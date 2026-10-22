@@ -64,6 +64,10 @@ A fourth variant, **Mini + Vite**, is the same Mini source bundled and minified 
 - **Results:** **all 6 passed every hidden test on the first try**, with no regressions.
 - **Mini specifically:** the model had never seen Mini and still matched React and Vue, at ~15–30% more tokens spent reading its docs.
 - **Caveat:** that is one run per cell, so it's a signal, not proof.
+- **Round 2 (after Mini's `--state` output):** a planted search bug, the same in all three CRMs, was fixed by
+  every agent in 4–5 tool calls at about the same cost (Mini +4%), and re-running the old tasks on Mini showed
+  no clear change from its bigger docs. The bug sat in one short file, so it was found by reading the code:
+  the state output didn't get a chance to help. Setup: `tools/ai/` (plants the bug), `flows/hidden/crm-search-bug.js`.
 
 ## What it doesn't show
 

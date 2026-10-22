@@ -131,7 +131,16 @@ Two feature requests (spec in each task), identical text for every framework. On
 | Form rules + counter: regressions | none | none | none |
 | Form rules + counter: tokens / tool calls / time | 56.2k / 13 / 105 s | 42.9k / 11 / 82 s | 41.9k / 13 / 116 s |
 | Form rules + counter: lines changed | 18 | 10 | 11 |
+| Round 2 · Search bug fix: hidden tests passed | **3/3** | **3/3** | **3/3** |
+| Round 2 · Search bug fix: regressions | none | none | none |
+| Round 2 · Search bug fix: tokens / tool calls / time | 34.4k / 5 / 28 s | 33.1k / 4 / 25 s | 33.1k / 5 / 26 s |
+| Round 2 · Search bug fix: lines changed | 6 | 6 | 4 |
+| Round 2 · Sortable table (Mini only): hidden tests / tokens / tool calls / time | **4/4** · 51.5k / 11 / 63 s | – | – |
+| Round 2 · Form rules + counter (Mini only): hidden tests / tokens / tool calls / time | **6/6** · 48.2k / 10 / 54 s | – | – |
 
 - Every agent succeeded on its first try, including on Mini, which the model had never seen: its docs and checks were enough.
 - Mini cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.
 - The Mini form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature.
+- Round 2 (2026-10-22, after Mini gained --state and the state block in failing flows; AGENTS.md grew from 244 to 316 lines). Same setup, one run per cell. Bug task: the same planted bug in all three CRMs (search only updated from 2 characters, so clearing the box kept the list filtered), a visible reproduction flow, graded with hidden flows (clearing restores all, one-letter search filters, search + status combine). Failing Mini flows showed `q = "ada"` under an empty search box; React and Vue showed only the page outline.
+- Bug task result: all three fixed it the same way (removed the 2-character rule, citing the spec) in 4–5 tool calls, at about the same cost (Mini +4%). The bug was found by reading one short file, so the state output had no room to help; a bigger app or a bug spread over several files would be a fairer test of it.
+- Mini re-run of the old tasks: sortable table 51.5k tokens (was 48.7k), form 48.2k (was 56.2k): no clear change from the bigger AGENTS.md. Round 1's React and Vue numbers came from an earlier session, possibly another model, so don't compare these Mini numbers with them directly. Times also aren't comparable across sessions.
