@@ -2,8 +2,8 @@
   "code": {
     "todo/mini": {
       "files": 3,
-      "lines": 108,
-      "chars": 3563,
+      "lines": 109,
+      "chars": 3617,
       "list": [
         "todo/mini/app/main.js",
         "todo/mini/app/todos.js",
@@ -32,8 +32,8 @@
     },
     "crm/mini": {
       "files": 11,
-      "lines": 256,
-      "chars": 9017,
+      "lines": 257,
+      "chars": 9071,
       "list": [
         "crm/mini/app/format.js",
         "crm/mini/app/main.js",
@@ -93,8 +93,8 @@
     },
     "bench/mini": {
       "files": 3,
-      "lines": 87,
-      "chars": 3557,
+      "lines": 89,
+      "chars": 3714,
       "list": [
         "bench/mini/app/data.js",
         "bench/mini/app/main.js",

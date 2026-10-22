@@ -10,53 +10,53 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 
 | `todo` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 26.7 | **6.2** | 67.2 | 26 |
-| JS files | 11 | **1** | **1** | **1** |
-| First paint (ms) | 692 | **484** | 788 | 588 |
-| Ready (ms) | 628.2 | **420.9** | 743 | 530.7 |
+| JS downloaded (KB, gzip) | 30.3 | **6.7** | 67.2 | 26 |
+| JS files | 12 | **1** | **1** | **1** |
+| First paint (ms) | 780 | **472** | 792 | 584 |
+| Ready (ms) | 718.1 | **416.3** | 744.7 | 531.3 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
 | `crm` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 26.7 | **10.4** | 97.9 | 37.1 |
-| JS files | 13 | **3** | 4 | 5 |
-| First paint (ms) | 660 | **464** | 948 | 644 |
-| Ready (ms) | 1140.8 | **794.9** | 1297.6 | 993 |
-| Blocking (ms) | **0** | **0** | 2 | 38 |
+| JS downloaded (KB, gzip) | 30.3 | **11** | 97.9 | 37.1 |
+| JS files | 14 | **3** | 4 | 5 |
+| First paint (ms) | 748 | **472** | 948 | 632 |
+| Ready (ms) | 1230.8 | **801.4** | 1296.6 | 990.5 |
+| Blocking (ms) | **0** | **0** | 2 | 32 |
 
 | `crm/customers` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 27.2 | **10.8** | 98.3 | 37.6 |
-| JS files | 13 | **3** | 4 | 5 |
-| First paint (ms) | 656 | **468** | 952 | 656 |
-| Ready (ms) | 1160.9 | **816.1** | 1343.6 | 1049.7 |
-| Blocking (ms) | **0** | **0** | **0** | 42 |
+| JS downloaded (KB, gzip) | 30.8 | **11.4** | 98.3 | 37.6 |
+| JS files | 14 | **3** | 4 | 5 |
+| First paint (ms) | 748 | **468** | 948 | 644 |
+| Ready (ms) | 1248.4 | **817** | 1344.3 | 1033.9 |
+| Blocking (ms) | **0** | **0** | 2 | 33 |
 
 ### Over HTTP/2
 
 | `todo` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 26.7 | **6.2** | 67.2 | 26 |
-| JS files | 11 | **1** | **1** | **1** |
-| First paint (ms) | 628 | **480** | 796 | 592 |
-| Ready (ms) | 571.2 | **421.8** | 747.8 | 543.3 |
+| JS downloaded (KB, gzip) | 30.3 | **6.7** | 67.2 | 26 |
+| JS files | 12 | **1** | **1** | **1** |
+| First paint (ms) | 652 | **476** | 804 | 592 |
+| Ready (ms) | 587.9 | **416.5** | 757.4 | 538.5 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
 | `crm` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 26.7 | **10.4** | 97.9 | 37.1 |
-| JS files | 13 | **3** | 4 | 5 |
-| First paint (ms) | 596 | **468** | 956 | 648 |
-| Ready (ms) | 1086.2 | **797.6** | 1307.8 | 1009.2 |
-| Blocking (ms) | **0** | **0** | 5 | 39 |
+| JS downloaded (KB, gzip) | 30.3 | **11** | 97.9 | 37.1 |
+| JS files | 14 | **3** | 4 | 5 |
+| First paint (ms) | 612 | **480** | 952 | 644 |
+| Ready (ms) | 1100.7 | **808.5** | 1293.4 | 994.5 |
+| Blocking (ms) | **0** | **0** | **0** | 34 |
 
 | `crm/customers` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 27.2 | **10.8** | 98.3 | 37.6 |
-| JS files | 13 | **3** | 4 | 5 |
-| First paint (ms) | 600 | **468** | 964 | 652 |
-| Ready (ms) | 1097.2 | **819** | 1359.3 | 1046.9 |
-| Blocking (ms) | **0** | **0** | 12 | 36 |
+| JS downloaded (KB, gzip) | 30.8 | **11.4** | 98.3 | 37.6 |
+| JS files | 14 | **3** | 4 | 5 |
+| First paint (ms) | 604 | **476** | 948 | 640 |
+| Ready (ms) | 1106.7 | **830.3** | 1338.3 | 1035.8 |
+| Blocking (ms) | **0** | **0** | **0** | 32 |
 
 ## Runtime (ms, lower is better)
 
@@ -64,15 +64,15 @@ js-framework-benchmark-style operations on the bench app, desktop CPU. Time from
 
 | Operation | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| create 1,000 rows | 56.3 | 51.5 | 55.5 | **49.6** |
-| replace 1,000 rows | 59.9 | **54.7** | 56.6 | 57.5 |
-| update every 10th row | 18.9 | 18.4 | **14.7** | 16.7 |
-| select a row | 2.6 | 2.4 | **1.1** | 2.7 |
-| swap two rows | **6.8** | 7.9 | 47.1 | 9.5 |
-| remove a row | 11 | 9.7 | **4.7** | 9.3 |
-| create 10,000 rows | 588.4 | **581.7** | 746.5 | 649.1 |
-| append 1,000 rows | 70 | 60.6 | **58** | 64.8 |
-| clear 1,000 rows | **6.3** | 7.3 | 8.8 | 8.1 |
+| create 1,000 rows | **42.7** | 44.2 | 44 | 42.9 |
+| replace 1,000 rows | 53.4 | 53.6 | 52.8 | **49.1** |
+| update every 10th row | 16.2 | 16.4 | **13.5** | 15.1 |
+| select a row | **0.4** | **0.4** | 1.1 | 2.4 |
+| swap two rows | **4.8** | **4.8** | 41.2 | 7.1 |
+| remove a row | 5.1 | **4.3** | 4.6 | 7.9 |
+| create 10,000 rows | 562.1 | 568.8 | 708 | **506.5** |
+| append 1,000 rows | 56.9 | 52.9 | **50.3** | 56 |
+| clear 1,000 rows | **6.6** | 6.8 | 8.3 | 7.5 |
 
 ### Mini before and after the optimization pass
 
@@ -94,18 +94,18 @@ Same session, old and new Mini alternated 6 times (medians), so session-to-sessi
 
 | State | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| ready | 0.58 | **0.56** | 0.97 | 0.75 |
-| 1,000 rows | 1.51 | **1.48** | 2.7 | 2.68 |
-| 10,000 rows | 8.37 | **8.35** | 15.71 | 18.28 |
-| after 5 create/clear | 0.79 | **0.76** | 1.76 | 1.59 |
+| ready | 0.59 | **0.56** | 0.97 | 0.75 |
+| 1,000 rows | 2.01 | **1.98** | 2.7 | 2.68 |
+| 10,000 rows | 13.1 | **12.93** | 15.71 | 18.28 |
+| after 5 create/clear | **0.78** | **0.78** | 1.76 | 1.59 |
 
 ## Code (lines of app code, without comments and blank lines)
 
 | App | Mini | React | Vue |
 |---|---:|---:|---:|
-| todo | 108 | 106 | **91** |
-| crm | **256** | 406 | 394 |
-| bench | 87 | 91 | **82** |
+| todo | 109 | 106 | **91** |
+| crm | **257** | 406 | 394 |
+| bench | 89 | 91 | **82** |
 
 ## Developer experience
 
@@ -114,7 +114,7 @@ Same session, old and new Mini alternated 6 times (medians), so session-to-sessi
 | npm packages to install | 0 | 22 | 67 |
 | node_modules size (MB) | 0 | 44 | 53 |
 | Build step | none | Vite | Vite |
-| Production build of the CRM (ms) | 0 | 304 | 199 |
+| Production build of the CRM (ms) | 0 | 304 | 210 |
 | Config files | 0 | 1 (vite.config.js) | 1 (vite.config.js) |
 
 ## AI-friendliness

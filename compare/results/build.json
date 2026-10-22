@@ -1,11 +1,11 @@
 {
-  "todo/react": 273,
-  "todo/vue": 306,
-  "todo/mini-vite": 62,
+  "todo/react": 277,
+  "todo/vue": 262,
+  "todo/mini-vite": 83,
   "crm/react": 304,
-  "crm/vue": 199,
-  "crm/mini-vite": 79,
-  "bench/react": 172,
-  "bench/vue": 133,
-  "bench/mini-vite": 57
+  "crm/vue": 210,
+  "crm/mini-vite": 76,
+  "bench/react": 221,
+  "bench/vue": 112,
+  "bench/mini-vite": 48
 }

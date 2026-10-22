@@ -250,30 +250,38 @@ function handle(err, h) {
  * @returns {((key: K) => boolean) & { size: () => number }} size: keys being tracked (for tests)
  */
 export function selector(source) {
-  const keys = new Map(); // key -> { flag: signal(boolean), readers }
+  const readers = new Map(); // key -> the effects that read isSelected(key), tracked like a signal's
+  // An effect leaves its sets on re-run or dispose (see reset); the key goes when its last reader does.
+  class Readers extends Set {
+    constructor(key) {
+      super();
+      this.key = key;
+    }
+    delete(e) {
+      const had = super.delete(e);
+      if (!this.size) readers.delete(this.key);
+      return had;
+    }
+  }
   let current;
   effect(() => {
     const next = typeof source === 'function' ? source() : source.value;
     if (next === current) return;
     const prev = current;
     current = next;
-    untrack(() => batch(() => {
-      const old = keys.get(prev);
-      if (old) old.flag.value = false;
-      const now = keys.get(next);
-      if (now) now.flag.value = true;
-    }));
+    for (const key of [prev, next]) for (const e of readers.get(key) ?? []) pending.add(e);
+    if (!batchDepth) flush();
   });
   const isSelected = (key) => {
-    let entry = keys.get(key);
-    if (!entry) keys.set(key, (entry = { flag: signal(key === current), readers: 0 }));
     if (currentEffect) {
-      entry.readers++;
-      onCleanup(() => --entry.readers || keys.delete(key)); // the last reader is gone
+      let set = readers.get(key);
+      if (!set) readers.set(key, (set = new Readers(key)));
+      set.add(currentEffect);
+      currentEffect.deps.add(set);
     }
-    return entry.flag.value;
+    return key === current;
   };
-  isSelected.size = () => keys.size;
+  isSelected.size = () => readers.size;
   return isSelected;
 }
 

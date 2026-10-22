@@ -110,7 +110,7 @@ and W064–W066 name routes and URLs that couldn't be prerendered.
 
 `npm run preview` serves it, and `npm run check -- --build` runs every check against it
 (and checks every route was prerendered).
-Measured in `../compare`: a bundled Mini app is ready 20–22% sooner than the same app in Vue on a slow phone.
+Measured in `../compare`: a bundled Mini app is ready 19–23% sooner than the same app in Vue on a slow phone.
 Unbuilt Mini still works in production, and it loads faster than React.
 
 The dev server sends `index.html` for unknown paths, so reloading on `/todos` works. `npm run preview`

@@ -206,12 +206,17 @@ test('selector: works with a computed or function source, and for keys not yet r
   assert.equal(fromFn('b'), true);
 });
 
-test('selector: a row that goes away stops being tracked (no leak)', () => {
+test('selector: rows that go away are dropped, so memory stays bounded', () => {
   const selected = signal(0);
   const isSelected = selector(selected);
-  const t = rows(3, isSelected);
-  for (const dispose of t.disposers) dispose();
-  assert.equal(isSelected.size(), 0); // every key released
-  selected.value = 1; // nothing left to re-run
-  assert.equal(t.total(), 3);
+  for (let cycle = 0; cycle < 10; cycle++) {
+    // Like the benchmark: 1,000 rows with fresh ids are created, then all removed.
+    const disposers = [];
+    for (let i = 0; i < 1000; i++) root((d) => (disposers.push(d), effect(() => isSelected(cycle * 1000 + i))));
+    for (const d of disposers) d();
+  }
+  assert.equal(isSelected.size(), 0); // every key left with its last row
+  const t = rows(3, isSelected); // still works afterwards
+  selected.value = 1;
+  assert.equal(t.total(), 5); // rows 0 (no longer selected) and 1 (now selected)
 });
