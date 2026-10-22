@@ -3,7 +3,7 @@
 
 import { signal, root, onCleanup, catchError } from './signal.js';
 import { html, toNodes } from './html.js';
-import { DEV, warn, error, describe } from './dev.js';
+import { DEV, warn, error, describe, registry, collect, silently } from './dev.js';
 
 /**
  * @typedef {object} ComponentContext
@@ -97,7 +97,7 @@ export function define(name, setup, { props = [], shadow = false, styles = '', f
       /** @type {Record<string, import('./signal.js').Signal<any>>} */
       this._props = {};
       for (const p of props) {
-        this._props[p] = signal(null);
+        this._props[p] = DEV ? silently(() => signal(null)) : signal(null); // not the parent setup's state
         // A property set before the element upgraded would shadow the accessor; move it over.
         if (Object.hasOwn(this, p)) {
           const self = /** @type {any} */ (this);
@@ -162,8 +162,16 @@ export function define(name, setup, { props = [], shadow = false, styles = '', f
           const prev = current;
           current = this;
           let view;
+          if (DEV) {
+            registry.components.add(this);
+            onCleanup(() => registry.components.delete(this));
+          }
           try {
-            view = setup(this._props, ctx);
+            view = DEV
+              ? collect(setup, () => setup(this._props, ctx), (state) => {
+                  this.__miniState = { tag: name, props: this._props, state };
+                })
+              : setup(this._props, ctx);
           } finally {
             current = prev;
           }

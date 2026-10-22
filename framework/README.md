@@ -135,6 +135,16 @@ use it automatically; nginx `try_files $uri $uri/index.html /404.html`, etc.).
   Add `-- --json` for output tools can read.
 - **`npm run see /path` lets you look without a browser.** It prints headings, links, buttons and
   inputs as text, flags layout overflow, and saves a screenshot to `.mini/screenshots/`.
+- **The state is text too.** `npm run see /path --state` adds what the app holds, by variable name:
+  ```
+  route /todos
+  store "mini-todos": todos = 3 items [{ id, text, done }, …], filter = "all"
+  <todo-list>: draft = "", visible = computed · 3 items [{ id, text, done }, …], left = computed · 3
+  ```
+  A failing user flow prints the same block under the page outline, so an agent sees *why* a step
+  failed without adding `console.log`s. In dev mode the core records it in `globalThis.__mini`
+  (`mini/dev.js`); in production that code is removed (0 bytes). Names come from the setup or page
+  function's source (`const draft = signal('')`); a value it can't name shows as `signal#2`.
 - **JSDoc types**: editors autocomplete and flag mistakes (`count.valu` → "did you mean 'value'?"),
   while the files stay plain JavaScript.
 

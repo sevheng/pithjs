@@ -11,6 +11,8 @@ Requires Node 24+ and Chrome/Chromium for checks.
 1. Make a change.
 2. Run `npm run check`. Read every ✗ line. Each `[mini W…]`/`[mini E…]` message has a fix in `../framework/docs/errors.md`.
 3. To see a page, run `npm run see /path`. It prints the page as a text outline and saves a screenshot you can open.
+   Add `-- --state` to also print what the route, stores, page and each component hold (by variable name).
+   A failing flow prints that state too, under the page outline: read it before changing code.
 4. Done only when `npm run check` prints **All good**. Never claim something works without that.
 
 `npm run check -- --json` gives the same result as JSON.
@@ -27,7 +29,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
 | `npm run check` | Node tests + framework tests + user flows + every route (also at phone width) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
 | `npm run types` | only the JSDoc type check (TypeScript via npx, nothing installed) |
-| `npm run see /todos [--mobile]` | text outline of the page + screenshot in `.mini/screenshots/` |
+| `npm run see /todos [--mobile] [--state]` | text outline of the page + screenshot in `.mini/screenshots/` (`--state`: what the app holds) |
 | `npm run new page <name> [--nav]` | new page file + lazy route (+ nav link) |
 | `npm run new component <tag-name>` | new component file |
 

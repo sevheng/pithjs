@@ -3,7 +3,7 @@
 
 import { signal, computed, batch } from './signal.js';
 import { html } from './html.js';
-import { DEV, warn } from './dev.js';
+import { DEV, warn, recording, record, silently } from './dev.js';
 
 /**
  * @typedef {(value: any, values: Record<string, any>) => string | null | undefined} Rule
@@ -54,6 +54,7 @@ let formCount = 0;
  * }} options
  */
 export function form({ initial, validate = {}, onSubmit }) {
+  if (DEV && recording()) return record('form', silently(() => form({ initial, validate, onSubmit })));
   const id = `form${++formCount}`;
   const names = /** @type {(keyof V & string)[]} */ (Object.keys(initial));
   for (const key of Object.keys(validate)) {

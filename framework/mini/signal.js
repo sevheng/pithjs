@@ -1,6 +1,6 @@
 // Fine-grained reactivity: signals hold values, effects re-run when the signals they read change.
 
-import { error } from './dev.js';
+import { DEV, error, recording, record, silently } from './dev.js';
 
 /**
  * @template T
@@ -27,6 +27,7 @@ const pending = new Set();
  * @returns {Signal<T>}
  */
 export function signal(initial) {
+  if (DEV && recording()) return record('signal', silently(() => signal(initial)));
   let value = initial;
   const subscribers = new Set();
   return mark({
@@ -54,6 +55,7 @@ export function signal(initial) {
  * @returns {ReadonlySignal<T>}
  */
 export function computed(fn) {
+  if (DEV && recording()) return record('computed', silently(() => computed(fn)));
   const s = signal(undefined);
   effect(() => { s.value = fn(); });
   return mark({

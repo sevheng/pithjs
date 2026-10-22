@@ -6,7 +6,7 @@
 
 import { signal, computed, effect, untrack, batch, catchError } from './signal.js';
 import { html } from './html.js';
-import { DEV, warn, error, describe } from './dev.js';
+import { DEV, warn, error, describe, registry, recording, collect, silently } from './dev.js';
 
 /**
  * @typedef {(params: Record<string, string>) => unknown} View
@@ -47,6 +47,10 @@ export function createRouter(
   routes,
   { title = (t) => t, focus = null, transitions = true, prefetch = true, loading = () => null, guard = null } = {}
 ) {
+  // Made inside a setup: its signals aren't that component's state.
+  if (DEV && recording()) {
+    return silently(() => createRouter(routes, { title, focus, transitions, prefetch, loading, guard }));
+  }
   const normalize = (pattern, route) => {
     const r = typeof route === 'function' ? { view: route } : route;
     const layout = r?.layout;
@@ -168,6 +172,7 @@ export function createRouter(
   const match = computed(() => resolve(path.value));
   const ready = load(match.peek().route).catch(() => {});
   const params = computed(() => match.value.params);
+  if (DEV) registry.router = { path, search };
 
   effect(() => {
     const t = match.value.route.title;
@@ -183,15 +188,32 @@ export function createRouter(
   `;
   const failedView = (route) => errorView(route.error, () => load(route).catch(() => {}));
 
+  // Dev only: registry.pages lists the current layout (when it holds state of its own), then the page.
+  /** @type {{ path: string, name: string, layout?: boolean, state: [string, string, unknown][] } | null} */
+  let layoutEntry = null, pageEntry = null;
+  const showPages = () => {
+    registry.pages = [layoutEntry, pageEntry].filter(Boolean);
+  };
+  const recordPage = (fn, run) =>
+    collect(fn, run, (state) => {
+      pageEntry = { path: path.peek(), name: fn.name, state };
+      showPages();
+    });
+  const recordLayout = (fn, run) =>
+    collect(fn, run, (state) => {
+      layoutEntry = state.length ? { path: path.peek(), name: fn.name, layout: true, state } : null;
+      showPages();
+    });
+
   // A page that throws (while rendering or later, in one of its holes) shows errorView instead of
   // breaking the app. Try again renders it from scratch. Components with their own fallback catch first.
   const attempt = signal(0);
   function renderPage(route, params) {
     attempt.value;
-    const failed = signal(/** @type {unknown} */ (null));
+    const failed = DEV ? silently(() => signal(/** @type {unknown} */ (null))) : signal(/** @type {unknown} */ (null));
     let stop = () => {};
     const nodes = catchError(
-      (dispose) => ((stop = dispose), untrack(() => route.view(params))),
+      (dispose) => ((stop = dispose), untrack(() => (DEV ? recordPage(route.view, () => route.view(params)) : route.view(params)))),
       (err) => {
         if (failed.peek()) return;
         console.error(`[mini] Page "${route.pattern}" failed:`, err);
@@ -223,7 +245,13 @@ export function createRouter(
   // Only a different layout re-renders the outer part: pages sharing one keep its DOM and state.
   const view = () => {
     const shell = layout.value;
-    return untrack(() => (shell ? shell(pageIn(shell)) : html`${pageIn(null)}`));
+    if (DEV) {
+      layoutEntry = null;
+      showPages();
+    }
+    return untrack(() =>
+      shell ? (DEV ? recordLayout(shell, () => shell(pageIn(shell))) : shell(pageIn(shell))) : html`${pageIn(null)}`
+    );
   };
 
   // Scroll positions live in each history entry's state, so back/forward can put them back.

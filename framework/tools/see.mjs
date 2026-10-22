@@ -1,6 +1,7 @@
 // npm run see /todos  → prints what the page shows as text, and saves a screenshot.
 // Lets anyone (or any AI) "look" at a page without opening a browser.
 //   --mobile   use a phone-sized window (390x844)
+//   --state    also print what the pages, stores and components hold (dev mode; see tests/state.js)
 //   --no-shot  skip the screenshot
 
 import { mkdirSync } from 'node:fs';
@@ -26,6 +27,7 @@ const server = await startServer(0);
 const base = `http://localhost:${server.address().port}`;
 try {
   const query = new URLSearchParams({ path, width: String(width), height: String(height) });
+  if (args.includes('--state')) query.set('state', '1');
   const jobs = [loadPage(chrome, `${base}/__mini/see.html?${query}`)];
   if (!args.includes('--no-shot')) {
     mkdirSync(shotDir, { recursive: true });
@@ -36,6 +38,7 @@ try {
 
   console.log(`Page ${path} (${width}x${height})\n`);
   console.log(pick('outline') || '(nothing rendered)');
+  if (query.has('state')) console.log(`\nState:\n${pick('state') || '(none)'}`);
   const problems = pick('problems');
   console.log(problems ? `\nProblems:\n${problems}` : '\nNo errors or warnings.');
   const layout = pick('layout');

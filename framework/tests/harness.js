@@ -1,6 +1,8 @@
 // Drives the app inside an iframe so tests can click, type and read it the way a person would,
 // and describes any page as a text outline (headings, links, buttons, inputs) for tools that can't see.
 
+import { stateText } from './state.js';
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clean = (s) => (s ?? '').replace(/\s+/g, ' ').trim();
 const quote = (s) => JSON.stringify(s);
@@ -326,7 +328,10 @@ export async function runFlows() {
       if (app.problems.length) throw new Error(`The app reported problems:\n  ${app.problems.join('\n  ')}`);
       results.push([name, null]);
     } catch (err) {
-      results.push([name, err]);
+      // Every failure also says what the app holds (dev mode): pages, stores, components.
+      const error = typeof err?.message === 'string' ? err : new Error(String(err)); // may be from the app's realm
+      error.message += `\nState:\n${stateText(frame.contentWindow)}`;
+      results.push([name, error]);
     }
     frame.remove();
   }

@@ -155,3 +155,18 @@ test('catchError is disposed with its owner', () => {
   s.value = 1;
   assert.equal(runs, 1);
 });
+
+test('the state registry is off in production: no globalThis.__mini, registry is null', async () => {
+  const prev = globalThis.MINI_DEV;
+  globalThis.MINI_DEV = false;
+  try {
+    // A fresh copy of dev.js (the query makes Node load it again), read with MINI_DEV = false.
+    const dev = await import('../mini/dev.js?production');
+    assert.equal(dev.DEV, false);
+    assert.equal(dev.registry, null);
+    assert.equal(globalThis.__mini, undefined);
+  } finally {
+    if (prev === undefined) delete globalThis.MINI_DEV;
+    else globalThis.MINI_DEV = prev;
+  }
+});

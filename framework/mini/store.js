@@ -1,7 +1,7 @@
 // Shared state: createStore({ a: 1 }) -> { a: signal(1) }, optionally saved to localStorage.
 
 import { signal, effect, root } from './signal.js';
-import { DEV, warn, describe } from './dev.js';
+import { DEV, warn, describe, registry, recording, silently } from './dev.js';
 
 const notJson = (v) =>
   typeof v === 'function' || typeof v === 'bigint' || v instanceof Map || v instanceof Set || v instanceof Date;
@@ -14,6 +14,8 @@ const notJson = (v) =>
  * @returns {{ [K in keyof T]: import('./signal.js').Signal<T[K]> }}
  */
 export function createStore(initial, { persist = null } = {}) {
+  // Its signals belong to the store, not to the component whose setup made it.
+  if (DEV && recording()) return silently(() => createStore(initial, { persist }));
   let saved = {};
   if (persist) {
     try {
@@ -46,5 +48,6 @@ export function createStore(initial, { persist = null } = {}) {
       })
     );
   }
+  DEV && registry.stores.push({ name: persist || 'store', signals: store });
   return store;
 }

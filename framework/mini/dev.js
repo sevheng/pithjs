@@ -5,6 +5,93 @@
 const host = globalThis.location?.hostname ?? '';
 export const DEV = globalThis.MINI_DEV ?? ['localhost', '127.0.0.1', '[::1]'].includes(host);
 
+// Dev only. Read by the test tools (tests/state.js) to print the app's state as text, for
+// `npm run see /path --state` and failing user flows. Nothing is recorded in production.
+// globalThis.__mini = {
+//   components: Set<HTMLElement>,  // mounted Mini components; each host has host.__miniState:
+//                                  //   { tag, props: { [name]: Signal }, state: [name, kind, obj][] }
+//   pages: [{ path, name, layout?: true, state: [name, kind, obj][] }],  // the current layout (if it holds
+//                                  //   state), then the current page
+//   stores: [{ name, signals: { [key]: Signal } }],
+//   router: { path: Signal<string>, search: Signal<string> } | null,
+// }
+// kind: 'signal' | 'computed' | 'resource' | 'paginated' | 'form'. obj is the object itself.
+export const registry = DEV ? (globalThis.__mini ??= { components: new Set(), pages: [], stores: [], router: null }) : null;
+
+// Dev only: the state a component setup or page function creates. signal(), computed(), resource(),
+// paginated() and form() each add one entry; what they (or the framework) create inside is hidden.
+// Every call site is behind DEV, so none of this ships.
+/** @type {[string, unknown][] | null} */
+let collected = null;
+let hidden = 0;
+
+/** True when a creation now would be listed (a collector is open and nothing is hiding it). */
+export const recording = () => !!collected && !hidden;
+
+/**
+ * @template T
+ * @param {string} kind
+ * @param {T} obj
+ * @returns {T}
+ */
+export function record(kind, obj) {
+  if (recording()) collected.push([kind, obj]);
+  return obj;
+}
+
+/**
+ * Run fn without listing what it creates.
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function silently(fn) {
+  hidden++;
+  try {
+    return fn();
+  } finally {
+    hidden--;
+  }
+}
+
+/**
+ * Run fn (a setup or page function) with its own collector, then pass its named state to save,
+ * even if fn throws. Nested collectors (a child component's setup) don't mix with this one.
+ * @template T
+ * @param {Function} owner the function whose source names the state
+ * @param {() => T} fn
+ * @param {(state: [string, string, unknown][]) => void} save
+ * @returns {T}
+ */
+export function collect(owner, fn, save) {
+  const prev = collected, prevHidden = hidden;
+  const list = (collected = []);
+  hidden = 0;
+  try {
+    return fn();
+  } finally {
+    collected = prev;
+    hidden = prevHidden;
+    save(named(owner, list));
+  }
+}
+
+// Names come from the owner's source: `const draft = signal(` etc., matched per kind in order, and
+// only when the source has exactly as many as were created (a wrong name is worse than signal#2).
+const declared = /\b(?:const|let|var)\s+([\w$]+)\s*=\s*(signal|computed|resource|paginated|form)\s*\(/g;
+function named(owner, list) {
+  /** @type {Record<string, string[]>} */
+  const names = {};
+  for (const [, name, kind] of String(owner).matchAll(declared)) (names[kind] ??= []).push(name);
+  /** @type {Record<string, number>} */
+  const total = {}, seen = {};
+  for (const [kind] of list) total[kind] = (total[kind] ?? 0) + 1;
+  return list.map(([kind, obj]) => {
+    const n = (seen[kind] = (seen[kind] ?? 0) + 1);
+    return [names[kind]?.length === total[kind] ? names[kind][n - 1] : `${kind}#${n}`, kind, obj];
+  });
+}
+
 const seen = new Set();
 
 const ref = (code) => `See framework/docs/errors.md#${code.toLowerCase()}`;

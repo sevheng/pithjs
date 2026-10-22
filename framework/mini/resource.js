@@ -4,7 +4,7 @@
 
 import { signal, computed, effect, untrack, batch, onCleanup } from './signal.js';
 import { html } from './html.js';
-import { DEV, warn, describe } from './dev.js';
+import { DEV, warn, describe, recording, record, silently } from './dev.js';
 
 /** A non-2xx response. `body` is the parsed JSON (or text) the server sent back. */
 export class HttpError extends Error {
@@ -61,6 +61,7 @@ const defaultError = (err, retry) => html`
  * @param {(ctx: { signal: AbortSignal }) => Promise<T> | T} fetcher pass ctx.signal to fetch/fetchJSON
  */
 export function resource(fetcher) {
+  if (DEV && recording()) return record('resource', silently(() => resource(fetcher)));
   const data = signal(/** @type {T | undefined} */ (undefined));
   const error = signal(/** @type {any} */ (null));
   const loading = signal(false);
@@ -207,6 +208,7 @@ export function resource(fetcher) {
  *   (without, an empty array is)
  */
 export function paginated(fetcher, { pageSize } = {}) {
+  if (DEV && recording()) return record('paginated', silently(() => paginated(fetcher, { pageSize })));
   const loadingMore = signal(false);
   const moreError = signal(/** @type {any} */ (null));
   /** @type {AbortController | null} */
