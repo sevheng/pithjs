@@ -6,6 +6,7 @@
 
 import { signal, computed, effect, untrack, batch, catchError } from './signal.js';
 import { html } from './html.js';
+import { transition } from './transition.js';
 import { DEV, warn, error, describe, registry, recording, collect, silently } from './dev.js';
 
 /**
@@ -288,10 +289,7 @@ export function createRouter(
     await load(resolve(url.pathname).route).catch(() => {}); // a failure renders failedView
     if (id !== navigation) return; // the user already went somewhere else
 
-    let done = false;
     const apply = () => {
-      if (done) return;
-      done = true;
       batch(() => {
         path.value = url.pathname;
         search.value = url.search;
@@ -306,17 +304,8 @@ export function createRouter(
       }
       if (focus) /** @type {HTMLElement | null} */ (document.querySelector(focus))?.focus({ preventScroll: true });
     };
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (animate && transitions && document.startViewTransition && !reduced) {
-      const transition = document.startViewTransition(apply);
-      // A newer navigation skips this transition, which rejects these promises: that's expected.
-      for (const p of [transition.ready, transition.finished, transition.updateCallbackDone]) p?.catch(() => {});
-      // The browser may delay or never run the transition callback (e.g. while not rendering);
-      // an animation must never block navigation, so update directly if it hasn't run.
-      setTimeout(apply, 300);
-    } else {
-      apply();
-    }
+    if (animate && transitions) transition(apply); // never blocks: applies within 300 ms regardless
+    else apply();
   }
 
   /**

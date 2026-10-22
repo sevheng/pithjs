@@ -203,6 +203,11 @@ Field helpers: `input` (any `type`), `textarea`, `select`, `checkbox`. Each take
 submit focus moves to the first bad field. Also: `signup.values()`, `signup.reset()`,
 `signup.setErrors({ email: '...' })`, `signup.valid.value`. Every field name must be in `initial` (W015, W016).
 
+**Animating removals and reorders:** `transition(() => (todos.value = ...))` plus a unique
+`style=${`view-transition-name: todo-${t.id}`}` on each row (see `app/components/todo-list.js`).
+Don't add an animation library, and don't call `document.startViewTransition` yourself (it can stall).
+Appearing items: CSS `@starting-style` or a keyframe animation.
+
 **Confirm, dialogs and toasts: use `mini/ui`**, never `window.confirm`/`alert` or a hand-made modal:
 ```js
 import { confirm, dialog, toast } from 'mini/ui';

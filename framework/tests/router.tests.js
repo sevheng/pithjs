@@ -1,6 +1,7 @@
 // router tests. Called by index.html with the shared helpers.
 
 import { createRouter } from '../mini/router.js';
+import { transition } from '../mini/transition.js';
 import { html } from '../mini/html.js';
 import { root, signal } from '../mini/signal.js';
 
@@ -339,4 +340,57 @@ export default async function (t) {
       console.error = consoleError;
     }
   });
+
+  // transition(): stub the View Transitions API and matchMedia on this document, then restore them.
+  async function withViewTransitions(start, reduced, fn) {
+    const own = Object.hasOwn(document, 'startViewTransition');
+    const matchMedia = window.matchMedia;
+    if (start === undefined) Object.defineProperty(document, 'startViewTransition', { value: undefined, configurable: true });
+    else document.startViewTransition = start;
+    window.matchMedia = (q) => ({ matches: reduced && q.includes('reduce') });
+    try {
+      await fn();
+    } finally {
+      if (!own) delete document.startViewTransition;
+      window.matchMedia = matchMedia;
+    }
+  }
+  const settled = Promise.resolve();
+  const fakeTransition = { ready: settled, finished: settled, updateCallbackDone: settled };
+
+  await test('transition: without View Transitions, the update runs right away', () =>
+    withViewTransitions(undefined, false, () => {
+      let runs = 0;
+      transition(() => runs++);
+      eq(runs, 1);
+    }));
+
+  await test('transition: with reduced motion, the update runs right away and nothing animates', () => {
+    let started = 0;
+    return withViewTransitions(() => (started++, fakeTransition), true, () => {
+      let runs = 0;
+      transition(() => runs++);
+      eq(runs, 1);
+      eq(started, 0);
+    });
+  });
+
+  await test('transition: the browser runs the update once inside a view transition', () =>
+    withViewTransitions((update) => (update(), fakeTransition), false, async () => {
+      let runs = 0;
+      transition(() => runs++);
+      eq(runs, 1);
+      await new Promise((r) => setTimeout(r, 350)); // the fallback timer must not run it again
+      eq(runs, 1);
+    }));
+
+  await test('transition: if the browser never runs the callback, the update still happens once', () =>
+    withViewTransitions(() => fakeTransition, false, async () => {
+      let runs = 0;
+      transition(() => runs++);
+      eq(runs, 0);
+      await until(() => runs === 1);
+      await new Promise((r) => setTimeout(r, 50));
+      eq(runs, 1);
+    }));
 }

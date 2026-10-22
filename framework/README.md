@@ -464,6 +464,24 @@ export async function POST({ body }) {
 ```
 Static hosting doesn't run these. In production, a real backend must answer the same URLs.
 
+### Animations
+
+Use the browser, not a library. CSS `transition` covers hover and open/close, `@starting-style` covers
+items appearing, and the router already animates page changes. For items **removed or reordered**, wrap
+the change in `transition()` and give each row its own `view-transition-name`: the browser snapshots the
+list before and after, fades out what left and slides what moved.
+
+```js
+import { transition } from 'mini';
+const remove = (id) => transition(() => (todos.value = todos.value.filter((t) => t.id !== id)));
+// each row: <li style=${`view-transition-name: todo-${t.id}`}>   (names must be unique on the page)
+```
+
+`transition(update)` uses View Transitions when the browser has them and the user hasn't asked for
+reduced motion; otherwise it just runs `update`. `update` always runs exactly once, within 300 ms even if
+the browser holds the transition back (it may in a background tab), so an animation never stops a change.
+Use it rather than calling `document.startViewTransition` yourself, which can stall.
+
 ## Dev warnings
 
 On `localhost`, Mini prints `[mini W…]` warnings for common mistakes (each message once). They are

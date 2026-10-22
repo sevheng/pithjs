@@ -1,4 +1,4 @@
-import { define, html, repeat, signal, computed } from 'mini';
+import { define, html, repeat, signal, computed, transition } from 'mini';
 import { confirm, toast } from 'mini/ui';
 import { todoStore } from '../store.js';
 
@@ -25,14 +25,15 @@ define('todo-list', () => {
   const toggle = (id) => {
     todos.value = todos.value.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
   };
-  const remove = (id) => {
+  // transition(): the removed rows fade out and the rest slide up, instead of jumping.
+  const remove = (id) => transition(() => {
     todos.value = todos.value.filter((t) => t.id !== id);
-  };
+  });
   const clearDone = async () => {
     const n = todos.value.filter((t) => t.done).length;
     const ok = await confirm(`Delete ${n} completed todo${n === 1 ? '' : 's'}?`, { ok: 'Clear', danger: true });
     if (!ok) return;
-    todos.value = todos.value.filter((t) => !t.done);
+    transition(() => (todos.value = todos.value.filter((t) => !t.done)));
     toast('Completed todos cleared');
   };
 
@@ -48,13 +49,13 @@ define('todo-list', () => {
       <div class="filters" role="group" aria-label="Show">
         ${Object.keys(FILTERS).map((f) => html`
           <button class="chip" type="button" aria-pressed=${() => String(filter.value === f)}
-                  @click=${() => (filter.value = f)}>${f}</button>
+                  @click=${() => transition(() => (filter.value = f))}>${f}</button>
         `)}
       </div>
 
       <ul class="todo-list">
         ${repeat(visible, (t) => t.id, (t) => html`
-          <li class=${t.done ? 'todo done' : 'todo'}>
+          <li class=${t.done ? 'todo done' : 'todo'} style=${`view-transition-name: todo-${t.id}`}>
             <label class="todo-label">
               <input type="checkbox" class="check" .checked=${t.done} @change=${() => toggle(t.id)}>
               <span class="todo-text">${t.text}</span>
