@@ -1,0 +1,144 @@
+{
+  "code": {
+    "todo/mini": {
+      "files": 3,
+      "lines": 108,
+      "chars": 3563,
+      "list": [
+        "todo/mini/app/main.js",
+        "todo/mini/app/todos.js",
+        "todo/mini/index.html"
+      ]
+    },
+    "todo/react": {
+      "files": 3,
+      "lines": 106,
+      "chars": 3374,
+      "list": [
+        "todo/react/index.html",
+        "todo/react/src/App.jsx",
+        "todo/react/src/main.jsx"
+      ]
+    },
+    "todo/vue": {
+      "files": 3,
+      "lines": 91,
+      "chars": 3130,
+      "list": [
+        "todo/vue/index.html",
+        "todo/vue/src/App.vue",
+        "todo/vue/src/main.js"
+      ]
+    },
+    "crm/mini": {
+      "files": 11,
+      "lines": 256,
+      "chars": 9017,
+      "list": [
+        "crm/mini/app/format.js",
+        "crm/mini/app/main.js",
+        "crm/mini/app/pages/customer-form.js",
+        "crm/mini/app/pages/customer.js",
+        "crm/mini/app/pages/customers.js",
+        "crm/mini/app/pages/dashboard.js",
+        "crm/mini/app/pages/edit-customer.js",
+        "crm/mini/app/pages/new-customer.js",
+        "crm/mini/app/pages/not-found.js",
+        "crm/mini/app/router.js",
+        "crm/mini/index.html"
+      ]
+    },
+    "crm/react": {
+      "files": 13,
+      "lines": 406,
+      "chars": 13688,
+      "list": [
+        "crm/react/index.html",
+        "crm/react/src/Layout.jsx",
+        "crm/react/src/lib/api.js",
+        "crm/react/src/lib/format.js",
+        "crm/react/src/lib/status.jsx",
+        "crm/react/src/main.jsx",
+        "crm/react/src/pages/Customer.jsx",
+        "crm/react/src/pages/CustomerForm.jsx",
+        "crm/react/src/pages/Customers.jsx",
+        "crm/react/src/pages/Dashboard.jsx",
+        "crm/react/src/pages/EditCustomer.jsx",
+        "crm/react/src/pages/NewCustomer.jsx",
+        "crm/react/src/pages/NotFound.jsx"
+      ]
+    },
+    "crm/vue": {
+      "files": 16,
+      "lines": 394,
+      "chars": 14884,
+      "list": [
+        "crm/vue/index.html",
+        "crm/vue/src/App.vue",
+        "crm/vue/src/components/Field.vue",
+        "crm/vue/src/components/LoadError.vue",
+        "crm/vue/src/components/Loading.vue",
+        "crm/vue/src/lib/api.js",
+        "crm/vue/src/lib/format.js",
+        "crm/vue/src/main.js",
+        "crm/vue/src/pages/Customer.vue",
+        "crm/vue/src/pages/CustomerForm.vue",
+        "crm/vue/src/pages/Customers.vue",
+        "crm/vue/src/pages/Dashboard.vue",
+        "crm/vue/src/pages/EditCustomer.vue",
+        "crm/vue/src/pages/NewCustomer.vue",
+        "crm/vue/src/pages/NotFound.vue",
+        "crm/vue/src/router.js"
+      ]
+    },
+    "bench/mini": {
+      "files": 3,
+      "lines": 87,
+      "chars": 3557,
+      "list": [
+        "bench/mini/app/data.js",
+        "bench/mini/app/main.js",
+        "bench/mini/index.html"
+      ]
+    },
+    "bench/react": {
+      "files": 4,
+      "lines": 91,
+      "chars": 3420,
+      "list": [
+        "bench/react/index.html",
+        "bench/react/src/App.jsx",
+        "bench/react/src/data.js",
+        "bench/react/src/main.jsx"
+      ]
+    },
+    "bench/vue": {
+      "files": 4,
+      "lines": 82,
+      "chars": 2897,
+      "list": [
+        "bench/vue/index.html",
+        "bench/vue/src/App.vue",
+        "bench/vue/src/data.js",
+        "bench/vue/src/main.js"
+      ]
+    }
+  },
+  "deps": {
+    "mini": {
+      "direct": 0,
+      "total": 0,
+      "diskMB": 0
+    },
+    "react": {
+      "direct": 5,
+      "total": 22,
+      "diskMB": 44
+    },
+    "vue": {
+      "direct": 4,
+      "total": 67,
+      "diskMB": 53
+    }
+  }
+}

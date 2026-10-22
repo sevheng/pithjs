@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mini See</title>
+  <style>body { margin: 0; background: #fff; color: #111; } pre { margin: 1rem; }</style>
+</head>
+<body>
+  <!-- Used by `npm run see`: loads ?path= in an iframe and prints its text outline. -->
+  <pre id="outline">Loading…</pre>
+  <pre id="problems"></pre>
+  <pre id="layout"></pre>
+  <script type="module">
+    import { createFrame, createApp } from './harness.js';
+
+    const params = new URLSearchParams(location.search);
+    const frame = createFrame({ width: +params.get('width') || 1024, height: +params.get('height') || 768 });
+    const app = createApp(frame);
+    await app.go(params.get('path') || '/');
+    await new Promise((r) => setTimeout(r, 300)); // let transitions and late renders finish
+    document.getElementById('outline').textContent = app.outline();
+    document.getElementById('problems').textContent = app.problems.join('\n');
+    document.getElementById('layout').textContent = findOverflow(app.document);
+
+    // If the page scrolls sideways, name the innermost elements that stick out past the screen edge.
+    function findOverflow(doc) {
+      const width = doc.documentElement.clientWidth;
+      if (doc.documentElement.scrollWidth <= width + 1) return '';
+      const view = doc.defaultView;
+      const scrolls = (el) => /auto|scroll|hidden|clip/.test(view.getComputedStyle(el).overflowX);
+      const sticksOut = (el) => {
+        const r = el.getBoundingClientRect();
+        if (!r.width || r.right <= width + 1) return false;
+        for (let p = el.parentElement; p && p !== doc.body; p = p.parentElement) if (scrolls(p)) return false;
+        return true;
+      };
+      const culprits = [...doc.body.querySelectorAll('*')].filter(
+        (el) => sticksOut(el) && ![...el.children].some(sticksOut)
+      );
+      const label = (el) => {
+        const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        const cls = el.classList.length ? `.${[...el.classList].join('.')}` : '';
+        return `<${el.localName}${cls}>${text ? ` "${text}"` : ''} reaches ${Math.round(el.getBoundingClientRect().right)}px`;
+      };
+      return [`The page is ${doc.documentElement.scrollWidth}px wide but the screen is ${width}px: it scrolls sideways.`,
+        ...culprits.slice(0, 5).map((el) => `  ${label(el)}`)].join('\n');
+    }
+    document.title = 'DONE';
+  </script>
+</body>
+</html>

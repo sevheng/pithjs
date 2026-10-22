@@ -1,0 +1,370 @@
+{
+  "environment": {
+    "date": "2026-10-22T15:26:32.647Z",
+    "chrome": "Chrome/155.0.0.0",
+    "node": "v26.10.0",
+    "runs": 5
+  },
+  "runtime": {
+    "mini": {
+      "create 1,000 rows": 56.3,
+      "replace 1,000 rows": 59.9,
+      "update every 10th row": 18.9,
+      "select a row": 2.6,
+      "swap two rows": 6.8,
+      "remove a row": 11,
+      "create 10,000 rows": 588.4,
+      "append 1,000 rows": 70,
+      "clear 1,000 rows": 6.3
+    },
+    "mini-vite": {
+      "create 1,000 rows": 51.5,
+      "replace 1,000 rows": 54.7,
+      "update every 10th row": 18.4,
+      "select a row": 2.4,
+      "swap two rows": 7.9,
+      "remove a row": 9.7,
+      "create 10,000 rows": 581.7,
+      "append 1,000 rows": 60.6,
+      "clear 1,000 rows": 7.3
+    },
+    "react": {
+      "create 1,000 rows": 55.5,
+      "replace 1,000 rows": 56.6,
+      "update every 10th row": 14.7,
+      "select a row": 1.1,
+      "swap two rows": 47.1,
+      "remove a row": 4.7,
+      "create 10,000 rows": 746.5,
+      "append 1,000 rows": 58,
+      "clear 1,000 rows": 8.8
+    },
+    "vue": {
+      "create 1,000 rows": 49.6,
+      "replace 1,000 rows": 57.5,
+      "update every 10th row": 16.7,
+      "select a row": 2.7,
+      "swap two rows": 9.5,
+      "remove a row": 9.3,
+      "create 10,000 rows": 649.1,
+      "append 1,000 rows": 64.8,
+      "clear 1,000 rows": 8.1
+    }
+  },
+  "memory": {
+    "mini": {
+      "ready": 0.58,
+      "1,000 rows": 1.51,
+      "10,000 rows": 8.37,
+      "after 5 create/clear": 0.79
+    },
+    "mini-vite": {
+      "ready": 0.56,
+      "1,000 rows": 1.48,
+      "10,000 rows": 8.35,
+      "after 5 create/clear": 0.76
+    },
+    "react": {
+      "ready": 0.97,
+      "1,000 rows": 2.7,
+      "10,000 rows": 15.71,
+      "after 5 create/clear": 1.76
+    },
+    "vue": {
+      "ready": 0.75,
+      "1,000 rows": 2.68,
+      "10,000 rows": 18.28,
+      "after 5 create/clear": 1.59
+    }
+  },
+  "load": {
+    "todo · mini · h1": {
+      "app": "todo",
+      "impl": "mini",
+      "protocol": "http/1.1",
+      "fcp": 692,
+      "lcp": 692,
+      "ready": 628.2,
+      "tbt": 0,
+      "jsKB": 26.7,
+      "jsFiles": 11,
+      "requests": 14
+    },
+    "todo · mini · h2": {
+      "app": "todo",
+      "impl": "mini",
+      "protocol": "h2",
+      "fcp": 628,
+      "lcp": 628,
+      "ready": 571.2,
+      "tbt": 0,
+      "jsKB": 26.7,
+      "jsFiles": 11,
+      "requests": 14
+    },
+    "todo · mini-vite · h1": {
+      "app": "todo",
+      "impl": "mini-vite",
+      "protocol": "http/1.1",
+      "fcp": 484,
+      "lcp": 484,
+      "ready": 420.9,
+      "tbt": 0,
+      "jsKB": 6.2,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "todo · mini-vite · h2": {
+      "app": "todo",
+      "impl": "mini-vite",
+      "protocol": "h2",
+      "fcp": 480,
+      "lcp": 480,
+      "ready": 421.8,
+      "tbt": 0,
+      "jsKB": 6.2,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "todo · react · h1": {
+      "app": "todo",
+      "impl": "react",
+      "protocol": "http/1.1",
+      "fcp": 788,
+      "lcp": 788,
+      "ready": 743,
+      "tbt": 0,
+      "jsKB": 67.2,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "todo · react · h2": {
+      "app": "todo",
+      "impl": "react",
+      "protocol": "h2",
+      "fcp": 796,
+      "lcp": 796,
+      "ready": 747.8,
+      "tbt": 0,
+      "jsKB": 67.2,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "todo · vue · h1": {
+      "app": "todo",
+      "impl": "vue",
+      "protocol": "http/1.1",
+      "fcp": 588,
+      "lcp": 588,
+      "ready": 530.7,
+      "tbt": 0,
+      "jsKB": 26,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "todo · vue · h2": {
+      "app": "todo",
+      "impl": "vue",
+      "protocol": "h2",
+      "fcp": 592,
+      "lcp": 592,
+      "ready": 543.3,
+      "tbt": 0,
+      "jsKB": 26,
+      "jsFiles": 1,
+      "requests": 4
+    },
+    "crm · mini · h1": {
+      "app": "crm",
+      "impl": "mini",
+      "protocol": "http/1.1",
+      "fcp": 660,
+      "lcp": 960,
+      "ready": 1140.8,
+      "tbt": 0,
+      "jsKB": 26.7,
+      "jsFiles": 13,
+      "requests": 17
+    },
+    "crm · mini · h2": {
+      "app": "crm",
+      "impl": "mini",
+      "protocol": "h2",
+      "fcp": 596,
+      "lcp": 900,
+      "ready": 1086.2,
+      "tbt": 0,
+      "jsKB": 26.7,
+      "jsFiles": 13,
+      "requests": 17
+    },
+    "crm · mini-vite · h1": {
+      "app": "crm",
+      "impl": "mini-vite",
+      "protocol": "http/1.1",
+      "fcp": 464,
+      "lcp": 612,
+      "ready": 794.9,
+      "tbt": 0,
+      "jsKB": 10.4,
+      "jsFiles": 3,
+      "requests": 7
+    },
+    "crm · mini-vite · h2": {
+      "app": "crm",
+      "impl": "mini-vite",
+      "protocol": "h2",
+      "fcp": 468,
+      "lcp": 620,
+      "ready": 797.6,
+      "tbt": 0,
+      "jsKB": 10.4,
+      "jsFiles": 3,
+      "requests": 7
+    },
+    "crm · react · h1": {
+      "app": "crm",
+      "impl": "react",
+      "protocol": "http/1.1",
+      "fcp": 948,
+      "lcp": 1104,
+      "ready": 1297.6,
+      "tbt": 2,
+      "jsKB": 97.9,
+      "jsFiles": 4,
+      "requests": 8
+    },
+    "crm · react · h2": {
+      "app": "crm",
+      "impl": "react",
+      "protocol": "h2",
+      "fcp": 956,
+      "lcp": 1108,
+      "ready": 1307.8,
+      "tbt": 5,
+      "jsKB": 97.9,
+      "jsFiles": 4,
+      "requests": 8
+    },
+    "crm · vue · h1": {
+      "app": "crm",
+      "impl": "vue",
+      "protocol": "http/1.1",
+      "fcp": 644,
+      "lcp": 812,
+      "ready": 993,
+      "tbt": 38,
+      "jsKB": 37.1,
+      "jsFiles": 5,
+      "requests": 9
+    },
+    "crm · vue · h2": {
+      "app": "crm",
+      "impl": "vue",
+      "protocol": "h2",
+      "fcp": 648,
+      "lcp": 824,
+      "ready": 1009.2,
+      "tbt": 39,
+      "jsKB": 37.1,
+      "jsFiles": 5,
+      "requests": 9
+    },
+    "crm/customers · mini · h1": {
+      "app": "crm/customers",
+      "impl": "mini",
+      "protocol": "http/1.1",
+      "fcp": 656,
+      "lcp": 980,
+      "ready": 1160.9,
+      "tbt": 0,
+      "jsKB": 27.2,
+      "jsFiles": 13,
+      "requests": 17
+    },
+    "crm/customers · mini · h2": {
+      "app": "crm/customers",
+      "impl": "mini",
+      "protocol": "h2",
+      "fcp": 600,
+      "lcp": 916,
+      "ready": 1097.2,
+      "tbt": 0,
+      "jsKB": 27.2,
+      "jsFiles": 13,
+      "requests": 17
+    },
+    "crm/customers · mini-vite · h1": {
+      "app": "crm/customers",
+      "impl": "mini-vite",
+      "protocol": "http/1.1",
+      "fcp": 468,
+      "lcp": 640,
+      "ready": 816.1,
+      "tbt": 0,
+      "jsKB": 10.8,
+      "jsFiles": 3,
+      "requests": 7
+    },
+    "crm/customers · mini-vite · h2": {
+      "app": "crm/customers",
+      "impl": "mini-vite",
+      "protocol": "h2",
+      "fcp": 468,
+      "lcp": 636,
+      "ready": 819,
+      "tbt": 0,
+      "jsKB": 10.8,
+      "jsFiles": 3,
+      "requests": 7
+    },
+    "crm/customers · react · h1": {
+      "app": "crm/customers",
+      "impl": "react",
+      "protocol": "http/1.1",
+      "fcp": 952,
+      "lcp": 1124,
+      "ready": 1343.6,
+      "tbt": 0,
+      "jsKB": 98.3,
+      "jsFiles": 4,
+      "requests": 8
+    },
+    "crm/customers · react · h2": {
+      "app": "crm/customers",
+      "impl": "react",
+      "protocol": "h2",
+      "fcp": 964,
+      "lcp": 1136,
+      "ready": 1359.3,
+      "tbt": 12,
+      "jsKB": 98.3,
+      "jsFiles": 4,
+      "requests": 8
+    },
+    "crm/customers · vue · h1": {
+      "app": "crm/customers",
+      "impl": "vue",
+      "protocol": "http/1.1",
+      "fcp": 656,
+      "lcp": 856,
+      "ready": 1049.7,
+      "tbt": 42,
+      "jsKB": 37.6,
+      "jsFiles": 5,
+      "requests": 9
+    },
+    "crm/customers · vue · h2": {
+      "app": "crm/customers",
+      "impl": "vue",
+      "protocol": "h2",
+      "fcp": 652,
+      "lcp": 860,
+      "ready": 1046.9,
+      "tbt": 36,
+      "jsKB": 37.6,
+      "jsFiles": 5,
+      "requests": 9
+    }
+  }
+}

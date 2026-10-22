@@ -1,0 +1,18 @@
+{
+  "method": "Two feature requests (spec in each task), identical text for every framework. One fresh AI agent per framework and task (same model, no memory of this project), each in its own copy, allowed to edit only that framework's CRM folder, with the same verification tools (build + existing flows). Mini's agents were also pointed to Mini's docs, since no model has Mini in its training data. Graded afterwards with hidden acceptance flows the agents never saw, plus the 11 existing flows for regressions. One run per cell: treat it as a signal, not a statistic.",
+  "tasks": [
+    { "name": "Sortable table: hidden tests passed", "mini": "**4/4**", "react": "**4/4**", "vue": "**4/4**" },
+    { "name": "Sortable table: regressions", "mini": "none", "react": "none", "vue": "none" },
+    { "name": "Sortable table: tokens / tool calls / time", "mini": "48.7k / 12 / 94 s", "react": "37.8k / 9 / 75 s", "vue": "40.4k / 11 / 75 s" },
+    { "name": "Sortable table: lines changed", "mini": "26", "react": "28", "vue": "29" },
+    { "name": "Form rules + counter: hidden tests passed", "mini": "**6/6**", "react": "**6/6**", "vue": "**6/6**" },
+    { "name": "Form rules + counter: regressions", "mini": "none", "react": "none", "vue": "none" },
+    { "name": "Form rules + counter: tokens / tool calls / time", "mini": "56.2k / 13 / 105 s", "react": "42.9k / 11 / 82 s", "vue": "41.9k / 13 / 116 s" },
+    { "name": "Form rules + counter: lines changed", "mini": "18", "react": "10", "vue": "11" }
+  ],
+  "notes": [
+    "Every agent succeeded on its first try, including on Mini, which the model had never seen: its docs and checks were enough.",
+    "Mini cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.",
+    "The Mini form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature."
+  ]
+}

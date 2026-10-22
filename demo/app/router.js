@@ -1,0 +1,29 @@
+import { createRouter } from 'mini';
+import { session } from './store.js';
+
+// The settings pages share one layout (side nav + a display name field). It downloads with the first
+// settings page, and stays mounted while you move between them.
+const settings = { load: () => import('./layouts/settings.js') };
+
+// Each page's code is downloaded only when it's first needed (or when a link to it is hovered).
+export const router = createRouter(
+  {
+    '/': { title: 'Home', load: () => import('./pages/home.js') },
+    '/todos': { title: 'Todos', load: () => import('./pages/todos.js') },
+    '/team': { title: 'Team', load: () => import('./pages/team.js') },
+    '/team/:id': { title: 'Member', load: () => import('./pages/member.js') },
+    '/contact': { title: 'Contact', load: () => import('./pages/contact.js') },
+    '/about': { title: 'About', load: () => import('./pages/about.js') },
+    '/settings': { redirect: '/settings/profile' },
+    '/settings/profile': { title: 'Profile', layout: settings, load: () => import('./pages/settings-profile.js') },
+    '/settings/appearance': { title: 'Appearance', layout: settings, load: () => import('./pages/settings-appearance.js') },
+    '/settings/account': { title: 'Account', layout: settings, auth: true, load: () => import('./pages/settings-account.js') },
+    '*': { title: 'Not found', load: () => import('./pages/not-found.js') },
+  },
+  {
+    title: (t) => `${t} · Mini`,
+    focus: '#main',
+    // Routes marked `auth: true` need a signed-in visitor; others go to the profile page with a notice.
+    guard: (to) => (to.route.auth && !session.signedIn.value ? '/settings/profile?denied=1' : true),
+  }
+);

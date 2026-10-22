@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Tests</title>
+  <script type="importmap">
+    { "imports": { "mini": "/mini/index.js", "mini/ui": "/mini/ui.js" } }
+  </script>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; background: #fff; color: #111; }
+    @media (prefers-color-scheme: dark) { body { background: #121316; color: #eee; } }
+    .pass { color: #1a7f37; } .fail { color: #d1242f; }
+    li { margin: 0.25rem 0; } #sandbox { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Mini tests</h1>
+  <p id="summary">Running…</p>
+  <ul id="results"></ul>
+  <div id="sandbox"></div>
+
+  <script type="module">
+    import { html, repeat, signal, define, root, createRouter, resource, form, rules, HttpError } from 'mini';
+
+    const results = [];
+    const sandbox = document.getElementById('sandbox');
+    const tick = () => new Promise((r) => setTimeout(r));
+    async function waitUntil(check, timeout) {
+      const end = Date.now() + timeout;
+      while (!check()) {
+        if (Date.now() > end) throw new Error(`timed out waiting for: ${check}`);
+        await new Promise((r) => setTimeout(r, 10));
+      }
+    }
+    async function test(name, fn) {
+      try {
+        sandbox.replaceChildren();
+        await fn();
+        results.push([name, null]);
+      } catch (err) {
+        results.push([name, err]);
+      }
+    }
+    function eq(a, b) {
+      if (a !== b) throw new Error(`expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
+    }
+    const mount = (frag) => (sandbox.append(frag), sandbox);
+
+    // Capture dev warnings so tests can assert on them (and unexpected ones fail the run).
+    const warnings = [];
+    console.warn = (...args) => warnings.push(args.join(' '));
+    async function expectWarning(pattern, fn) {
+      const start = warnings.length;
+      await fn();
+      const got = warnings.splice(start);
+      if (!got.some((w) => pattern.test(w))) {
+        throw new Error(`expected a warning matching ${pattern}, got ${got.length ? got.join(' / ') : 'none'}`);
+      }
+    }
+
+    await test('text holes are escaped (no XSS)', () => {
+      window.__xss = false;
+      const evil = '<img src=x onerror="window.__xss=true">';
+      mount(html`<p>${evil}</p>`);
+      eq(sandbox.querySelector('img'), null);
+      eq(sandbox.querySelector('p').textContent, evil);
+    });
+
+    await test('attribute holes are escaped', () => {
+      mount(html`<p title=${'" onclick="x'}></p>`);
+      eq(sandbox.querySelector('p').getAttribute('title'), '" onclick="x');
+      eq(sandbox.querySelector('p').hasAttribute('onclick'), false);
+    });
+
+    await test('javascript: URLs are blocked in href', () => {
+      mount(html`<a href=${'javascript:alert(1)'}>x</a>`);
+      eq(sandbox.querySelector('a').getAttribute('href'), '#');
+    });
+
+    await test('signal text updates in place', () => {
+      const s = signal('a');
+      root(() => mount(html`<p>${s}</p>`));
+      const node = sandbox.querySelector('p').firstChild;
+      s.value = 'b';
+      eq(sandbox.querySelector('p').textContent, 'b');
+      eq(sandbox.querySelector('p').firstChild, node); // same text node, just edited
+    });
+
+    await test('events, properties, boolean attributes', () => {
+      let clicks = 0;
+      const off = signal(false);
+      root(() => mount(html`<button ?disabled=${off} .title=${'hi'} @click=${() => clicks++}>b</button>`));
+      const b = sandbox.querySelector('button');
+      b.click();
+      eq(clicks, 1);
+      eq(b.title, 'hi');
+      off.value = true;
+      eq(b.disabled, true);
+    });
+
+    await test('quoted attribute holes work', () => {
+      mount(html`<p class="${'x'}" data-a='${'y'}'></p>`);
+      eq(sandbox.querySelector('p').className, 'x');
+      eq(sandbox.querySelector('p').dataset.a, 'y');
+    });
+
+    await test('conditional rendering swaps nodes', () => {
+      const show = signal(true);
+      root(() => mount(html`<div>${() => (show.value ? html`<b>yes</b>` : 'no')}</div>`));
+      eq(sandbox.querySelector('div').innerHTML.replace(/<!--.*?-->/g, ''), '<b>yes</b>');
+      show.value = false;
+      eq(sandbox.querySelector('div').textContent, 'no');
+    });
+
+    await test('repeat reuses rows by key and keeps focus', () => {
+      const items = signal([{ id: 1 }, { id: 2 }, { id: 3 }]);
+      root(() => mount(html`<ul>${repeat(items, (i) => i.id, (i) => html`<li><input data-id=${i.id}></li>`)}</ul>`));
+      const second = sandbox.querySelector('[data-id="2"]');
+      sandbox.style.display = 'block';
+      second.focus();
+      const [a, b, c] = items.value;
+      items.value = [c, a, b, { id: 4 }];
+      eq([...sandbox.querySelectorAll('input')].map((i) => i.dataset.id).join(), '3,1,2,4');
+      eq(sandbox.querySelector('[data-id="2"]'), second);
+      eq(document.activeElement, second);
+      items.value = [a];
+      eq(sandbox.querySelectorAll('li').length, 1);
+      sandbox.style.display = '';
+    });
+
+    await test('components get props and clean up when removed', async () => {
+      let cleaned = 0;
+      define('test-greet', (props, ctx) => {
+        ctx.onMount(() => () => cleaned++);
+        return html`<span>Hello ${() => props.name.value}</span>`;
+      }, { props: ['name'] });
+      mount(html`<test-greet name="Ann"></test-greet>`);
+      const el = sandbox.querySelector('test-greet');
+      eq(el.textContent, 'Hello Ann');
+      el.setAttribute('name', 'Bo');
+      eq(el.textContent, 'Hello Bo');
+      el.name = 'Cy';
+      eq(el.textContent, 'Hello Cy');
+      el.remove();
+      await tick();
+      eq(cleaned, 1);
+    });
+
+    await test('moving a component keeps its state', async () => {
+      let setups = 0;
+      define('test-move', () => (setups++, html`<i>m</i>`));
+      mount(html`<div id="a"><test-move></test-move></div><div id="b"></div>`);
+      sandbox.querySelector('#b').append(sandbox.querySelector('test-move'));
+      await tick();
+      eq(setups, 1);
+    });
+
+    await test('repeat moves only the rows that changed position', async () => {
+      const items = signal(Array.from({ length: 100 }, (_, i) => ({ id: i })));
+      root(() => mount(html`<ul>${repeat(items, (i) => i.id, (i) => html`<li>${i.id}</li>`)}</ul>`));
+      const ul = sandbox.querySelector('ul');
+      const moved = () => new Promise((resolve) => {
+        let count = 0;
+        const mo = new MutationObserver((records) => { for (const r of records) count += r.addedNodes.length; });
+        mo.observe(ul, { childList: true });
+        setTimeout(() => { mo.disconnect(); resolve(count); });
+      });
+      const ids = () => [...ul.children].map((li) => Number(li.textContent));
+
+      let watching = moved();
+      const swapped = items.value.slice();
+      [swapped[1], swapped[98]] = [swapped[98], swapped[1]];
+      items.value = swapped;
+      let count = await watching;
+      eq(ids()[1], 98);
+      eq(ids()[98], 1);
+      if (count > 2) throw new Error(`swapping 2 rows moved ${count} nodes`);
+
+      watching = moved();
+      items.value = [...items.value.slice(1), items.value[0]]; // first row to the end
+      count = await watching;
+      eq(ids().at(-1), 0);
+      if (count > 1) throw new Error(`moving 1 row moved ${count} nodes`);
+    });
+
+    await test('invisible whitespace is dropped, visible spaces are kept', () => {
+      const frag = html`
+        <p><b>a</b> <i>b</i></p>
+        <table><tbody>
+          <tr>
+            <td>1</td>
+          </tr>
+        </tbody></table>
+      `;
+      eq(frag.firstChild.nodeName, 'P'); // leading indentation dropped
+      eq(frag.lastChild.nodeName, 'TABLE'); // trailing indentation dropped
+      eq(frag.firstChild.textContent, 'a b'); // the space between inline elements stays
+      const tbody = frag.querySelector('tbody');
+      eq([...tbody.childNodes].map((n) => n.nodeName).join(), 'TR');
+      eq([...tbody.firstChild.childNodes].map((n) => n.nodeName).join(), 'TD');
+    });
+
+    await test('clearing a list drops all rows at once, and only its own nodes', () => {
+      const items = signal([1, 2, 3].map((id) => ({ id })));
+      root(() => mount(html`
+        <ul>${repeat(items, (i) => i.id, (i) => html`<li>${i.id}</li>`)}</ul>
+        <div>before ${repeat(items, (i) => i.id, (i) => html`<span>${i.id}</span>`)} after</div>
+      `));
+      const [ul, div] = [sandbox.querySelector('ul'), sandbox.querySelector('div')];
+      items.value = [];
+      eq(ul.querySelectorAll('li').length, 0);
+      eq(div.textContent.replace(/\s+/g, ' ').trim(), 'before after'); // its neighbours survive
+      items.value = [{ id: 7 }, { id: 8 }];
+      eq([...ul.querySelectorAll('li')].map((li) => li.textContent).join(), '7,8');
+      eq([...div.querySelectorAll('span')].map((li) => li.textContent).join(), '7,8');
+      items.value = [{ id: 9 }]; // replace every row
+      eq([...ul.querySelectorAll('li')].map((li) => li.textContent).join(), '9');
+    });
+
+    // ---------- Router ----------
+
+    await test('router: lazy pages, slow-then-fast clicks, and failed loads', async () => {
+      const start = location.pathname;
+      const later = (ms, value) => new Promise((r) => setTimeout(() => r(value), ms));
+      const until = (check) => waitUntil(check, 2000);
+      const realError = console.error;
+      console.error = () => {}; // the failure cases below log on purpose
+      const router = createRouter({
+        [start]: { title: 'Start', load: () => later(10, { default: () => 'page start' }) },
+        '/__mini/slow': { load: () => later(200, { default: () => 'page slow' }) },
+        '/__mini/fast': { load: () => later(10, { default: () => 'page fast' }) },
+        '/__mini/user/:id': { load: () => later(1, { default: ({ id }) => `user ${id}` }) },
+        '/__mini/broken': { load: () => Promise.reject(new Error('network down')) },
+        '/__mini/no-default': { load: () => later(1, { Page: () => 'x' }) },
+        '*': () => 'not found',
+      }, { transitions: false, prefetch: false, loading: () => 'loading…' });
+      try {
+        root(() => mount(html`<div id="outlet">${router.view}</div>`));
+        const text = () => sandbox.querySelector('#outlet').textContent;
+        eq(text(), 'loading…');
+        await until(() => text() === 'page start');
+
+        // A slow page clicked, then a fast one: the fast one must win, even though the slow one finishes last.
+        router.navigate('/__mini/slow');
+        router.navigate('/__mini/fast');
+        await until(() => text() === 'page fast');
+        await new Promise((r) => setTimeout(r, 300));
+        eq(text(), 'page fast');
+        eq(location.pathname, '/__mini/fast');
+
+        router.navigate('/__mini/user/42');
+        await until(() => text() === 'user 42');
+
+        router.navigate('/__mini/broken');
+        await until(() => text().includes("didn't load"));
+        if (!text().includes('network down')) throw new Error('the error message should be shown');
+
+        router.navigate('/__mini/no-default');
+        await until(() => text().includes('E005'));
+      } finally {
+        console.error = realError;
+        router.dispose();
+        history.replaceState(null, '', start);
+      }
+    });
+
+    await test('router: back-to-back animated navigations leave no unhandled errors', async () => {
+      if (!document.startViewTransition) return; // nothing to test in browsers without View Transitions
+      const start = location.pathname;
+      const unhandled = [];
+      const onUnhandled = (e) => { unhandled.push(String(e.reason)); e.preventDefault(); };
+      addEventListener('unhandledrejection', onUnhandled);
+      const router = createRouter({
+        [start]: () => 'start',
+        '/__mini/a': () => 'a',
+        '/__mini/b': () => 'b',
+        '*': () => 'not found',
+      }, { prefetch: false });
+      try {
+        root(() => mount(html`<div id="outlet">${router.view}</div>`));
+        router.navigate('/__mini/a');
+        await new Promise((r) => setTimeout(r, 5));
+        router.navigate('/__mini/b'); // starts a new transition while the first is running
+        await waitUntil(() => sandbox.querySelector('#outlet').textContent === 'b', 2000);
+        await new Promise((r) => setTimeout(r, 400));
+        eq(unhandled.join(' / '), '');
+      } finally {
+        removeEventListener('unhandledrejection', onUnhandled);
+        router.dispose();
+        history.replaceState(null, '', start);
+      }
+    });
+
+    // ---------- Data loading ----------
+
+    // A fake fetcher we control: each call returns a promise we resolve or reject by hand.
+    function controllable() {
+      const calls = [];
+      const fetcher = ({ signal }) => new Promise((resolve, reject) => calls.push({ resolve, reject, signal }));
+      return { calls, fetcher };
+    }
+
+    await test('resource: loading → ready, refetch keeps old data, error → retry', async () => {
+      const { calls, fetcher } = controllable();
+      let r;
+      root(() => {
+        r = resource(fetcher);
+        mount(html`<div id="out">${r.render({ loading: () => 'L', error: (e, retry) => `E:${e.message}`, ready: (d) => `D:${d}` })}</div>`);
+      });
+      const text = () => sandbox.querySelector('#out').textContent;
+      eq(text(), 'L');
+      calls[0].resolve('one');
+      await tick();
+      eq(text(), 'D:one');
+
+      r.refetch();
+      eq(r.loading.value, true);
+      eq(text(), 'D:one'); // old data stays while refetching
+      calls[1].reject(new Error('down'));
+      await tick();
+      eq(text(), 'E:down');
+
+      r.refetch();
+      eq(text(), 'D:one'); // retry clears the error; the old data shows while loading again
+      calls[2].resolve('two');
+      await tick();
+      eq(text(), 'D:two');
+      eq(r.loading.value, false);
+    });
+
+    await test('resource: a changed signal refetches, aborts the old request, ignores its late reply', async () => {
+      const { calls, fetcher } = controllable();
+      const q = signal('a');
+      let r;
+      root(() => {
+        r = resource((ctx) => { q.value; return fetcher(ctx); });
+        mount(html`<div id="out">${r.render((d) => d)}</div>`);
+      });
+      q.value = 'b';
+      eq(calls.length, 2);
+      eq(calls[0].signal.aborted, true);
+      calls[1].resolve('for b');
+      await tick();
+      calls[0].resolve('for a (late)');
+      await tick();
+      eq(sandbox.querySelector('#out').textContent, 'for b');
+      r.mutate('edited');
+      eq(sandbox.querySelector('#out').textContent, 'edited');
+    });
+
+    await test('resource: removing the component aborts its request', async () => {
+      const { calls, fetcher } = controllable();
+      root((dispose) => { resource(fetcher); dispose(); });
+      eq(calls[0].signal.aborted, true);
+    });
+
+    // ---------- Forms ----------
+
+    function makeForm(onSubmit) {
+      let f;
+      root(() => {
+        f = form({
+          initial: { email: '', pass: '', confirm: '', agree: false },
+          validate: {
+            email: [rules.required(), rules.email()],
+            pass: rules.minLength(8),
+            confirm: rules.sameAs('pass', 'Passwords differ'),
+            agree: rules.required(),
+          },
+          onSubmit,
+        });
+        mount(html`<form novalidate @submit=${f.submit}>
+          ${f.input('email', { label: 'Email', type: 'email' })}
+          ${f.input('pass', { label: 'Password', type: 'password' })}
+          ${f.input('confirm', { label: 'Confirm', type: 'password' })}
+          ${f.checkbox('agree', { label: 'Agree' })}
+          <button>Go</button>
+        </form>`);
+      });
+      sandbox.style.display = 'block';
+      const field = (label) => [...sandbox.querySelectorAll('input')].find((i) => i.labels[0]?.textContent.trim() === label);
+      const errorOf = (label) => document.getElementById(field(label).getAttribute('aria-describedby').split(' ').pop()).textContent;
+      const type = (label, value) => { const el = field(label); el.value = value; el.dispatchEvent(new Event('input')); };
+      return { f, field, errorOf, type };
+    }
+
+    await test('form: a function hint updates live and is linked to the field', () => {
+      let f;
+      root(() => {
+        f = form({ initial: { notes: '' } });
+        mount(html`${f.textarea('notes', { label: 'Notes', hint: () => `${f.fields.notes.value.length}/200` })}`);
+      });
+      const area = sandbox.querySelector('textarea');
+      const hint = document.getElementById(area.getAttribute('aria-describedby').split(' ')[0]);
+      eq(hint.textContent, '0/200');
+      area.value = 'hello';
+      area.dispatchEvent(new Event('input'));
+      eq(hint.textContent, '5/200');
+    });
+
+    await test('form: errors wait for blur, then update as you type', () => {
+      const { field, errorOf, type } = makeForm();
+      type('Email', 'nope');
+      eq(errorOf('Email'), ''); // still typing: no error yet
+      field('Email').dispatchEvent(new Event('blur'));
+      eq(errorOf('Email'), 'Enter a valid email address');
+      eq(field('Email').getAttribute('aria-invalid'), 'true');
+      type('Email', 'ann@example.com');
+      eq(errorOf('Email'), '');
+      eq(field('Email').hasAttribute('aria-invalid'), false);
+      sandbox.style.display = '';
+    });
+
+    await test('form: submit with errors shows all, focuses the first, skips onSubmit', async () => {
+      let called = false;
+      const { field, errorOf, type } = makeForm(() => { called = true; });
+      type('Email', 'ann@example.com');
+      type('Password', 'short');
+      sandbox.querySelector('button').click();
+      await tick();
+      eq(called, false);
+      eq(errorOf('Password'), 'Use at least 8 characters');
+      eq(errorOf('Agree'), 'This field is required');
+      eq(document.activeElement, field('Password'));
+      sandbox.style.display = '';
+    });
+
+    await test('form: valid submit sends values; server field errors land on the right field', async () => {
+      const sent = [];
+      let reply = Promise.resolve();
+      const { f, field, errorOf, type } = makeForm((values) => { sent.push(values); return reply; });
+      type('Email', 'ann@example.com');
+      type('Password', 'longenough');
+      type('Confirm', 'longenough');
+      field('Agree').click();
+
+      reply = Promise.reject(new HttpError(new Response(null, { status: 422 }), { errors: { email: 'Already registered' } }));
+      reply.catch(() => {});
+      sandbox.querySelector('button').click();
+      eq(f.submitting.value, true);
+      await tick();
+      eq(sent.length, 1);
+      eq(JSON.stringify(sent[0]), JSON.stringify({ email: 'ann@example.com', pass: 'longenough', confirm: 'longenough', agree: true }));
+      eq(f.submitting.value, false);
+      eq(errorOf('Email'), 'Already registered');
+      eq(document.activeElement, field('Email'));
+
+      type('Email', 'ann2@example.com'); // editing the field clears its server error
+      eq(errorOf('Email'), '');
+
+      reply = Promise.reject(new Error('Network down'));
+      reply.catch(() => {});
+      sandbox.querySelector('button').click();
+      await tick();
+      eq(f.submitError.value?.message, 'Network down');
+
+      f.reset();
+      eq(field('Email').value, '');
+      eq(field('Agree').checked, false);
+      eq(f.submitError.value, null);
+      sandbox.style.display = '';
+    });
+
+    // ---------- Dev warnings ----------
+
+    await test('warns when @click gets a value instead of a function', () =>
+      expectWarning(/@click on <button> needs a function/, () => {
+        let n = 0;
+        mount(html`<button @click=${n++}>x</button>`);
+      }));
+
+    await test('warns when an object would show as [object Object]', () =>
+      expectWarning(/shows as "\[object Object\]"/, () => mount(html`<p>${{ name: 'x' }}</p>`)));
+
+    await test('throws when a hole is inside <textarea>', () => {
+      let error = null;
+      try {
+        mount(html`<textarea>${'hi'}</textarea>`);
+      } catch (e) {
+        error = e;
+      }
+      if (!error || !/textarea/.test(error.message)) throw new Error('expected a textarea error');
+    });
+
+    await test('warns about duplicate repeat() keys', () =>
+      expectWarning(/key 7 twice/, () => {
+        const items = signal([{ id: 7 }, { id: 7 }]);
+        root(() => mount(html`<ul>${repeat(items, (i) => i.id, (i) => html`<li>${i.id}</li>`)}</ul>`));
+      }));
+
+    await test('warns when a component setup returns nothing', () =>
+      expectWarning(/<test-empty> setup returned nothing/, () => {
+        define('test-empty', () => { html`<p>forgot return</p>`; });
+        mount(html`<test-empty></test-empty>`);
+      }));
+
+    await test('warns about props with capital letters', () =>
+      expectWarning(/use "user-name"/i, () => define('test-caps', () => html``, { props: ['userName'] })));
+
+    await test('warns about an undefined custom element (typo)', () =>
+      expectWarning(/<test-typoo> is not defined/, async () => {
+        mount(html`<test-typoo></test-typoo>`);
+        await new Promise((r) => setTimeout(r, 1100));
+      }));
+
+    await test('warns about form fields that do not exist', () =>
+      expectWarning(/W015.*validate\.emial/, () => root(() => form({ initial: { email: '' }, validate: { emial: rules.required() } }))));
+
+    // Per-area test files. Each exports `default async function (t)` and calls t.test(...).
+    const helpers = { test, eq, mount, tick, waitUntil, expectWarning, sandbox, warnings };
+    for (const area of ['router', 'component', 'resource', 'ui', 'replay']) {
+      try {
+        const mod = await import(`./${area}.tests.js`);
+        await mod.default(helpers);
+      } catch (err) {
+        results.push([`${area}.tests.js loads and runs`, err]);
+      }
+    }
+
+    await test('no unexpected warnings during the run', () => {
+      if (warnings.length) throw new Error(warnings.join(' / '));
+    });
+
+    const failed = results.filter(([, e]) => e);
+    document.getElementById('results').append(...results.map(([name, err]) => {
+      const li = document.createElement('li');
+      li.className = err ? 'fail' : 'pass';
+      li.textContent = `${err ? '✗' : '✓'} ${name}${err ? ` (${err.message})` : ''}`;
+      return li;
+    }));
+    const summary = document.getElementById('summary');
+    summary.textContent = `${results.length - failed.length}/${results.length} passed`;
+    summary.className = failed.length ? 'fail' : 'pass';
+    document.title = failed.length ? 'FAIL' : 'PASS';
+  </script>
+</body>
+</html>

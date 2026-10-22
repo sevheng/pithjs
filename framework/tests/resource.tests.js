@@ -1,0 +1,266 @@
+// resource tests. Called by index.html with the shared helpers.
+
+import { resource, paginated } from '../mini/resource.js';
+import { signal, root } from '../mini/signal.js';
+import { html } from '../mini/html.js';
+
+// A promise you settle by hand.
+/** @returns {{ promise: Promise<any>, resolve: (v?: any) => void, reject: (e?: any) => void }} */
+function deferred() {
+  /** @type {any} */
+  let resolve;
+  /** @type {any} */
+  let reject;
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
+// A fetcher whose calls you settle by hand: calls[i].resolve(value) / .reject(err).
+function controllable() {
+  const calls = [];
+  const fetcher = (ctx) => new Promise((resolve, reject) => calls.push({ ...ctx, resolve, reject }));
+  return { calls, fetcher };
+}
+
+/** @param {any} t */
+export default async function (t) {
+  const { test, eq, tick, mount, sandbox, expectWarning } = t;
+
+  // Loads `initial` and returns the ready resource.
+  async function loaded(initial) {
+    /** @type {any} */
+    let r;
+    root(() => { r = resource(() => initial); });
+    await tick();
+    return r;
+  }
+  const toggle = (id) => (list) => list.map((x) => (x.id === id ? { ...x, done: !x.done } : x));
+  const done = (r) => r.data.value.filter((x) => x.done).map((x) => x.id).join();
+
+  // ---------- optimistic ----------
+
+  await test('optimistic: applies the update at once, keeps it when save resolves undefined', async () => {
+    const r = await loaded([{ id: 1, done: false }]);
+    const save = deferred();
+    const p = r.optimistic(toggle(1), () => save.promise);
+    eq(done(r), '1');
+    save.resolve(undefined);
+    await p;
+    eq(done(r), '1');
+  });
+
+  await test('optimistic: a value from save replaces the data', async () => {
+    const r = await loaded([{ id: 1, done: false }]);
+    await r.optimistic(toggle(1), async () => [{ id: 1, done: true, server: true }]);
+    eq(r.data.value[0].server, true);
+  });
+
+  await test('optimistic: a failed save rolls back and rethrows', async () => {
+    const r = await loaded([{ id: 1, done: false }]);
+    const before = r.data.value;
+    /** @type {any} */
+    let caught;
+    await r.optimistic(toggle(1), async () => { throw new Error('nope'); }).catch((e) => (caught = e));
+    eq(caught?.message, 'nope');
+    eq(r.data.value, before);
+    eq(r.error.value, null); // the error goes to the caller (e.g. form's submitError), not the load error view
+  });
+
+  await test('optimistic: concurrent saves - a failure undoes only its own update', async () => {
+    const r = await loaded([{ id: 1, done: false }, { id: 2, done: false }]);
+    const a = deferred(), b = deferred();
+    const pa = r.optimistic(toggle(1), () => a.promise).catch(() => {});
+    const pb = r.optimistic(toggle(2), () => b.promise);
+    eq(done(r), '1,2');
+    b.resolve(undefined); // the later one succeeds first
+    await pb;
+    a.reject(new Error('down')); // the earlier one fails: 2 stays done
+    await pa;
+    eq(done(r), '2');
+
+    const c = deferred(), d = deferred();
+    const pc = r.optimistic(toggle(1), () => c.promise);
+    const pd = r.optimistic(toggle(1), () => d.promise).catch(() => {});
+    eq(done(r), '2'); // toggled twice
+    d.reject(new Error('down')); // the later one fails: only the earlier toggle remains
+    await pd;
+    eq(done(r), '1,2');
+    c.resolve(undefined);
+    await pc;
+    eq(done(r), '1,2');
+  });
+
+  await test('optimistic: a server value becomes the base, pending updates stay on top', async () => {
+    const r = await loaded([{ id: 1, done: false }, { id: 2, done: false }]);
+    const a = deferred(), b = deferred();
+    const pa = r.optimistic(toggle(1), () => a.promise);
+    const pb = r.optimistic(toggle(2), () => b.promise);
+    a.resolve([{ id: 1, done: true }, { id: 2, done: false }]); // server doesn't know about 2 yet
+    await pa;
+    eq(done(r), '1,2');
+    b.reject(new Error('down'));
+    await pb.catch(() => {});
+    eq(done(r), '1');
+  });
+
+  await test('optimistic: a refetch that lands mid-save keeps the pending update', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let r;
+    root(() => { r = resource(fetcher); });
+    calls[0].resolve([{ id: 1, done: false }]);
+    await tick();
+    const save = deferred();
+    const p = r.optimistic(toggle(1), () => save.promise);
+    r.refetch();
+    calls[1].resolve([{ id: 1, done: false }, { id: 2, done: false }]);
+    await tick();
+    eq(done(r), '1'); // fresh list, still with the unsaved toggle
+    save.reject(new Error('x'));
+    await p.catch(() => {});
+    eq(done(r), '');
+    eq(r.data.value.length, 2);
+  });
+
+  // ---------- paginated ----------
+
+  await test('paginated: loads page 1, loadMore appends, short page ends it', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    root(() => {
+      p = paginated(fetcher, { pageSize: 2 });
+      mount(html`<ul id="out">${p.render({ loading: () => 'L', ready: (items) => items.map((i) => html`<li>${i}</li>`) })}</ul>`);
+    });
+    const text = () => sandbox.querySelector('#out').textContent;
+    eq(text(), 'L');
+    eq(calls[0].page, 1);
+    eq(p.loading.value, true);
+    calls[0].resolve(['a', 'b']);
+    await tick();
+    eq(text(), 'ab');
+    eq(p.hasMore.value, true);
+    eq(p.loading.value, false);
+
+    p.loadMore();
+    eq(calls[1].page, 2);
+    eq(p.loadingMore.value, true);
+    p.loadMore(); // no-op while loading
+    eq(calls.length, 2);
+    calls[1].resolve(['c']);
+    await tick();
+    eq(text(), 'abc');
+    eq(p.items.value.join(), 'a,b,c');
+    eq(p.hasMore.value, false);
+    eq(p.loadingMore.value, false);
+    p.loadMore(); // nothing more
+    eq(calls.length, 2);
+  });
+
+  await test('paginated: { items, next } pages, next is passed back', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    root(() => { p = paginated(fetcher); });
+    calls[0].resolve({ items: [1, 2], next: 'cur2' });
+    await tick();
+    eq(p.hasMore.value, true);
+    p.loadMore();
+    eq(calls[1].page, 2);
+    eq(calls[1].next, 'cur2');
+    calls[1].resolve({ items: [3], next: null });
+    await tick();
+    eq(p.items.value.join(), '1,2,3');
+    eq(p.hasMore.value, false);
+  });
+
+  await test('paginated: a loadMore error keeps items, loadMore retries', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    root(() => {
+      p = paginated(fetcher, { pageSize: 1 });
+      mount(html`<p id="out">${p.render((items) => items.join())}</p>`);
+    });
+    calls[0].resolve(['a']);
+    await tick();
+    p.loadMore();
+    calls[1].reject(new Error('down'));
+    await tick();
+    eq(p.error.value?.message, 'down');
+    eq(sandbox.querySelector('#out').textContent, 'a'); // items stay on screen
+    eq(p.loadingMore.value, false);
+    p.loadMore();
+    eq(calls[2].page, 2);
+    eq(p.error.value, null);
+    calls[2].resolve(['b']);
+    await tick();
+    eq(sandbox.querySelector('#out').textContent, 'a,b');
+  });
+
+  await test('paginated: a changed signal resets to page 1 and aborts loadMore', async () => {
+    const { calls, fetcher } = controllable();
+    const q = signal('x');
+    /** @type {any} */
+    let p;
+    root(() => { p = paginated((ctx) => { q.value; return fetcher(ctx); }, { pageSize: 1 }); });
+    calls[0].resolve(['x1']);
+    await tick();
+    p.loadMore();
+    q.value = 'y';
+    eq(calls[1].signal.aborted, true);
+    eq(calls[2].page, 1);
+    eq(p.loadingMore.value, false);
+    calls[1].resolve(['x2 (late)']);
+    calls[2].resolve(['y1']);
+    await tick();
+    eq(p.items.value.join(), 'y1');
+    eq(p.hasMore.value, true);
+
+    p.refetch();
+    eq(calls[3].page, 1);
+    calls[3].resolve([]);
+    await tick();
+    eq(p.items.value.length, 0);
+    eq(p.hasMore.value, false);
+  });
+
+  await test('paginated: page 1 error shows the error view, retry refetches', async () => {
+    const { calls, fetcher } = controllable();
+    root(() => {
+      const p = paginated(fetcher, { pageSize: 5 });
+      mount(html`<p id="out">${p.render({ error: (e, retry) => html`<button @click=${retry}>${e.message}</button>`, ready: (items) => items.join() })}</p>`);
+    });
+    calls[0].reject(new Error('boom'));
+    await tick();
+    sandbox.querySelector('#out button').click();
+    eq(calls[1].page, 1);
+    calls[1].resolve(['ok']);
+    await tick();
+    eq(sandbox.querySelector('#out').textContent, 'ok');
+  });
+
+  await test('paginated: removing the component aborts loadMore', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    /** @type {any} */
+    let dispose;
+    root((d) => { dispose = d; p = paginated(fetcher, { pageSize: 1 }); });
+    calls[0].resolve(['a']);
+    await tick();
+    p.loadMore();
+    dispose();
+    eq(calls[1].signal.aborted, true);
+  });
+
+  await test('paginated: warns when a page is not an array or { items }', () =>
+    expectWarning(/W040.*page 1/, async () => {
+      /** @type {any} */
+      let p;
+      // @ts-expect-error: a wrong page shape on purpose
+      root(() => { p = paginated(() => ({ data: [] })); });
+      await tick();
+      eq(p.hasMore.value, false);
+    }));
+}

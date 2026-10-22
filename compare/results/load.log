@@ -1,0 +1,26 @@
+todo · mini · h1                   {"app":"todo","impl":"mini","protocol":"http/1.1","fcp":716,"lcp":716,"ready":643.2,"tbt":0,"jsKB":19,"jsFiles":11,"requests":14}
+todo · mini · h2                   {"app":"todo","impl":"mini","protocol":"h2","fcp":596,"lcp":596,"ready":536.9,"tbt":0,"jsKB":19,"jsFiles":11,"requests":14}
+todo · mini-vite · h1              {"app":"todo","impl":"mini-vite","protocol":"http/1.1","fcp":488,"lcp":488,"ready":428,"tbt":0,"jsKB":5.1,"jsFiles":1,"requests":4}
+todo · mini-vite · h2              {"app":"todo","impl":"mini-vite","protocol":"h2","fcp":492,"lcp":492,"ready":428.5,"tbt":0,"jsKB":5.1,"jsFiles":1,"requests":4}
+todo · react · h1                  {"app":"todo","impl":"react","protocol":"http/1.1","fcp":808,"lcp":808,"ready":757.1,"tbt":0,"jsKB":67.2,"jsFiles":1,"requests":4}
+todo · react · h2                  {"app":"todo","impl":"react","protocol":"h2","fcp":812,"lcp":812,"ready":760.6,"tbt":0,"jsKB":67.2,"jsFiles":1,"requests":4}
+todo · vue · h1                    {"app":"todo","impl":"vue","protocol":"http/1.1","fcp":624,"lcp":624,"ready":554.8,"tbt":0,"jsKB":26,"jsFiles":1,"requests":4}
+todo · vue · h2                    {"app":"todo","impl":"vue","protocol":"h2","fcp":608,"lcp":608,"ready":548,"tbt":0,"jsKB":26,"jsFiles":1,"requests":4}
+crm · mini · h1                    {"app":"crm","impl":"mini","protocol":"http/1.1","fcp":660,"lcp":968,"ready":1150.9,"tbt":0,"jsKB":19,"jsFiles":13,"requests":17}
+crm · mini · h2                    {"app":"crm","impl":"mini","protocol":"h2","fcp":588,"lcp":888,"ready":1087.7,"tbt":6,"jsKB":19,"jsFiles":13,"requests":17}
+crm · mini-vite · h1               {"app":"crm","impl":"mini-vite","protocol":"http/1.1","fcp":484,"lcp":624,"ready":803.7,"tbt":6,"jsKB":8.5,"jsFiles":3,"requests":7}
+crm · mini-vite · h2               {"app":"crm","impl":"mini-vite","protocol":"h2","fcp":488,"lcp":624,"ready":818.3,"tbt":5,"jsKB":8.5,"jsFiles":3,"requests":7}
+crm · react · h1                   {"app":"crm","impl":"react","protocol":"http/1.1","fcp":964,"lcp":1116,"ready":1316.3,"tbt":8,"jsKB":97.9,"jsFiles":4,"requests":8}
+crm · react · h2                   {"app":"crm","impl":"react","protocol":"h2","fcp":972,"lcp":1124,"ready":1327.3,"tbt":6,"jsKB":97.9,"jsFiles":4,"requests":8}
+crm · vue · h1                     {"app":"crm","impl":"vue","protocol":"http/1.1","fcp":660,"lcp":836,"ready":1029.7,"tbt":49,"jsKB":37.1,"jsFiles":5,"requests":9}
+crm · vue · h2                     {"app":"crm","impl":"vue","protocol":"h2","fcp":664,"lcp":840,"ready":1023.1,"tbt":53,"jsKB":37.1,"jsFiles":5,"requests":9}
+crm/customers · mini · h1          {"app":"crm/customers","impl":"mini","protocol":"http/1.1","fcp":656,"lcp":988,"ready":1165.1,"tbt":0,"jsKB":19.5,"jsFiles":13,"requests":17}
+crm/customers · mini · h2          {"app":"crm/customers","impl":"mini","protocol":"h2","fcp":576,"lcp":900,"ready":1090.7,"tbt":0,"jsKB":19.5,"jsFiles":13,"requests":17}
+crm/customers · mini-vite · h1     {"app":"crm/customers","impl":"mini-vite","protocol":"http/1.1","fcp":472,"lcp":628,"ready":818.1,"tbt":0,"jsKB":8.9,"jsFiles":3,"requests":7}
+crm/customers · mini-vite · h2     {"app":"crm/customers","impl":"mini-vite","protocol":"h2","fcp":484,"lcp":644,"ready":823,"tbt":5,"jsKB":8.9,"jsFiles":3,"requests":7}
+crm/customers · react · h1         {"app":"crm/customers","impl":"react","protocol":"http/1.1","fcp":984,"lcp":1152,"ready":1378,"tbt":13,"jsKB":98.3,"jsFiles":4,"requests":8}
+crm/customers · react · h2         {"app":"crm/customers","impl":"react","protocol":"h2","fcp":968,"lcp":1136,"ready":1362.1,"tbt":5,"jsKB":98.3,"jsFiles":4,"requests":8}
+crm/customers · vue · h1           {"app":"crm/customers","impl":"vue","protocol":"http/1.1","fcp":648,"lcp":852,"ready":1050.2,"tbt":38,"jsKB":37.6,"jsFiles":5,"requests":9}
+crm/customers · vue · h2           {"app":"crm/customers","impl":"vue","protocol":"h2","fcp":648,"lcp":848,"ready":1041.7,"tbt":36,"jsKB":37.6,"jsFiles":5,"requests":9}
+
+wrote /home/sevheng/webFramwork/compare/results/measure.json

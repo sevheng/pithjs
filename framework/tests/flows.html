@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Flows</title>
+  <script type="importmap">
+    { "imports": { "mini": "/mini/index.js", "mini/ui": "/mini/ui.js", "mini/testing": "/__mini/harness.js" } }
+  </script>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; background: #fff; color: #111; }
+    @media (prefers-color-scheme: dark) { body { background: #121316; color: #eee; } }
+    .pass { color: #1a7f37; } .fail { color: #d1242f; white-space: pre-wrap; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Mini user flows</h1>
+  <p id="summary">Running…</p>
+  <ul id="results"></ul>
+  <script type="module">
+    import { runFlows, report } from './harness.js';
+    import '/tests/flows.js'; // the project's flows
+    report(await runFlows());
+  </script>
+</body>
+</html>
