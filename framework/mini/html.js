@@ -10,7 +10,7 @@
 //   element ref         ref=${el => ...}    called with the element
 // Attribute holes must be the whole value: class=${x}, not class="a ${x}".
 
-import { effect, root, untrack, onCleanup, isSignal } from './signal.js';
+import { effect, root, untrack, onCleanup, isSignal, catching } from './signal.js';
 import { DEV, warn, error, describe } from './dev.js';
 
 /** @typedef {import('./signal.js').ReadonlySignal<any>} AnySignal */
@@ -364,7 +364,7 @@ function bindAttr(el, name, value) {
       );
       return;
     }
-    el.addEventListener(name.slice(1), value);
+    el.addEventListener(name.slice(1), catching(value)); // errors go to the component's or page's fallback
     return;
   }
   if (name === 'ref') {

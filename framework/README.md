@@ -4,7 +4,7 @@ A tiny web framework built on native browser tech: **no dependencies, no build s
 Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading, forms, and dialogs and toasts.
 
 **Size budget: 10 KB.** The whole framework (`'mini'`, every export), built and gzipped, must stay within
-10 KB (10,000 bytes); it's 9.3 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
+10 KB (10,000 bytes); it's 9.4 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
 over budget, so a new feature has to pay for itself. `'mini/ui'` is optional and adds 1.3 KB only to pages
 that import it. Apps usually ship less, since the build drops what they don't use.
 
@@ -128,6 +128,9 @@ use it automatically; nginx `try_files $uri $uri/index.html /404.html`, etc.).
   3. the project's user flows (`tests/flows.js`) that click and type like a person
   4. every route in `app/router.js` (failing on errors, warnings, or sideways scrolling at phone width)
   5. a type check
+  6. the framework's 10 KB size budget
+  7. `index.html`'s `<link rel="modulepreload">` list: it must name exactly the modules the app loads at
+     startup (without a build, a missing one costs a network round trip, an extra one wastes a download)
 
   Add `-- --json` for output tools can read.
 - **`npm run see /path` lets you look without a browser.** It prints headings, links, buttons and
@@ -228,7 +231,9 @@ define('theme-label', () => {
 
 **Errors**: if setup or one of its `${}` holes throws, the component shows a fallback instead of breaking the page.
 The default is an alert with a "Try again" button (and a `console.error`); pass your own with
-`fallback: (err, retry) => html`...`` (nothing is logged). Errors in event handlers (`@click`) are not caught.
+`fallback: (err, retry) => html`...`` (nothing is logged). Errors in its event handlers count too: an `@click`
+that throws, or an `async` one whose promise rejects, shows the same fallback (in a page outside any
+component, the page's error view). Event handlers attached with your own `addEventListener` aren't covered.
 
 ```js
 define('stock-price', setup, { fallback: (err, retry) => html`<p>Price unavailable <button @click=${retry}>Retry</button></p>` });
@@ -285,9 +290,11 @@ router.query.value.q;                     // ?q=ann → 'ann'
 router.setQuery({ q: 'bo', page: null }); // update the URL without re-rendering the page
 ```
 
-**Query string:** `router.query` is the URL's `?search` as an object and updates on every navigation.
-`router.setQuery(obj)` merges into it (`null` or `''` removes a key) without re-rendering the page,
-replacing the history entry; pass `{ replace: false }` to make it a back-button step.
+**Query string:** `router.query` is the URL's `?search` as an object and updates on every navigation
+(a repeated key keeps its last value). `router.queryAll('tag')` gives every value of a repeated key
+(`?tag=a&tag=b` → `['a', 'b']`), reactively. `router.setQuery(obj)` merges into the URL (`null`, `''` or `[]`
+removes a key; an array writes the key once per value) without re-rendering the page, replacing the
+history entry; pass `{ replace: false }` to make it a back-button step.
 
 **Redirects and guards:** `redirect` sends a route elsewhere. `guard(to)` runs before every page change
 (first load, links, `navigate()`, back/forward) with `{ path, params, query, route }` (`route` includes

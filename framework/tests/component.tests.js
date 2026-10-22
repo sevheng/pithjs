@@ -19,7 +19,7 @@ async function quietErrors(fn) {
 
 /** @param {any} t */
 export default async function (t) {
-  const { test, eq, mount, tick, expectWarning, sandbox } = t;
+  const { test, eq, mount, tick, waitUntil, expectWarning, sandbox } = t;
 
   await test('ctx.slot(name) and ctx.slot() split the original children', () => {
     define('test-card', (_p, ctx) => html`
@@ -197,5 +197,41 @@ export default async function (t) {
     await tick();
     eq(setups, 1);
     eq(shell.textContent, 'live');
+  });
+
+  await test('an error thrown in a @click handler shows the component fallback', async () => {
+    let got = null;
+    define('test-click-error', () => html`<button @click=${(e) => { got = e.type; throw new Error('click broke'); }}>go</button>`,
+      { fallback: (err) => html`<p class="fb">${err.message}</p>` });
+    mount(html`<test-click-error></test-click-error>`);
+    const el = sandbox.querySelector('test-click-error');
+    await quietErrors(() => el.querySelector('button').click());
+    eq(got, 'click'); // the handler still gets its event
+    eq(el.querySelector('.fb').textContent, 'click broke');
+  });
+
+  await test('a rejected async @click handler shows the component fallback', async () => {
+    define('test-async-click-error', () => html`<button @click=${async () => { await tick(); throw new Error('save failed'); }}>save</button>`,
+      { fallback: (err) => html`<p class="fb">${err.message}</p>` });
+    mount(html`<test-async-click-error></test-async-click-error>`);
+    const el = sandbox.querySelector('test-async-click-error');
+    await quietErrors(async () => {
+      el.querySelector('button').click();
+      await waitUntil(() => el.querySelector('.fb'), 1000);
+    });
+    eq(el.querySelector('.fb').textContent, 'save failed');
+  });
+
+  await test('with no fallback around it, a @click error is reported to the page as before', async () => {
+    const reported = [];
+    const onError = (e) => { reported.push(e.error?.message); e.preventDefault(); };
+    window.addEventListener('error', onError);
+    try {
+      mount(html`<button id="bare" @click=${() => { throw new Error('bare broke'); }}>x</button>`);
+      sandbox.querySelector('#bare').click();
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+    eq(reported.join(), 'bare broke');
   });
 }

@@ -305,4 +305,38 @@ export default async function (t) {
       await until(() => text().includes('loaded'));
     });
   });
+
+  await test('router: queryAll reads a repeated key; setQuery writes an array as repeated keys', async () => {
+    history.replaceState(null, '', `${start}?tag=a&tag=b&q=x`);
+    let renders = 0;
+    await withRouter({ [start]: () => (renders++, html`<p>start</p>`), '*': () => 'nf' }, {}, async (router) => {
+      mount(html`<p id="tags">${() => router.queryAll('tag').join(',')}</p>`);
+      const tags = () => sandbox.querySelector('#tags').textContent;
+      eq(tags(), 'a,b');
+      eq(router.query.value.tag, 'b'); // query keeps the last value, as before
+      eq(router.queryAll('none').length, 0);
+      router.setQuery({ tag: ['c', 'd', 'e'] });
+      eq(location.search, '?q=x&tag=c&tag=d&tag=e');
+      await until(() => tags() === 'c,d,e');
+      router.setQuery({ tag: [] });
+      await until(() => tags() === '');
+      eq(location.search, '?q=x');
+      eq(renders, 1);
+    });
+  });
+
+  await test('router: an error in a page @click handler shows the page error view', async () => {
+    const consoleError = console.error;
+    console.error = () => {};
+    try {
+      const routes = { [start]: () => html`<button id="boom" @click=${() => { throw new Error('click broke'); }}>x</button>`, '*': () => 'nf' };
+      await withRouter(routes, {}, async () => {
+        await until(() => sandbox.querySelector('#boom'));
+        sandbox.querySelector('#boom').click();
+        await until(() => text().includes('click broke'));
+      });
+    } finally {
+      console.error = consoleError;
+    }
+  });
 }

@@ -319,14 +319,18 @@ export function createRouter(
   }
 
   /**
-   * Merge values into the URL's ?query. null or '' removes a key. The page doesn't re-render.
-   * @param {Record<string, string | number | boolean | null | undefined>} values
+   * Merge values into the URL's ?query. null, '' or [] removes a key; an array writes it once per value
+   * (?tag=a&tag=b). The page doesn't re-render.
+   * @param {Record<string, string | number | boolean | null | undefined | (string | number)[]>} values
    * @param {{ replace?: boolean }} [options] replace (default): don't add a history entry
    */
   function setQuery(values, { replace = true } = {}) {
     const url = new URL(location.href);
     for (const [key, value] of Object.entries(values)) {
-      if (value == null || value === '') url.searchParams.delete(key);
+      if (Array.isArray(value)) {
+        url.searchParams.delete(key);
+        for (const v of value) url.searchParams.append(key, String(v));
+      } else if (value == null || value === '') url.searchParams.delete(key);
       else url.searchParams.set(key, String(value));
     }
     if (url.href === location.href) return;
@@ -388,8 +392,10 @@ export function createRouter(
   return {
     path,
     params,
-    /** The URL's ?query as a plain object, e.g. { q: 'ann', page: '2' }. */
+    /** The URL's ?query as a plain object, e.g. { q: 'ann', page: '2' } (a repeated key keeps its last value). */
     query,
+    /** Every value of a repeated ?query key, e.g. queryAll('tag') → ['a', 'b'] for ?tag=a&tag=b. Reactive. */
+    queryAll: (key) => new URLSearchParams(search.value).getAll(key),
     view,
     navigate,
     setQuery,

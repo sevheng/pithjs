@@ -11,7 +11,7 @@ Start here:
 cd demo
 npm install      # once: Vite, the only dev dependency
 npm run dev      # → http://localhost:8000, reloads when you save
-npm run check    # proves everything works: tests, user flows, every page, phone layout, types, 10 KB size budget
+npm run check    # proves everything works: tests, user flows, every page, phone layout, types, 10 KB size budget, preloads
 npm run build    # production build into dist/, every page prerendered to HTML
 npm run preview  # serve dist/ locally
 ```

@@ -201,6 +201,27 @@ export function catchError(fn, handler) {
   return result;
 }
 
+/**
+ * Wrap an event handler so its errors (thrown, or a rejected promise from an async handler) go to the
+ * catchError around the code that attached it, like errors in effects do. With none, fn is returned as is.
+ * @template {Function} F
+ * @param {F} fn
+ * @returns {F}
+ */
+export function catching(fn) {
+  const h = currentHandler;
+  if (!h) return fn;
+  return /** @type {any} */ (function (...args) {
+    try {
+      const result = fn.apply(this, args);
+      if (typeof result?.then === 'function') result.then(undefined, (err) => handle(err, h));
+      return result;
+    } catch (err) {
+      handle(err, h);
+    }
+  });
+}
+
 // Give err to handler h; if h throws, the next handler out gets that error.
 function handle(err, h) {
   if (!h) throw err;

@@ -7,6 +7,7 @@
 //      first URL the project's prerender.mjs lists for them (if it lists any).
 //   5. types: JSDoc type check with TypeScript (fetched once by npx; skipped if offline)
 //   6. size: the whole framework, minified + gzipped, stays within its 10 KB budget (tools/size.mjs)
+//   7. preloads: index.html preloads exactly the modules the app loads at startup (tools/preloads.mjs)
 // Stages that don't apply (e.g. no app/router.js when run from framework/) are skipped.
 // Flags: --json prints one JSON object (for tools and AI agents).
 //        --build builds the app with Vite first (npm run build) and checks the built dist/ instead,
@@ -21,6 +22,7 @@ import { routeFile } from './prerender.mjs';
 import { prerenderTargets } from './routes.mjs';
 import { startServer, projectRoot } from './dev-server.mjs';
 import { BUDGET, measureFramework } from './size.mjs';
+import { checkPreloads } from './preloads.mjs';
 
 const frameworkTests = join(import.meta.dirname, '..', 'tests');
 const project = (...parts) => join(projectRoot, ...parts);
@@ -53,7 +55,7 @@ function prerenderProblems(path) {
   return [];
 }
 
-const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null };
+const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null, preloads: null };
 
 if (built) {
   const { buildProject } = await import('./build.mjs');
@@ -164,7 +166,9 @@ if (pathWarnings.length) report.pages.push({ path: 'prerender.mjs', title: '', o
 
 report.types = await typesDone;
 report.size = await sizeDone;
-report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size].every((r) => r?.ok);
+const preloads = checkPreloads();
+report.preloads = preloads.skipped ? { ok: true, ...preloads } : { ok: !preloads.missing.length && !preloads.unused.length, ...preloads };
+report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size, report.preloads].every((r) => r?.ok);
 
 // ---------- Output ----------
 if (json) {
@@ -229,6 +233,17 @@ if (json) {
   } else {
     if (!report.size.ok) problems++;
     line(report.size.ok, `framework ${kb(report.size.core)} of ${kb(report.size.budget)} (minified + gzipped, every export) ${dim(`· mini/ui +${kb(report.size.ui)}`)}`);
+  }
+  console.log('\nPreloads');
+  if (report.preloads.skipped) skip(report.preloads.skipped);
+  else if (report.preloads.ok) line(true, 'index.html preloads every module loaded at startup, and nothing else');
+  for (const url of report.preloads.missing ?? []) {
+    problems++;
+    line(false, `index.html doesn't preload ${url}: add <link rel="modulepreload" href="${url}"> (it loads at startup, a round trip late)`);
+  }
+  for (const url of report.preloads.unused ?? []) {
+    problems++;
+    line(false, `index.html preloads ${url}, which nothing loads at startup: remove that <link rel="modulepreload">`);
   }
   if (report.error) {
     problems++;

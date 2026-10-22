@@ -25,7 +25,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 | `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip) |
 | `npm run preview` | serve the built `dist/` locally (unknown paths get `dist/404.html`, the plain shell) |
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
-| `npm run check` | Node tests + framework tests + user flows + every route (also at phone width) + type check + the framework's 10 KB size budget |
+| `npm run check` | Node tests + framework tests + user flows + every route (also at phone width) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
 | `npm run types` | only the JSDoc type check (TypeScript via npx, nothing installed) |
 | `npm run see /todos [--mobile]` | text outline of the page + screenshot in `.mini/screenshots/` |
 | `npm run new page <name> [--nav]` | new page file + lazy route (+ nav link) |
@@ -130,7 +130,7 @@ Provide a signal if the value changes.
 
 **Errors:** a component or page that throws (in setup or a `${}` hole) shows an error with a "Try again"
 button, and the rest of the app keeps working. Custom view: `define('x-y', setup, { fallback: (err, retry) => html`...` })`.
-Don't wrap setup in try/catch yourself. Errors in event handlers (`@click`) are not caught: handle them there.
+Don't wrap setup in try/catch yourself. This includes `@click` handlers (and rejected `async` ones): their errors show the same fallback.
 
 **Shared state:** put it in `app/store.js` with `createStore({ key: initial }, { persist: 'storage-key' })`.
 Read and write `store.key.value`. Persisted values must be plain JSON (W014).
@@ -242,6 +242,7 @@ Layouts: `const settings = { load: () => import('./layouts/settings.js') }` with
 `export default (page) => html`<nav>…</nav>${page}`` (E005 if there's no default export).
 Pages sharing a layout keep it mounted. Read the URL's `?query` with `router.query.value.q`; change it
 with `router.setQuery({ q })` (no re-render). Use it for filters and search boxes, so a reload or shared link keeps them.
+For a repeated key (`?tag=a&tag=b`): `router.queryAll('tag')` → `['a', 'b']`, and `router.setQuery({ tag: ['a', 'b'] })`.
 Navigate in code with `router.navigate('/path')` (import `router` from `app/router.js`). Plain `<a href="/path">` links just work.
 `router.preload('/checkout')` downloads a page's code ahead of time (e.g. the next step of a form).
 If a page's code fails to load, the router shows an error with a "Try again" button.
