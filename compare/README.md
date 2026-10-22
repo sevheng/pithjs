@@ -47,16 +47,15 @@ A fourth variant, **Mini + Vite**, is the same Mini source bundled and minified 
 **Runtime: Mini leads or ties on most operations.** (Measured fairly since 2026-10-23: each timed run starts
 right after a frame. Before, the browser's next frame sometimes landed in the window, adding 3–7 ms to
 whichever framework's setup lined it up, mostly Mini's remove and update.)
-- **Fastest:** selecting a row (0.4 ms vs React 1.1, Vue 2.4, thanks to `selector()`), swapping rows (4.8 ms vs
-  Vue 7.1, React 41.2), clearing 1,000 rows, and creating 1,000 rows (even with Vue).
-- **Even:** removing a row (Mini + Vite fastest at 4.3 ms; React 4.6).
-- **Behind:** updating every 10th row (16.2 ms vs React's 13.5: Mini rebuilds a row whose item changed, React
-  patches its text), appending 1,000 rows (56.9 vs React's 50.3), replacing 1,000 rows and creating 10,000
-  (Vue fastest, 8–11% ahead).
-- **Trade-off kept:** `selector()` makes clearing 1,000 rows ~0.9 ms slower (each row's entry is released);
-  Mini is still the fastest at clearing.
+- **Fastest:** selecting a row (0.3 ms vs React 1.3, Vue 2.4, thanks to `selector()`), swapping rows (5 ms vs
+  Vue 7.5, React 42.4), removing a row (4.0 ms vs React 4.3, Vue 7.9) and clearing 1,000 rows.
+- **Even (within 3%):** creating and replacing 1,000 rows (Vue a hair ahead).
+- **Behind:** updating every 10th row (17.6 ms vs React's 13.0: Mini rebuilds a row whose item changed, React
+  patches its text), appending 1,000 rows and creating 10,000 (Vue fastest, 6–8% ahead).
+- **Trade-off kept:** `selector()` adds a little to clearing (each row's entry is released); Mini is still the
+  fastest at clearing.
 
-**Memory: Mini uses about half** of what React or Vue use (about 8.4 MB vs 15.7–18.3 MB with 10,000 rows), and returns to baseline after create/clear cycles.
+**Memory: Mini uses the least**: 9.2 MB with 10,000 rows vs React's 15.7 and Vue's 18.3 (about 40% and 50% less), and returns to baseline after create/clear cycles.
 
 **Code and setup:**
 - **CRM size:** the CRM takes about **35% less code** in Mini (256 lines vs ~400), thanks to built-in `resource()` and `form()`.

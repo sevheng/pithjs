@@ -64,15 +64,15 @@ js-framework-benchmark-style operations on the bench app, desktop CPU. Time from
 
 | Operation | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| create 1,000 rows | **42.7** | 44.2 | 44 | 42.9 |
-| replace 1,000 rows | 53.4 | 53.6 | 52.8 | **49.1** |
-| update every 10th row | 16.2 | 16.4 | **13.5** | 15.1 |
-| select a row | **0.4** | **0.4** | 1.1 | 2.4 |
-| swap two rows | **4.8** | **4.8** | 41.2 | 7.1 |
-| remove a row | 5.1 | **4.3** | 4.6 | 7.9 |
-| create 10,000 rows | 562.1 | 568.8 | 708 | **506.5** |
-| append 1,000 rows | 56.9 | 52.9 | **50.3** | 56 |
-| clear 1,000 rows | **6.6** | 6.8 | 8.3 | 7.5 |
+| create 1,000 rows | 45.2 | 46.2 | 47 | **44.2** |
+| replace 1,000 rows | 52.7 | 53.3 | 53.4 | **51.4** |
+| update every 10th row | 17.6 | 18.7 | **13** | 14.6 |
+| select a row | **0.3** | **0.3** | 1.3 | 2.4 |
+| swap two rows | 5 | **4.9** | 42.4 | 7.5 |
+| remove a row | **4** | 4.4 | 4.3 | 7.9 |
+| create 10,000 rows | 568.4 | 563.3 | 727.9 | **533.8** |
+| append 1,000 rows | 57.4 | 56.4 | 53.2 | **53** |
+| clear 1,000 rows | 6.3 | **6.2** | 7.7 | 7.2 |
 
 ### Mini before and after the optimization pass
 
@@ -95,9 +95,9 @@ Same session, old and new Mini alternated 6 times (medians), so session-to-sessi
 | State | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | ready | 0.59 | **0.56** | 0.97 | 0.75 |
-| 1,000 rows | 2.01 | **1.98** | 2.7 | 2.68 |
-| 10,000 rows | 13.1 | **12.93** | 15.71 | 18.28 |
-| after 5 create/clear | **0.78** | **0.78** | 1.76 | 1.59 |
+| 1,000 rows | 1.61 | **1.57** | 2.7 | 2.68 |
+| 10,000 rows | 9.24 | **9.22** | 15.71 | 18.28 |
+| after 5 create/clear | 0.79 | **0.76** | 1.76 | 1.59 |
 
 ## Code (lines of app code, without comments and blank lines)
 
@@ -114,7 +114,7 @@ Same session, old and new Mini alternated 6 times (medians), so session-to-sessi
 | npm packages to install | 0 | 22 | 67 |
 | node_modules size (MB) | 0 | 44 | 53 |
 | Build step | none | Vite | Vite |
-| Production build of the CRM (ms) | 0 | 304 | 210 |
+| Production build of the CRM (ms) | 0 | 295 | 189 |
 | Config files | 0 | 1 (vite.config.js) | 1 (vite.config.js) |
 
 ## AI-friendliness
