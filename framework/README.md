@@ -344,7 +344,13 @@ it mounted while you move between them, so its state (open menus, inputs, scroll
 import { createStore } from 'mini';
 const store = createStore({ todos: [] }, { persist: 'my-key' }); // saved to localStorage
 store.todos.value = [...store.todos.value, item];
+const session = createStore({ user: null }, { name: 'session' }); // not saved; `name` labels it in --state
 ```
+
+A persisted store stays in step across the browser's tabs: when another tab of the same site saves it,
+this tab's signals take the new values (and the page updates), without a reload. A key the other tab's
+save lacks goes back to its initial value, and clearing localStorage resets the store. `name` is only
+for `npm run see --state` (default: the `persist` key, else `"store"`).
 
 ### Data loading
 

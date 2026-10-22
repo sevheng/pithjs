@@ -1,21 +1,24 @@
-// Shared state: createStore({ a: 1 }) -> { a: signal(1) }, optionally saved to localStorage.
+// Shared state: createStore({ a: 1 }) -> { a: signal(1) }, optionally saved to localStorage and kept
+// in step across the browser's tabs.
 
-import { signal, effect, root } from './signal.js';
+import { signal, effect, root, batch } from './signal.js';
 import { DEV, warn, describe, registry, recording, silently } from './dev.js';
 
 const notJson = (v) =>
   typeof v === 'function' || typeof v === 'bigint' || v instanceof Map || v instanceof Set || v instanceof Date;
 
 /**
- * Shared state: each key becomes a signal. With `persist`, values are saved to localStorage.
+ * Shared state: each key becomes a signal. With `persist`, values are saved to localStorage, and a save
+ * in another tab of the same site updates this one.
  * @template {Record<string, any>} T
  * @param {T} initial
- * @param {{ persist?: string | null }} [options] persist: the localStorage key
+ * @param {{ persist?: string | null, name?: string | null }} [options] persist: the localStorage key ·
+ *   name: what `npm run see --state` calls it (default: the persist key, else "store")
  * @returns {{ [K in keyof T]: import('./signal.js').Signal<T[K]> }}
  */
-export function createStore(initial, { persist = null } = {}) {
+export function createStore(initial, { persist = null, name = persist } = {}) {
   // Its signals belong to the store, not to the component whose setup made it.
-  if (DEV && recording()) return silently(() => createStore(initial, { persist }));
+  if (DEV && recording()) return silently(() => createStore(initial, { persist, name }));
   let saved = {};
   if (persist) {
     try {
@@ -47,7 +50,21 @@ export function createStore(initial, { persist = null } = {}) {
         }
       })
     );
+    // Another tab saved (the browser tells only the other tabs; an unchanged save tells no one, so two
+    // tabs can't ping-pong). key null: that tab cleared localStorage. Keys it lacks go back to initial.
+    addEventListener('storage', (e) => {
+      if (e.storageArea !== localStorage || (e.key !== persist && e.key !== null)) return;
+      let next;
+      try {
+        next = (e.key && JSON.parse(e.newValue)) || initial;
+      } catch {
+        return;
+      }
+      batch(() => {
+        for (const key in store) store[key].value = Object.hasOwn(next, key) ? next[key] : initial[key];
+      });
+    });
   }
-  DEV && registry.stores.push({ name: persist || 'store', signals: store });
+  DEV && registry.stores.push({ name: name || 'store', signals: store });
   return store;
 }

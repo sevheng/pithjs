@@ -135,7 +135,9 @@ button, and the rest of the app keeps working. Custom view: `define('x-y', setup
 Don't wrap setup in try/catch yourself. This includes `@click` handlers (and rejected `async` ones): their errors show the same fallback.
 
 **Shared state:** put it in `app/store.js` with `createStore({ key: initial }, { persist: 'storage-key' })`.
-Read and write `store.key.value`. Persisted values must be plain JSON (W014).
+Read and write `store.key.value`. Persisted values must be plain JSON (W014). A persisted store follows
+changes made in the user's other tabs by itself. Give an unsaved store a `name` (`{ name: 'session' }`) so
+`--state` output can tell stores apart.
 
 **Loading data: always use `resource()`**, never a hand-written `fetch` with your own loading/error signals:
 ```js
