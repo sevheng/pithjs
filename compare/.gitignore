@@ -2,4 +2,4 @@ node_modules/
 .cert/
 */*/dist/
 results/raw/
-.mini-before/
+.mini-before*/

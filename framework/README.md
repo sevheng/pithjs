@@ -171,6 +171,14 @@ batch(() => { a.value = 1; b.value = 2; }); // effects run once
 `catchError(fn, handler)` runs fn in a scope; errors thrown in it, or later in effects/computeds made inside it,
 go to `handler(err)` instead of throwing.
 
+`selector(source)` is for "which one is selected" in a list (a selected row, the active tab):
+```js
+const isSelected = selector(selected);                         // selected: a signal holding an id
+html`<tr class=${() => (isSelected(row.id) ? 'selected' : '')}>`
+```
+Changing `selected` re-runs only the two rows whose answer changed, not every row, as
+`selected.value === row.id` would. In the benchmark that makes selecting a row 3× faster than React.
+
 ### Templates
 
 ```js

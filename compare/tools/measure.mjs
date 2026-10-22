@@ -133,7 +133,12 @@ const BENCH = `(async () => {
   const rows = () => document.querySelectorAll('tbody tr').length;
   const tick = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
   const click = (sel) => $(sel).click();
-  const settle = async () => { await tick(); await tick(); window.gc?.(); await tick(); };
+  // Start each measurement right after the browser has drawn a frame. Otherwise its next regular frame
+  // (style, paint: several ms) lands inside the timed window more or less often depending on how long the
+  // setup took, which penalised whichever framework's setup happened to line up with it. The timeout
+  // keeps a page that never draws (headless, hidden) from waiting forever.
+  const afterFrame = () => new Promise((r) => { let t; requestAnimationFrame(() => { clearTimeout(t); setTimeout(r, 0); }); t = setTimeout(r, 100); });
+  const settle = async () => { await tick(); await tick(); window.gc?.(); await tick(); await afterFrame(); };
   const fresh = async (n) => { click('#clear'); await tick(); if (n) { click(n === 1000 ? '#run' : '#runlots'); await tick(); } };
 
   const ops = {

@@ -24,7 +24,7 @@ A fourth variant, **Mini + Vite**, is the same Mini source bundled and minified 
 
 - **Server** (`tools/server.mjs`): gzip like a real host, over both HTTP/1.1 and HTTP/2 (HTTP/2 lets many small files load in parallel, which matters for unbundled Mini).
 - **Load**: Chrome via the DevTools protocol, a fresh profile per run, Lighthouse's mobile profile (Slow 4G + 4× CPU slowdown), median of 5.
-- **Runtime**: click to DOM updated and laid out, 3 warm-up + 10 measured runs with GC in between, in 3 fresh pages, median. Every operation is checked for the right result.
+- **Runtime**: click to DOM updated and laid out, 3 warm-up + 10 measured runs with GC in between, in 3 fresh pages, median. Every operation is checked for the right result. Each run starts right after the browser has drawn a frame, so its next frame never lands inside the timed window (before 2026-10-23 it sometimes did, which penalised Mini's remove and update by 3–7 ms).
 - **Memory**: JS heap after a forced GC.
 - Mini runs with its dev warnings off, like the others' production builds.
 - **Noise**: runtime numbers vary up to ±10% between sessions. Differences smaller than that are not meaningful.

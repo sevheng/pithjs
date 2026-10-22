@@ -242,6 +242,42 @@ function handle(err, h) {
 }
 
 /**
+ * A cheap "is this the one?" for lists: isSelected(key) is true when source's value equals key. When the
+ * source changes, only the two keys whose answer changed re-run their effects (the old and the new one),
+ * not every row: `const isSelected = selector(selected)` then `class=${() => isSelected(row.id) ? ...}`.
+ * @template K
+ * @param {ReadonlySignal<K> | (() => K)} source
+ * @returns {((key: K) => boolean) & { size: () => number }} size: keys being tracked (for tests)
+ */
+export function selector(source) {
+  const keys = new Map(); // key -> { flag: signal(boolean), readers }
+  let current;
+  effect(() => {
+    const next = typeof source === 'function' ? source() : source.value;
+    if (next === current) return;
+    const prev = current;
+    current = next;
+    untrack(() => batch(() => {
+      const old = keys.get(prev);
+      if (old) old.flag.value = false;
+      const now = keys.get(next);
+      if (now) now.flag.value = true;
+    }));
+  });
+  const isSelected = (key) => {
+    let entry = keys.get(key);
+    if (!entry) keys.set(key, (entry = { flag: signal(key === current), readers: 0 }));
+    if (currentEffect) {
+      entry.readers++;
+      onCleanup(() => --entry.readers || keys.delete(key)); // the last reader is gone
+    }
+    return entry.flag.value;
+  };
+  isSelected.size = () => keys.size;
+  return isSelected;
+}
+
+/**
  * Read signals without subscribing the current effect.
  * @template T
  * @param {() => T} fn

@@ -1,5 +1,6 @@
 // CPU-profile one benchmark operation and print where the time goes (self time by function).
-//   node tools/profile.mjs [impl] [op]     op: run | runlots | add | update | swaprows | clear (button ids)
+//   node tools/profile.mjs [impl] [op]     op: run | runlots | add | update | swaprows | clear (button ids),
+//                                          or select | remove (a row's own link, on 1,000 rows)
 import { findChrome } from '../../framework/tools/chrome.mjs';
 import { launch } from './cdp.mjs';
 import { startServer } from './server.mjs';
@@ -17,9 +18,10 @@ await page.evaluate(`new Promise((r) => { const t = setInterval(() => document.q
 
 // Setup (outside the profile) and the measured operation (inside it), 20 times.
 const tick = `new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); })`;
-const SETUP = { run: '#clear', runlots: '#clear', update: '#run', clear: '#run', swaprows: '#run', add: '#run' };
+const SETUP = { run: '#clear', runlots: '#clear', update: '#run', clear: '#run', swaprows: '#run', add: '#run', select: '#run', remove: '#run' };
+const TARGET = { select: 'tbody tr:nth-child(2) .lbl', remove: 'tbody tr:nth-child(2) .remove' };
 const setup = `(async () => { document.querySelector('${SETUP[op] ?? '#clear'}').click(); await ${tick}; document.body.offsetHeight; window.gc?.(); })()`;
-const measured = `(async () => { document.querySelector('#${op}').click(); await ${tick}; document.body.offsetHeight; })()`;
+const measured = `(async () => { document.querySelector('${TARGET[op] ?? `#${op}`}').click(); await ${tick}; document.body.offsetHeight; })()`;
 for (let i = 0; i < 5; i++) { await page.evaluate(setup); await page.evaluate(measured); } // warm up
 await page.send('Profiler.enable');
 await page.send('Profiler.setSamplingInterval', { interval: 25 });

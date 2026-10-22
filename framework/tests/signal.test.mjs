@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { signal, computed, effect, batch, root, untrack, onCleanup, catchError } from '../mini/signal.js';
+import { signal, computed, effect, batch, root, untrack, onCleanup, catchError, selector } from '../mini/signal.js';
 
 test('effect re-runs when a signal it read changes', () => {
   const s = signal(1);
@@ -169,4 +169,49 @@ test('the state registry is off in production: no globalThis.__mini, registry is
     if (prev === undefined) delete globalThis.MINI_DEV;
     else globalThis.MINI_DEV = prev;
   }
+});
+
+// One effect per row reading isSelected(row): what the benchmark's table does.
+function rows(n, isSelected) {
+  const runs = new Array(n).fill(0);
+  const disposers = [];
+  for (let i = 0; i < n; i++) root((dispose) => (disposers.push(dispose), effect(() => (isSelected(i), runs[i]++))));
+  return { runs, disposers, total: () => runs.reduce((a, b) => a + b, 0) };
+}
+
+test('selector: changing the selection re-runs only the two rows whose answer changed', () => {
+  const selected = signal(-1);
+  const isSelected = selector(selected);
+  const t = rows(1000, isSelected);
+  assert.equal(t.total(), 1000); // first run
+  selected.value = 5;
+  assert.equal(t.total(), 1001); // only row 5
+  assert.equal(isSelected(5), true);
+  selected.value = 7;
+  assert.equal(t.total(), 1003); // rows 5 and 7
+  assert.deepEqual([t.runs[5], t.runs[7]], [3, 2]);
+  selected.value = 7; // same value: nothing
+  assert.equal(t.total(), 1003);
+});
+
+test('selector: works with a computed or function source, and for keys not yet read', () => {
+  const s = signal('a');
+  const isSelected = selector(computed(() => s.value.toUpperCase()));
+  assert.equal(isSelected('A'), true);
+  assert.equal(isSelected('B'), false);
+  s.value = 'b';
+  assert.equal(isSelected('B'), true);
+  assert.equal(isSelected('A'), false);
+  const fromFn = selector(() => s.value);
+  assert.equal(fromFn('b'), true);
+});
+
+test('selector: a row that goes away stops being tracked (no leak)', () => {
+  const selected = signal(0);
+  const isSelected = selector(selected);
+  const t = rows(3, isSelected);
+  for (const dispose of t.disposers) dispose();
+  assert.equal(isSelected.size(), 0); // every key released
+  selected.value = 1; // nothing left to re-run
+  assert.equal(t.total(), 3);
 });

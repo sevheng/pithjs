@@ -66,6 +66,8 @@ visited, or when the user points at a link to it. So:
 5. **Update arrays and objects immutably** so signals see the change:
    `todos.value = [...todos.value, item]` ✓, but `todos.value.push(item)` ✗ (nothing updates).
 6. **Lists use `repeat()` with a stable unique key**: `${repeat(items, (i) => i.id, (i) => html`<li>${i.name}</li>`)}`.
+   To mark the selected row or active tab, use `const isSelected = selector(selected)` and `isSelected(i.id)` in the row,
+   not `selected.value === i.id` (that re-runs every row on each change).
 
 ## Patterns (copy these)
 

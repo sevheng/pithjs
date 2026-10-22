@@ -1,8 +1,9 @@
-import { html, repeat, signal, root } from 'mini';
+import { html, repeat, signal, root, selector } from 'mini';
 import { buildData } from './data.js';
 
 const rows = signal([]);
 const selected = signal(0);
+const isSelected = selector(selected); // a click re-renders the 2 rows that changed, not all 1,000
 
 const run = () => {
   rows.value = buildData(1000);
@@ -42,7 +43,7 @@ root(() => {
         <table class="bench-table">
           <tbody>
             ${repeat(rows, (r) => r.id, (r) => html`
-              <tr class=${() => (selected.value === r.id ? 'selected' : '')}>
+              <tr class=${() => (isSelected(r.id) ? 'selected' : '')}>
                 <td class="col-id">${r.id}</td>
                 <td class="col-label"><a class="lbl" @click=${() => (selected.value = r.id)}>${r.label}</a></td>
                 <td><a class="remove" aria-label="Remove" @click=${() => remove(r.id)}>×</a></td>
