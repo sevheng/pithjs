@@ -238,8 +238,12 @@ export default function UserPage({ id }) { return html`<h1>User ${id}</h1>`; }
 
 '/settings/profile': { title: 'Profile', layout: settings, load: () => import('./pages/profile.js') },
 '/old': { redirect: '/new' },
-// createRouter(routes, { guard: (to) => (to.route.auth && !loggedIn() ? '/login' : true) })
+// createRouter(routes, { guard: (to) => (to.route.auth && !session.user.value ? '/login' : true) })
 ```
+Guards are synchronous. If the server decides who's signed in, ask it once at the top of `app/router.js`,
+before `createRouter`: `session.user.value = await fetchJSON('/api/me').catch(() => null);`. Then update
+`session.user` on sign-in/out. Per-item access (`/projects/42`) goes in the page: `resource()` + a "No access"
+view on a 403. Never rely on a guard for security: the API must check too.
 Layouts: `const settings = { load: () => import('./layouts/settings.js') }` with
 `export default (page) => html`<nav>…</nav>${page}`` (E005 if there's no default export).
 Pages sharing a layout keep it mounted. Read the URL's `?query` with `router.query.value.q`; change it

@@ -311,6 +311,27 @@ history entry; pass `{ replace: false }` to make it a back-button step.
 custom fields like `auth`); return `true` to allow it or a path to go there instead. Guards are synchronous.
 Redirects replace the history entry, so back doesn't bounce.
 
+**Sign-in that the server checks:** ask the server once, at the top of `app/router.js`, before
+`createRouter`. The first guard runs as soon as the router is created, and a top-level `await` holds the
+app's start until the answer is in. After that the guard reads a signal, so it can stay synchronous:
+
+```js
+// app/router.js
+import { createRouter, fetchJSON } from 'mini';
+import { session } from './store.js'; // createStore({ user: null })
+
+session.user.value = await fetchJSON('/api/me').catch(() => null); // 401 or offline → signed out
+
+export const router = createRouter(routes, {
+  guard: (to) => (to.route.auth && !session.user.value ? `/login?next=${encodeURIComponent(to.path)}` : true),
+});
+// After signing in or out: set session.user.value, then router.navigate(...)
+```
+
+Per-item permission (may this user open `/projects/42`?) belongs in the page, not the guard: load it with
+`resource()` and show a "No access" view for a 403, like a "not found" page for a 404. A guard only picks
+which page to show; the API must refuse unauthorized requests itself.
+
 **Scroll:** links scroll to the top (or to `#id` on the new page); back/forward put the scroll position back.
 
 **Layouts:** `layout: (page) => html`...${page}...`` wraps a page. Pages that share the same layout keep
