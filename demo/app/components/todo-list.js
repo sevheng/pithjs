@@ -1,5 +1,5 @@
 import { define, html, repeat, signal, computed, transition } from 'mini';
-import { confirm, toast } from 'mini/ui';
+import { confirm, toast } from '../ui.js';
 import { todoStore } from '../store.js';
 
 const FILTERS = {

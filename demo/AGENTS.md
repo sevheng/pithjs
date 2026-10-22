@@ -59,7 +59,7 @@ visited, or when the user points at a link to it. So:
 
 ## The 6 rules
 
-1. **Import from `'mini'`**: `import { html, signal } from 'mini';` (an import map in `index.html` maps it to `/mini/index.js`). Dialogs and toasts come from `'mini/ui'`.
+1. **Import from `'mini'`**: `import { html, signal } from 'mini';` (an import map in `index.html` maps it to `/mini/index.js`). Dialogs and toasts are app code: `app/ui.js`.
 2. **Reactive = signal or function as the whole hole.** `${count}` and `${() => count.value * 2}` update. `${count.value}` is a snapshot that never updates.
 3. **Events take functions.** `@click=${() => save()}` ✓, but `@click=${save()}` ✗ (W001).
 4. **Attribute holes are whole values.** `class=${cls}` ✓, but `class="btn ${cls}"` ✗ (E001). Build the string in JS instead: ``class=${`btn ${cls}`}``.
@@ -208,20 +208,20 @@ submit focus moves to the first bad field. Also: `signup.values()`, `signup.rese
 Don't add an animation library, and don't call `document.startViewTransition` yourself (it can stall).
 Appearing items: CSS `@starting-style` or a keyframe animation.
 
-**Confirm, dialogs and toasts: use `mini/ui`**, never `window.confirm`/`alert` or a hand-made modal:
+**Confirm, dialogs and toasts: use `app/ui.js`** (this app's own helpers, on the browser's `<dialog>` and popover), never `window.confirm`/`alert`:
 ```js
-import { confirm, dialog, toast } from 'mini/ui';
+import { confirm, dialog, toast } from '../ui.js';   // from app/components or app/pages
 
 const clearDone = async () => {
   if (!(await confirm('Clear completed todos?', { ok: 'Clear', danger: true }))) return;
   store.todos.value = store.todos.value.filter((t) => !t.done);
   toast('Cleared');                                 // { type: 'success' | 'error', timeout: 0 = stays }
 };
-// Custom dialog: start it with a heading (its name, W050) and resolve with close(value).
+// Custom dialog: start it with a heading (its accessible name) and resolve with close(value).
 const value = await dialog((close) => html`<h2>Pick</h2>
   <button class="btn" type="button" @click=${() => close('a')}>A</button>`);
 ```
-Import `mini/ui` in the page or component that uses it (not in `main.js`).
+Import `app/ui.js` in the page or component that uses it (not in `main.js`).
 Flows: `await app.click('Clear completed'); await app.click('Clear'); await app.see('Cleared');`.
 
 **API** (`api/<name>.mjs`, dev server only): export functions named after HTTP methods.
@@ -319,5 +319,5 @@ A failing step prints the whole page as an outline, so you can see what is actua
 - Don't edit `../framework/` to fix an app bug. If the framework really is wrong, add a test in
   `../framework/tests/index.html` first.
 - Don't write your own fetch + loading/error signals or form validation. Use `resource()` and `form()`.
-- Don't use `window.confirm`/`alert` or build modals by hand. Use `mini/ui`.
+- Don't use `window.confirm`/`alert`. Use `app/ui.js`, and extend it there if you need more.
 - Don't use `document.querySelector` to update the UI. Change a signal and let the template update.

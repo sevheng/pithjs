@@ -222,6 +222,32 @@ flow('todos: "Clear completed" asks first; Cancel keeps the items, Clear removes
   await app.see('Reload the page'); // the active one stays
 });
 
+flow('todos: Esc closes the confirm, keeps the items, and gives focus back to the button', async (app) => {
+  await app.go('/todos');
+  await app.click('Try adding a todo'); // mark it done
+  // A mouse click focuses the button; the harness's click() doesn't, so focus it like a person would.
+  app.queryAll('button').find((b) => b.textContent.trim() === 'Clear completed').focus();
+  await app.click('Clear completed');
+  await app.see('Delete 1 completed todo?');
+  // A dangerous action starts on Cancel, so Enter can't delete by accident.
+  app.expect(app.document.activeElement?.textContent.trim() === 'Cancel', 'focus should start on Cancel');
+  const dialog = app.query('dialog');
+  const { Event } = /** @type {any} */ (app.window);
+  dialog.dispatchEvent(new Event('cancel', { cancelable: true })); // what the browser fires on Esc
+  await app.notSee('Delete 1 completed todo?');
+  await app.see('Try adding a todo');
+  app.expect(app.document.activeElement?.textContent.trim() === 'Clear completed', 'focus should return to "Clear completed"');
+});
+
+flow('todos: a toast can be dismissed', async (app) => {
+  await app.go('/todos');
+  await app.type('New todo', 'Water plants');
+  await app.click('Add');
+  await app.see('Todo added');
+  await app.click('Dismiss');
+  await app.notSee('Todo added');
+});
+
 flow('settings: /settings opens Profile, and the layout keeps its state across pages', async (app) => {
   await app.go('/');
   await app.click('Settings');

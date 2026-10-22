@@ -1,12 +1,13 @@
 # Mini
 
 A tiny web framework built on native browser tech: **no dependencies, no build step.**
-Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading, forms, and dialogs and toasts.
+Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading and forms.
 
 **Size budget: 10 KB.** The whole framework (`'mini'`, every export), built and gzipped, must stay within
-10 KB (10,000 bytes); it's 9.4 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
-over budget, so a new feature has to pay for itself. `'mini/ui'` is optional and adds 1.3 KB only to pages
-that import it. Apps usually ship less, since the build drops what they don't use.
+10 KB (10,000 bytes); it's 9.5 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
+over budget, so a new feature has to pay for itself. Apps usually ship less, since the build drops what
+they don't use. Only what most apps need, and is easy to get wrong, belongs in it; the rest (UI widgets,
+animation helpers beyond `transition()`) is app code an AI agent can write from the browser's own APIs.
 
 ## This folder
 
@@ -41,7 +42,7 @@ and shows errors as an overlay, and it serves `api/` and the test pages at `/__m
 `npm run dev:no-build` is the zero-install server: the project folder as-is, the framework at `/mini/`.
 `check` and `see` always use the no-build server, so their results don't depend on Vite.
 The project's `index.html` maps the imports:
-`<script type="importmap">{ "imports": { "mini": "/mini/index.js", "mini/ui": "/mini/ui.js" } }</script>`.
+`<script type="importmap">{ "imports": { "mini": "/mini/index.js" } }</script>`.
 
 ```sh
 npm run dev                        # → http://localhost:8000  (PORT=3000 npm run dev for another port)
@@ -423,33 +424,11 @@ html`<form novalidate @submit=${f.submit}>
   `(value, values) => message | null`.
 - Also: `f.fields.email` (signal), `f.values()`, `f.error('email')`, `f.valid`, `f.reset()`, `f.setErrors({...})`.
 
-### Dialogs and toasts (`mini/ui`)
+### Dialogs and toasts
 
-A separate entry, so pages that don't use it never download it. Map it in the import map:
-`"mini/ui": "/mini/ui.js"`.
-
-```js
-import { dialog, confirm, toast } from 'mini/ui';
-
-if (await confirm('Delete 3 todos?', { ok: 'Delete', danger: true })) clear();
-
-const size = await dialog((close) => html`
-  <h2>Pick a size</h2>
-  <button class="btn" type="button" @click=${() => close('S')}>Small</button>
-  <button class="btn" type="button" @click=${() => close('L')}>Large</button>
-`); // undefined if Esc or a backdrop click closed it
-
-const dismiss = toast('Saved', { type: 'success' }); // 'info' | 'success' | 'error', timeout ms (0 = stays)
-```
-
-- `dialog(render, { label })` opens a native modal `<dialog>`; `render(close)` returns its content and
-  `close(value)` resolves the promise. It is named by `label` or its first heading. On close it is
-  removed, its effects are disposed, and focus goes back where it was.
-- `confirm(message, { ok, cancel, danger })` resolves `true`/`false`. `danger` makes OK red and puts
-  focus on Cancel.
-- `toast(message, { type, timeout })` shows a message in a polite live region (errors are alerts), on
-  top of any open dialog. It returns a dismiss function. The timer pauses on hover/focus.
-- Styles: `.mini-dialog`, `.mini-toasts`, `.mini-toast` (see the demo's `styles/main.css`).
+Not part of Mini: the browser's `<dialog>` (modal, Esc, focus trap) and `popover` do the hard parts, and
+each app wants its own look. The demo's `app/ui.js` (`dialog`, `confirm`, `toast`, with its CSS under
+"UI helpers" in `styles/main.css`) is an accessible starting point to copy and restyle.
 
 ### Dev API (dev server only)
 

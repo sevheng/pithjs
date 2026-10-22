@@ -10,7 +10,7 @@ function project(preloads, extra = {}) {
   const root = mkdtempSync(join(tmpdir(), 'mini-preloads-'));
   const files = {
     'index.html': `<!doctype html><head>
-  <script type="importmap">{ "imports": { "mini": "/mini/index.js", "mini/ui": "/mini/ui.js" } }</script>
+  <script type="importmap">{ "imports": { "mini": "/mini/index.js", "mini/extra": "/mini/extra.js" } }</script>
 ${preloads.map((p) => `  <link rel="modulepreload" href="${p}">`).join('\n')}
   <script type="module" src="/app/main.js"></script>
 </head><body><div id="app"></div></body>`,
@@ -18,7 +18,7 @@ ${preloads.map((p) => `  <link rel="modulepreload" href="${p}">`).join('\n')}
     'app/router.js': `export { thing } from './store.js';\nexport const router = { load: () => import('./pages/lazy.js') };\n`,
     'app/store.js': `export const thing = 1;\n`,
     'app/components/nav.js': `export {};\n`,
-    'app/pages/lazy.js': `import { dialog } from 'mini/ui';\n`,
+    'app/pages/lazy.js': `import { thing } from 'mini/extra';\n`,
     ...extra,
   };
   for (const [file, text] of Object.entries(files)) {
@@ -31,7 +31,7 @@ ${preloads.map((p) => `  <link rel="modulepreload" href="${p}">`).join('\n')}
 const fw = mkdtempSync(join(tmpdir(), 'mini-fw-'));
 writeFileSync(join(fw, 'index.js'), `export { signal } from './signal.js';\n`);
 writeFileSync(join(fw, 'signal.js'), `export const signal = 1;\n`);
-writeFileSync(join(fw, 'ui.js'), `export const dialog = 1;\n`);
+writeFileSync(join(fw, 'extra.js'), `export const thing = 1;\n`);
 
 const all = ['/mini/index.js', '/mini/signal.js', '/app/main.js', '/app/router.js', '/app/store.js', '/app/components/nav.js'];
 

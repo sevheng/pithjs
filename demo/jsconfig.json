@@ -16,9 +16,6 @@
       "mini": [
         "../framework/mini/index.js"
       ],
-      "mini/ui": [
-        "../framework/mini/ui.js"
-      ],
       "mini/testing": [
         "../framework/tests/harness.js"
       ]

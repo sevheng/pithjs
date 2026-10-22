@@ -51,7 +51,6 @@ export function mini({ projectRoot }) {
       resolve: {
         alias: [
           { find: /^mini$/, replacement: join(framework, 'mini', 'index.js') },
-          { find: /^mini\/ui$/, replacement: join(framework, 'mini', 'ui.js') },
           { find: /^mini\/testing$/, replacement: join(framework, 'tests', 'harness.js') },
         ],
       },

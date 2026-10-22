@@ -384,7 +384,7 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
   .settings-nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
 }
 
-/* ---------- UI helpers (mini/ui: dialog, confirm, toast) ---------- */
+/* ---------- UI helpers (app/ui.js: dialog, confirm, toast) ---------- */
 .mini-dialog {
   width: min(28rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);

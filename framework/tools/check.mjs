@@ -232,7 +232,7 @@ if (json) {
     line(false, `couldn't measure: ${report.size.error}`);
   } else {
     if (!report.size.ok) problems++;
-    line(report.size.ok, `framework ${kb(report.size.core)} of ${kb(report.size.budget)} (minified + gzipped, every export) ${dim(`· mini/ui +${kb(report.size.ui)}`)}`);
+    line(report.size.ok, `framework ${kb(report.size.core)} of ${kb(report.size.budget)} (minified + gzipped, every export)`);
   }
   console.log('\nPreloads');
   if (report.preloads.skipped) skip(report.preloads.skipped);

@@ -150,19 +150,6 @@ paginated(({ page, signal }) => fetchJSON(`/api/team?page=${page}`, { signal }))
 paginated(async ({ page, signal }) => (await fetchJSON(`/api/team?page=${page}`, { signal })).data) // ✓
 ```
 
-## W050
-**A `dialog()` has no name.** Screen readers announce a dialog by its name. Pass a label, or make the
-first element a heading:
-
-```js
-dialog(render, { label: 'Edit todo' })                  // ✓
-dialog((close) => html`<h2>Edit todo</h2>...`)          // ✓ the heading names it
-```
-
-## W051
-**`toast()` got a `type` other than `info`, `success` or `error`.** Only those three are styled and
-announced correctly: `toast('Saved', { type: 'success' })`.
-
 ## W060
 **A route showed the not-found page while prerendering**, so it wasn't prerendered (printed by `npm run build`).
 The route key in `app/router.js` doesn't match its path. Fix the route pattern.

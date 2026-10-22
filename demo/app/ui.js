@@ -1,8 +1,7 @@
-// UI helpers: dialog(), confirm() and toast(). A separate entry ('mini/ui'), so pages that don't use
-// them never download this file.
-import { html } from './html.js';
-import { root } from './signal.js';
-import { DEV, warn } from './dev.js';
+// Dialogs and toasts for this app: dialog(), confirm() and toast(), built on the browser's <dialog> and
+// popover. App code, not part of Mini: copy it into your own app and restyle it (see "UI helpers" in
+// styles/main.css). Import it from the page or component that uses it, so other pages never load it.
+import { html, root } from 'mini';
 
 let ids = 0;
 const canPopover = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
@@ -44,7 +43,7 @@ export function dialog(render, { label } = {}) {
     else {
       const heading = body.querySelector('h1, h2, h3, h4, h5, h6');
       if (heading) el.setAttribute('aria-labelledby', heading.id ||= `mini-dialog-${++ids}`);
-      else DEV && warn('W050', 'dialog() has no name: pass { label } or start its content with a heading.');
+      else console.warn('dialog() has no name: pass { label } or start its content with a heading.');
     }
 
     el.addEventListener('cancel', (e) => (e.preventDefault(), close()));
@@ -87,7 +86,7 @@ const TYPES = ['info', 'success', 'error'];
  * @returns {() => void}
  */
 export function toast(message, { type = 'info', timeout = 4000 } = {}) {
-  if (DEV && !TYPES.includes(type)) warn('W051', `toast() type "${type}" is not one of ${TYPES.join(', ')}.`);
+  if (!TYPES.includes(type)) console.warn(`toast() type "${type}" is not one of ${TYPES.join(', ')}.`);
   if (!region?.isConnected) {
     region = document.createElement('div');
     region.className = 'mini-toasts';

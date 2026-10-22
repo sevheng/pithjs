@@ -8,5 +8,4 @@ test('the core framework is measured minified + gzipped, and stays within its 10
   assert.equal(BUDGET, 10_000);
   assert.ok(size.core > 4_000, `core measured at ${size.core} bytes: too small to be the whole framework`);
   assert.ok(size.core <= BUDGET, `core is ${size.core} bytes gzipped, over the ${BUDGET} byte budget`);
-  assert.ok(size.ui > 300 && size.ui < size.core, `mini/ui measured at ${size.ui} bytes (its own code only)`);
 });
