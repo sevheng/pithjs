@@ -328,9 +328,10 @@ export async function runFlows() {
       if (app.problems.length) throw new Error(`The app reported problems:\n  ${app.problems.join('\n  ')}`);
       results.push([name, null]);
     } catch (err) {
-      // Every failure also says what the app holds (dev mode): pages, stores, components.
+      // Every failure also says what the app holds: pages, stores, components. Only when the app records
+      // it (Mini in dev mode); for anything else the block would just be noise.
       const error = typeof err?.message === 'string' ? err : new Error(String(err)); // may be from the app's realm
-      error.message += `\nState:\n${stateText(frame.contentWindow)}`;
+      if (/** @type {any} */ (frame.contentWindow)?.__mini) error.message += `\nState:\n${stateText(frame.contentWindow)}`;
       results.push([name, error]);
     }
     frame.remove();

@@ -27,7 +27,8 @@ for (const app of apps.length ? apps : ['todo', 'crm', 'bench']) {
       if (!ok) failures++;
       console.log(`${ok ? '✓' : '✗'} ${app}/${impl}: ${results.length - failed.length}/${results.length} flows passed`);
       if (!results.length) console.log('    the flows page did not finish');
-      for (const f of failed) console.log(`    ✗ ${f.name.split('\n').slice(0, 12).join('\n      ')}`);
+      // The whole message: the page outline, and (Mini, dev mode) the app's state after it.
+      for (const f of failed) console.log(`    ✗ ${f.name.split('\n').join('\n      ')}`);
       for (const p of problems) console.log(`    console: ${p}`);
     } finally {
       server.close();
