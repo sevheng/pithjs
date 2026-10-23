@@ -10,6 +10,12 @@ test('replayScript() is a small, valid inline script that calls capture on #app'
   assert.doesNotThrow(() => new Function(js), 'the inline script does not parse');
   assert.match(js, /getElementById\(\s*["'`]app["'`]\s*\)/);
   assert.equal(replayScript(), js, 'the script is built once and reused');
+});
+
+// The budget is for the minified script; without Vite (e.g. run from framework/) it's the raw source.
+test('replayScript() stays within its 700 byte budget, minified + gzipped', (t) => {
+  const js = replayScript();
+  if (js === `(${capture})(document.getElementById('app'))`) return t.skip('Vite is not installed in this project, so the script is not minified');
   const size = gzipSync(js, { level: 9 }).length;
   assert.equal(REPLAY_BUDGET, 700);
   assert.ok(size <= REPLAY_BUDGET, `inline replay script is ${size} bytes gzipped, over the ${REPLAY_BUDGET} byte budget`);

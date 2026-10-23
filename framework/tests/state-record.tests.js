@@ -21,6 +21,7 @@ export default async function (t) {
   });
 
   await test('state-record: a component records its state by name, without internal signals, and its props', async () => {
+    /** @type {any} */
     let made;
     define('rec-state', (props) => {
       const draft = signal('');
@@ -70,6 +71,7 @@ export default async function (t) {
 
   await test('state-record: after a failed setup, Try again records the state of the new run', async () => {
     let runs = 0;
+    /** @type {any} */
     let retry;
     define('rec-retry', () => {
       const attempt = signal(++runs);

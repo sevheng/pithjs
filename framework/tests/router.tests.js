@@ -347,7 +347,7 @@ export default async function (t) {
     const matchMedia = window.matchMedia;
     if (start === undefined) Object.defineProperty(document, 'startViewTransition', { value: undefined, configurable: true });
     else document.startViewTransition = start;
-    window.matchMedia = (q) => ({ matches: reduced && q.includes('reduce') });
+    window.matchMedia = /** @type {any} */ ((q) => ({ matches: reduced && q.includes('reduce') }));
     try {
       await fn();
     } finally {
