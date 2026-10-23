@@ -1,6 +1,6 @@
 # Results
 
-Measured 2026-10-22 with Chrome/155.0.0.0, Node v26.10.0. Medians of 5 runs (load) and 10 runs × 3 pages (runtime).
+Measured 2026-10-23 with Chrome/155.0.0.0, Node v26.10.0. Medians of 9 runs (load) and 10 runs × 3 pages (runtime).
 
 ## Load on a slow phone
 
@@ -10,53 +10,53 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 
 | `todo` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.3 | **6.7** | 67.2 | 26 |
-| JS files | 12 | **1** | **1** | **1** |
-| First paint (ms) | 780 | **472** | 792 | 584 |
-| Ready (ms) | 718.1 | **416.3** | 744.7 | 531.3 |
+| JS downloaded (KB, gzip) | 10.8 | **6.7** | 67.2 | 26 |
+| JS files | 3 | **1** | **1** | **1** |
+| First paint (ms) | **528** | **528** | 808 | 600 |
+| Ready (ms) | 457.9 | **454.9** | 757.1 | 539.9 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
 | `crm` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.3 | **11** | 97.9 | 37.1 |
-| JS files | 14 | **3** | 4 | 5 |
-| First paint (ms) | 748 | **472** | 948 | 632 |
-| Ready (ms) | 1230.8 | **801.4** | 1296.6 | 990.5 |
-| Blocking (ms) | **0** | **0** | 2 | 32 |
+| JS downloaded (KB, gzip) | **10.7** | 11 | 97.9 | 37.1 |
+| JS files | 5 | **3** | 4 | 5 |
+| First paint (ms) | 488 | **484** | 956 | 644 |
+| Ready (ms) | 973.3 | **813.6** | 1307.3 | 1005.6 |
+| Blocking (ms) | **0** | **0** | 3 | 38 |
 
 | `crm/customers` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.8 | **11.4** | 98.3 | 37.6 |
-| JS files | 14 | **3** | 4 | 5 |
-| First paint (ms) | 748 | **468** | 948 | 644 |
-| Ready (ms) | 1248.4 | **817** | 1344.3 | 1033.9 |
-| Blocking (ms) | **0** | **0** | 2 | 33 |
+| JS downloaded (KB, gzip) | **11.3** | 11.4 | 98.3 | 37.6 |
+| JS files | 5 | **3** | 4 | 5 |
+| First paint (ms) | 504 | **484** | 1004 | 648 |
+| Ready (ms) | 1009.2 | **836.4** | 1468.1 | 1045.8 |
+| Blocking (ms) | **0** | **0** | 35 | 39 |
 
 ### Over HTTP/2
 
 | `todo` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.3 | **6.7** | 67.2 | 26 |
-| JS files | 12 | **1** | **1** | **1** |
-| First paint (ms) | 652 | **476** | 804 | 592 |
-| Ready (ms) | 587.9 | **416.5** | 757.4 | 538.5 |
+| JS downloaded (KB, gzip) | 10.8 | **6.7** | 67.2 | 26 |
+| JS files | 3 | **1** | **1** | **1** |
+| First paint (ms) | 564 | **536** | 812 | 596 |
+| Ready (ms) | 486.8 | **458.8** | 760.8 | 538.7 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
 | `crm` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.3 | **11** | 97.9 | 37.1 |
-| JS files | 14 | **3** | 4 | 5 |
-| First paint (ms) | 612 | **480** | 952 | 644 |
-| Ready (ms) | 1100.7 | **808.5** | 1293.4 | 994.5 |
-| Blocking (ms) | **0** | **0** | **0** | 34 |
+| JS downloaded (KB, gzip) | **10.7** | 11 | 97.9 | 37.1 |
+| JS files | 5 | **3** | 4 | 5 |
+| First paint (ms) | **488** | 492 | 976 | 656 |
+| Ready (ms) | 976 | **816.7** | 1324.4 | 1013.7 |
+| Blocking (ms) | **0** | **0** | 13 | 38 |
 
 | `crm/customers` | Mini | Mini + Vite | React | Vue |
 |---|---:|---:|---:|---:|
-| JS downloaded (KB, gzip) | 30.8 | **11.4** | 98.3 | 37.6 |
-| JS files | 14 | **3** | 4 | 5 |
-| First paint (ms) | 604 | **476** | 948 | 640 |
-| Ready (ms) | 1106.7 | **830.3** | 1338.3 | 1035.8 |
-| Blocking (ms) | **0** | **0** | **0** | 32 |
+| JS downloaded (KB, gzip) | **11.3** | 11.4 | 98.3 | 37.6 |
+| JS files | 5 | **3** | 4 | 5 |
+| First paint (ms) | 504 | **496** | 988 | 668 |
+| Ready (ms) | 1017.3 | **838** | 1396.8 | 1058.6 |
+| Blocking (ms) | **0** | 3 | 12 | 46 |
 
 ## Runtime (ms, lower is better)
 

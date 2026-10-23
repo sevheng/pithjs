@@ -8,6 +8,7 @@
 //   5. types: JSDoc type check with TypeScript (fetched once by npx; skipped if offline)
 //   6. size: the whole framework, minified + gzipped, stays within its 10 KB budget (tools/size.mjs)
 //   7. preloads: index.html preloads exactly the modules the app loads at startup (tools/preloads.mjs)
+//   8. release: mini/mini.min.js, the no-build production copy, matches mini/*.js (tools/release.mjs)
 // Stages that don't apply (e.g. no app/router.js when run from framework/) are skipped.
 // Flags: --json prints one JSON object (for tools and AI agents).
 //        --build builds the app with Vite first (npm run build) and checks the built dist/ instead,
@@ -23,6 +24,7 @@ import { prerenderTargets } from './routes.mjs';
 import { startServer, projectRoot } from './dev-server.mjs';
 import { BUDGET, measureFramework } from './size.mjs';
 import { checkPreloads } from './preloads.mjs';
+import { checkRelease } from './release.mjs';
 
 const frameworkTests = join(import.meta.dirname, '..', 'tests');
 const project = (...parts) => join(projectRoot, ...parts);
@@ -55,7 +57,7 @@ function prerenderProblems(path) {
   return [];
 }
 
-const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null, preloads: null };
+const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null, preloads: null, release: null };
 
 if (built) {
   const { buildProject } = await import('./build.mjs');
@@ -66,9 +68,14 @@ if (built) {
   }
 }
 
-// The size budget is measured in the background too.
-const sizeDone = measureFramework().then(
-  (size) => (size.skipped ? { ok: true, ...size } : { ok: size.core <= BUDGET, budget: BUDGET, ...size }),
+// The size budget is measured in the background too, and the same build is compared with mini.min.js.
+const minified = measureFramework();
+const sizeDone = minified.then(
+  ({ code, ...size }) => (size.skipped ? { ok: true, ...size } : { ok: size.core <= BUDGET, budget: BUDGET, ...size }),
+  (err) => ({ ok: false, error: String(err?.message ?? err) })
+);
+const releaseDone = minified.then(
+  (size) => (size.skipped ? { ok: true, skipped: size.skipped } : checkRelease({ code: size.code })),
   (err) => ({ ok: false, error: String(err?.message ?? err) })
 );
 
@@ -166,9 +173,10 @@ if (pathWarnings.length) report.pages.push({ path: 'prerender.mjs', title: '', o
 
 report.types = await typesDone;
 report.size = await sizeDone;
+report.release = await releaseDone;
 const preloads = checkPreloads();
 report.preloads = preloads.skipped ? { ok: true, ...preloads } : { ok: !preloads.missing.length && !preloads.unused.length, ...preloads };
-report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size, report.preloads].every((r) => r?.ok);
+report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size, report.preloads, report.release].every((r) => r?.ok);
 
 // ---------- Output ----------
 if (json) {
@@ -244,6 +252,13 @@ if (json) {
   for (const url of report.preloads.unused ?? []) {
     problems++;
     line(false, `index.html preloads ${url}, which nothing loads at startup: remove that <link rel="modulepreload">`);
+  }
+  console.log('\nRelease');
+  if (report.release.skipped) skip(report.release.skipped);
+  else if (report.release.ok) line(true, 'mini/mini.min.js (no-build production copy) is up to date');
+  else {
+    problems++;
+    line(false, report.release.error ?? 'mini/mini.min.js is out of date with mini/*.js: run  node ../framework/tools/release.mjs  (from demo/)');
   }
   if (report.error) {
     problems++;

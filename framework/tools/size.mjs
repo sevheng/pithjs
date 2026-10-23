@@ -14,7 +14,8 @@ const mini = join(import.meta.dirname, '..', 'mini');
 
 /**
  * @param {{ root?: string }} [options] root: a project folder with Vite installed
- * @returns {Promise<{ core: number, skipped?: undefined } | { skipped: string }>}
+ * @returns {Promise<{ core: number, code: string, skipped?: undefined } | { skipped: string }>}
+ *   code: the minified framework (what tools/release.mjs writes to mini/mini.min.js)
  */
 export async function measureFramework({ root = projectRoot } = {}) {
   let vite;
@@ -23,7 +24,7 @@ export async function measureFramework({ root = projectRoot } = {}) {
   } catch {
     return { skipped: 'Vite is not installed in this project (npm install)' };
   }
-  const gzipped = async (entry) => {
+  const minified = async (entry) => {
     const out = await vite.build({
       configFile: false,
       logLevel: 'silent',
@@ -34,9 +35,8 @@ export async function measureFramework({ root = projectRoot } = {}) {
         rollupOptions: { input: join(mini, entry), preserveEntrySignatures: 'strict' },
       },
     });
-    const code = [out].flat().flatMap((r) => r.output).filter((c) => c.type === 'chunk').map((c) => c.code).join('\n');
-    return gzipSync(code, { level: 9 }).length;
+    return [out].flat().flatMap((r) => r.output).filter((c) => c.type === 'chunk').map((c) => c.code).join('\n');
   };
-  const core = await gzipped('index.js');
-  return { core };
+  const code = await minified('index.js');
+  return { core: gzipSync(code, { level: 9 }).length, code };
 }

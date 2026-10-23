@@ -3,9 +3,10 @@
 //   runtime: js-framework-benchmark-style operations (median of 10, after warm-up, GC between runs)
 //   memory:  JS heap after load, with 1k / 10k rows, and after create/clear cycles (leak check)
 //
-//   node tools/measure.mjs [load] [runtime] [--runs 5]
+//   node tools/measure.mjs [load] [runtime] [--runs 5] [--source]
 // Writes results/measure.json. Mini runs with dev warnings off (MINI_DEV=false), like the others'
-// production builds.
+// production builds. Its load test serves it as deployed without a build: one file, mini.min.js
+// (framework/tools/release.mjs). --source loads its dev sources instead (ten files, dev code included).
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,6 +21,7 @@ const runsArg = args.indexOf('--runs');
 const RUNS = runsArg >= 0 ? Number(args[runsArg + 1]) : 5;
 const implArg = args.indexOf('--impl');
 const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['mini', 'mini-vite', 'react', 'vue'];
+const DEPLOY = !args.includes('--source');
 const OUT = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'measure.json';
 
 const median = (xs) => {
@@ -107,7 +109,7 @@ if (want('load')) {
   for (const { app, path, ready } of LOAD_PAGES) {
     for (const impl of IMPLS) {
       for (const h2 of [false, true]) {
-        const server = await startServer({ app, impl, h2 });
+        const server = await startServer({ app, impl, h2, deploy: DEPLOY });
         const runs = [];
         try {
           for (let i = 0; i < RUNS; i++) runs.push(await loadOnce(server.url + path, ready));

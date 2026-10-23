@@ -16,14 +16,16 @@ React 19 + React Router with hooks, Vue 3 + Vue Router with `<script setup>`, Mi
 No extra libraries: data loading and form logic for React and Vue are hand-written (a `useFetch` hook, `useState`/`reactive` forms),
 because Mini has those built in. With TanStack Query, react-hook-form or VeeValidate, the React/Vue code would be shorter, at the cost of more dependencies.
 
-A fourth variant, **Mini + Vite**, is the same Mini source bundled and minified by Vite. It shows what Mini's no-build choice costs.
+**Mini** is loaded as it's deployed without a build: the app's files as written, plus Mini's one-file production copy
+(`mini.min.js`, no dev code, see `framework/tools/release.mjs`). A fourth variant, **Mini + Vite**, bundles and minifies
+the app too. It shows what Mini's no-build choice costs.
 
 **Same behavior, proven:** every implementation passes the same flows (`flows/*.js`): 8 for Todo, 11 for CRM, 1 for Bench.
 
 ## How it was measured
 
 - **Server** (`tools/server.mjs`): gzip like a real host, over both HTTP/1.1 and HTTP/2 (HTTP/2 lets many small files load in parallel, which matters for unbundled Mini).
-- **Load**: Chrome via the DevTools protocol, a fresh profile per run, Lighthouse's mobile profile (Slow 4G + 4× CPU slowdown), median of 5.
+- **Load**: Chrome via the DevTools protocol, a fresh profile per run, Lighthouse's mobile profile (Slow 4G + 4× CPU slowdown), median of 9.
 - **Runtime**: click to DOM updated and laid out, 3 warm-up + 10 measured runs with GC in between, in 3 fresh pages, median. Every operation is checked for the right result. Each run starts right after the browser has drawn a frame, so its next frame never lands inside the timed window (before 2026-10-23 it sometimes did, which penalised Mini's remove and update by 3–7 ms).
 - **Memory**: JS heap after a forced GC.
 - Mini runs with its dev warnings off, like the others' production builds.
@@ -32,17 +34,16 @@ A fourth variant, **Mini + Vite**, is the same Mini source bundled and minified 
 
 ## What the numbers say
 
-**Size and loading: Mini's strongest area once built.**
-- **JS downloaded:** Mini ships 11 KB (gzip) for the CRM with Vite, against Vue's 37 KB and React's 98 KB.
-  Unbundled it ships ~30 KB: without a build the browser also downloads Mini's dev-only code (warnings,
-  the `--state` recording) and comments, which a build strips. That grew from ~20 KB to ~30 KB in October 2026.
-- **Mini + Vite is the fastest variant on every page**, ready 19–23% sooner than Vue and 38–45% sooner than React.
-- **Load speed, Mini without a build:**
-  - It is ready **4–22% sooner than React** on a slow phone (4–7% over HTTP/1.1, 15–22% over HTTP/2).
-  - Over **HTTP/2** it is **7–11% slower than Vue**; over **HTTP/1.1**, **21–35% slower**.
-  - Its costs are the import waterfall (the browser discovers files level by level, a round trip each), its
-    many small files waiting for HTTP/1.1's ~6 connections, and the dev-only code it can't strip.
-  - The extra dev code of October 2026 made it 7–14% slower over HTTP/1.1 (1–3% over HTTP/2). Use a build in production.
+**Size and loading: Mini's strongest area, with or without a build.**
+- **JS downloaded:** Mini ships 11 KB (gzip) for the CRM, with or without Vite, against Vue's 37 KB and React's 98 KB.
+- **Mini + Vite is the fastest variant on every page**, ready 15–21% sooner than Vue and 38–43% sooner than React.
+- **Mini without a build is faster than Vue too**: ready 3–15% sooner than Vue and 26–40% sooner than React, over
+  both HTTP/1.1 and HTTP/2. On the one-page Todo app it ties Mini + Vite. On the CRM it's ~17% behind Mini + Vite,
+  because the app's own files load unbundled (the browser finds each lazy page's imports a round trip late).
+- **Why it changed (2026-10-23):** before, no-build Mini loaded its ten readable source files, dev-only code
+  (warnings, the `--state` recording) and comments included: ~30 KB, and 7–35% slower than Vue.
+  `mini.min.js` is the same framework, built once and committed, so deploying still needs no build tool.
+  Development keeps the sources and their warnings. `npm run check` fails if the copy falls out of date.
 
 **Runtime: Mini leads or ties on most operations.** (Measured fairly since 2026-10-23: each timed run starts
 right after a frame. Before, the browser's next frame sometimes landed in the window, adding 3–7 ms to

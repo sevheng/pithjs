@@ -7,6 +7,8 @@
 // mini is served from source (no build step, as Mini is meant to run); react and vue are served
 // from their Vite production builds (dist/), as they are meant to run. mini-vite is Mini's source
 // bundled and minified by Vite (tools/build.mjs), to show what skipping the build costs.
+// --deploy (deploy: true) serves mini as a no-build site is deployed: index.html loads Mini's one-file
+// production copy, mini/mini.min.js (framework/tools/release.mjs), instead of its dev sources.
 
 import http from 'node:http';
 import http2 from 'node:http2';
@@ -14,6 +16,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { handleApi } from '../shared/api.mjs';
+import { forDeploy } from '../../framework/tools/release.mjs';
 
 const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
@@ -55,11 +58,12 @@ async function isFile(file) {
 const gzCache = new Map();
 
 /**
- * @param {{ app: string, impl: string, h2?: boolean, port?: number, flows?: string | null }} options
+ * @param {{ app: string, impl: string, h2?: boolean, port?: number, flows?: string | null, deploy?: boolean }} options
  *   flows: a different flows file to serve as /tests/flows.js
+ *   deploy: impl mini loads mini.min.js (production, no dev warnings), as deployed without a build
  * @returns {Promise<{ url: string, close: () => void }>}
  */
-export async function startServer({ app, impl, h2 = false, port = 0, flows = null }) {
+export async function startServer({ app, impl, h2 = false, port = 0, flows = null, deploy = false }) {
   if (!APPS.includes(app) || !IMPLS.includes(impl)) throw new Error(`unknown app/impl: ${app} ${impl}`);
   const root = appRoot(app, impl);
   // mini-before: the same app on Mini's html.js from before the optimization pass (.mini-before/).
@@ -114,8 +118,10 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
       const ext = extname(file);
       const headers = { 'content-type': TYPES[ext] ?? 'application/octet-stream', 'cache-control': 'no-cache' };
       let data = await readFile(file);
+      const deployed = deploy && impl === 'mini' && ext === '.html';
+      if (deployed) data = Buffer.from(forDeploy(data.toString('utf8')));
       if (COMPRESSIBLE.has(ext) && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '')) {
-        const key = `${file}:${(await stat(file)).mtimeMs}`;
+        const key = `${file}:${(await stat(file)).mtimeMs}${deployed ? ':deploy' : ''}`;
         if (!gzCache.has(key)) gzCache.set(key, gzipSync(data, { level: 6 }));
         data = gzCache.get(key);
         headers['content-encoding'] = 'gzip';
@@ -148,6 +154,6 @@ if (import.meta.main) {
   const [app = 'todo', impl = 'mini'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const portArg = process.argv.indexOf('--port');
   const port = portArg > 0 ? Number(process.argv[portArg + 1]) : 8000;
-  const server = await startServer({ app, impl, h2: process.argv.includes('--h2'), port });
+  const server = await startServer({ app, impl, h2: process.argv.includes('--h2'), port, deploy: process.argv.includes('--deploy') });
   console.log(`${app} / ${impl}: ${server.url}`);
 }

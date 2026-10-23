@@ -8,3 +8,4 @@ Verify every change with `cd demo && npm run check` (it also runs the framework'
 It must print "All good" before you call the work done.
 When changing `framework/mini/`, add or update a test in `framework/tests/index.html`
 (browser) or `framework/tests/*.test.mjs` (Node) first.
+Then rebuild its production copy with `node ../framework/tools/release.mjs` from `demo/` (check fails until you do).

@@ -15,5 +15,8 @@
   "include": [
     "mini",
     "tests/*.js"
+  ],
+  "exclude": [
+    "mini/mini.min.js"
   ]
 }

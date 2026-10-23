@@ -1,5 +1,6 @@
 // Run the shared user flows against every implementation.
-//   node tools/flows.mjs [todo|crm|bench] [mini|react|vue|mini-vite] [--flows path/to/flows.js]
+//   node tools/flows.mjs [todo|crm|bench] [mini|react|vue|mini-vite] [--flows path/to/flows.js] [--deploy]
+//   --deploy: mini loads its no-build production copy (mini.min.js), as measure.mjs loads it
 // Exits non-zero if any flow fails anywhere.
 
 import { findChrome, loadPage, parseResults } from '../../framework/tools/chrome.mjs';
@@ -17,7 +18,7 @@ if (!chrome) throw new Error('Chrome not found (set CHROME_PATH)');
 let failures = 0;
 for (const app of apps.length ? apps : ['todo', 'crm', 'bench']) {
   for (const impl of impls.length ? impls : IMPLS) {
-    const server = await startServer({ app, impl, flows });
+    const server = await startServer({ app, impl, flows, deploy: args.includes('--deploy') });
     try {
       const { dom, consoleLines } = await loadPage(chrome, `${server.url}/__mini/flows.html`);
       const results = parseResults(dom);

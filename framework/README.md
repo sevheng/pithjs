@@ -4,7 +4,7 @@ A tiny web framework built on native browser tech: **no dependencies, no build s
 Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading and forms.
 
 **Size budget: 10 KB.** The whole framework (`'mini'`, every export), built and gzipped, must stay within
-10 KB (10,000 bytes); it's 9.5 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
+10 KB (10,000 bytes); it's 9.6 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
 over budget, so a new feature has to pay for itself. Apps usually ship less, since the build drops what
 they don't use. Only what most apps need, and is easy to get wrong, belongs in it; the rest (UI widgets,
 animation helpers beyond `transition()`) is app code an AI agent can write from the browser's own APIs.
@@ -12,7 +12,7 @@ animation helpers beyond `transition()`) is app code an AI agent can write from 
 ## This folder
 
 ```
-mini/        the framework (import it as 'mini')
+mini/        the framework (import it as 'mini'); mini.min.js is its one-file production copy (tools/release.mjs)
 tools/       dev (Vite), build (Vite), the no-build server, check, see, new: run them from a project folder
 tests/       framework tests, the test harness ('mini/testing'), and the pages check/see use
 docs/        errors.md: every warning and error code with its fix
@@ -110,8 +110,28 @@ and W064–W066 name routes and URLs that couldn't be prerendered.
 
 `npm run preview` serves it, and `npm run check -- --build` runs every check against it
 (and checks every route was prerendered).
-Measured in `../compare`: a bundled Mini app is ready 19–23% sooner than the same app in Vue on a slow phone.
-Unbuilt Mini still works in production, and it loads faster than React.
+Measured in `../compare`: a bundled Mini app is ready 15–21% sooner than the same app in Vue on a slow phone.
+
+### Deploying without a build
+
+You can also deploy the project folder as it is, with no build tool. Copy `framework/mini/mini.min.js` to
+`/mini/mini.min.js` on the host, then change two things in the deployed `index.html`: the import map
+points at it, and it is Mini's only preload.
+
+```html
+<script type="importmap">{ "imports": { "mini": "/mini/mini.min.js" } }</script>
+<link rel="modulepreload" href="/mini/mini.min.js">   <!-- instead of /mini/index.js, /mini/signal.js, ... -->
+```
+
+`mini.min.js` is the whole framework in one minified file, without the dev-only code (warnings, the
+state recording): ~10 KB gzipped and one request, instead of ~30 KB in ten files. It's built once and
+committed, so deploying needs nothing installed. `forDeploy(html)` in `tools/release.mjs` makes those
+two edits. Keep `/mini/index.js` in development so warnings stay on. In `../compare`, a site deployed this
+way is ready 3–15% sooner than Vue. It's 0–17% behind `npm run build`, which also bundles the app's own
+files and prerenders.
+
+Changing `mini/`? Run `node ../framework/tools/release.mjs` from `demo/` to rebuild the copy;
+`npm run check` fails until you do.
 
 The dev server sends `index.html` for unknown paths, so reloading on `/todos` works. `npm run preview`
 sends `dist/404.html` (the plain app shell) instead, when it exists. On a real host, turn on the
