@@ -44,7 +44,8 @@ results.environment = {
   date: new Date().toISOString(),
   chrome: (await (await browser.newPage()).evaluate('navigator.userAgent')).match(/Chrome\/[\d.]+/)?.[0],
   node: process.version,
-  runs: RUNS,
+  // A run of only one part keeps the other part's settings (results are merged into the same file).
+  runs: want('load') ? RUNS : results.environment?.runs,
 };
 
 // Turn off Mini's dev warnings for measurements (the server injects nothing into React/Vue).

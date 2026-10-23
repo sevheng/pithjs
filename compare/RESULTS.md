@@ -1,6 +1,6 @@
 # Results
 
-Measured 2026-10-23 with Chrome/155.0.0.0, Node v26.10.0. Medians of 5 runs (load) and 10 runs × 3 pages × 4 rotated rounds (runtime).
+Measured 2026-10-23 with Chrome/155.0.0.0, Node v26.10.0. Medians of 9 runs (load) and 10 runs × 3 pages × 4 rotated rounds (runtime).
 
 ## Load on a slow phone
 

@@ -3,7 +3,7 @@
     "date": "2026-10-23T09:21:12.433Z",
     "chrome": "Chrome/155.0.0.0",
     "node": "v26.10.0",
-    "runs": 5
+    "runs": 9
   },
   "runtime": {
     "mini": {
@@ -95,7 +95,7 @@
     }
   },
   "load": {
-    "todo · mini · h1": {
+    "todo \u00b7 mini \u00b7 h1": {
       "app": "todo",
       "impl": "mini",
       "protocol": "http/1.1",
@@ -107,7 +107,7 @@
       "jsFiles": 3,
       "requests": 6
     },
-    "todo · mini · h2": {
+    "todo \u00b7 mini \u00b7 h2": {
       "app": "todo",
       "impl": "mini",
       "protocol": "h2",
@@ -119,7 +119,7 @@
       "jsFiles": 3,
       "requests": 6
     },
-    "todo · mini-vite · h1": {
+    "todo \u00b7 mini-vite \u00b7 h1": {
       "app": "todo",
       "impl": "mini-vite",
       "protocol": "http/1.1",
@@ -131,7 +131,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · mini-vite · h2": {
+    "todo \u00b7 mini-vite \u00b7 h2": {
       "app": "todo",
       "impl": "mini-vite",
       "protocol": "h2",
@@ -143,7 +143,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · react · h1": {
+    "todo \u00b7 react \u00b7 h1": {
       "app": "todo",
       "impl": "react",
       "protocol": "http/1.1",
@@ -155,7 +155,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · react · h2": {
+    "todo \u00b7 react \u00b7 h2": {
       "app": "todo",
       "impl": "react",
       "protocol": "h2",
@@ -167,7 +167,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · vue · h1": {
+    "todo \u00b7 vue \u00b7 h1": {
       "app": "todo",
       "impl": "vue",
       "protocol": "http/1.1",
@@ -179,7 +179,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · vue · h2": {
+    "todo \u00b7 vue \u00b7 h2": {
       "app": "todo",
       "impl": "vue",
       "protocol": "h2",
@@ -191,7 +191,7 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "crm · mini · h1": {
+    "crm \u00b7 mini \u00b7 h1": {
       "app": "crm",
       "impl": "mini",
       "protocol": "http/1.1",
@@ -203,7 +203,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm · mini · h2": {
+    "crm \u00b7 mini \u00b7 h2": {
       "app": "crm",
       "impl": "mini",
       "protocol": "h2",
@@ -215,7 +215,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm · mini-vite · h1": {
+    "crm \u00b7 mini-vite \u00b7 h1": {
       "app": "crm",
       "impl": "mini-vite",
       "protocol": "http/1.1",
@@ -227,7 +227,7 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm · mini-vite · h2": {
+    "crm \u00b7 mini-vite \u00b7 h2": {
       "app": "crm",
       "impl": "mini-vite",
       "protocol": "h2",
@@ -239,7 +239,7 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm · react · h1": {
+    "crm \u00b7 react \u00b7 h1": {
       "app": "crm",
       "impl": "react",
       "protocol": "http/1.1",
@@ -251,7 +251,7 @@
       "jsFiles": 4,
       "requests": 8
     },
-    "crm · react · h2": {
+    "crm \u00b7 react \u00b7 h2": {
       "app": "crm",
       "impl": "react",
       "protocol": "h2",
@@ -263,7 +263,7 @@
       "jsFiles": 4,
       "requests": 8
     },
-    "crm · vue · h1": {
+    "crm \u00b7 vue \u00b7 h1": {
       "app": "crm",
       "impl": "vue",
       "protocol": "http/1.1",
@@ -275,7 +275,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm · vue · h2": {
+    "crm \u00b7 vue \u00b7 h2": {
       "app": "crm",
       "impl": "vue",
       "protocol": "h2",
@@ -287,7 +287,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm/customers · mini · h1": {
+    "crm/customers \u00b7 mini \u00b7 h1": {
       "app": "crm/customers",
       "impl": "mini",
       "protocol": "http/1.1",
@@ -299,7 +299,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm/customers · mini · h2": {
+    "crm/customers \u00b7 mini \u00b7 h2": {
       "app": "crm/customers",
       "impl": "mini",
       "protocol": "h2",
@@ -311,7 +311,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm/customers · mini-vite · h1": {
+    "crm/customers \u00b7 mini-vite \u00b7 h1": {
       "app": "crm/customers",
       "impl": "mini-vite",
       "protocol": "http/1.1",
@@ -323,7 +323,7 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm/customers · mini-vite · h2": {
+    "crm/customers \u00b7 mini-vite \u00b7 h2": {
       "app": "crm/customers",
       "impl": "mini-vite",
       "protocol": "h2",
@@ -335,7 +335,7 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm/customers · react · h1": {
+    "crm/customers \u00b7 react \u00b7 h1": {
       "app": "crm/customers",
       "impl": "react",
       "protocol": "http/1.1",
@@ -347,7 +347,7 @@
       "jsFiles": 4,
       "requests": 8
     },
-    "crm/customers · react · h2": {
+    "crm/customers \u00b7 react \u00b7 h2": {
       "app": "crm/customers",
       "impl": "react",
       "protocol": "h2",
@@ -359,7 +359,7 @@
       "jsFiles": 4,
       "requests": 8
     },
-    "crm/customers · vue · h1": {
+    "crm/customers \u00b7 vue \u00b7 h1": {
       "app": "crm/customers",
       "impl": "vue",
       "protocol": "http/1.1",
@@ -371,7 +371,7 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm/customers · vue · h2": {
+    "crm/customers \u00b7 vue \u00b7 h2": {
       "app": "crm/customers",
       "impl": "vue",
       "protocol": "h2",
