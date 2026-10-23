@@ -273,6 +273,39 @@ export default async function (t) {
     }
   });
 
+  await test('router: the error option replaces the error view, for a page that throws and one that fails to load', async () => {
+    let fail = true;
+    let loads = 0;
+    const consoleError = console.error;
+    console.error = () => {};
+    try {
+      const routes = {
+        [start]: () => {
+          if (fail) throw new Error('page broke');
+          return html`<p>page ok</p>`;
+        },
+        '/__pith/err/load': { load: () => (++loads === 1 ? Promise.reject(new Error('offline')) : Promise.resolve({ default: () => html`<p>loaded now</p>` })) },
+        '*': () => 'nf',
+      };
+      const error = (err, retry) => html`<div class="mine" role="alert"><h1>Oops: ${err.message}</h1><button type="button" @click=${retry}>Retry</button></div>`;
+      await withRouter(routes, { error }, async (router) => {
+        await until(() => text().includes('Oops: page broke'));
+        eq(sandbox.querySelector('#outlet .mine h1').textContent, 'Oops: page broke');
+        fail = false;
+        sandbox.querySelector('#outlet .mine button').click();
+        await until(() => text().includes('page ok'));
+
+        router.navigate('/__pith/err/load');
+        await until(() => text().includes('Oops: offline'));
+        sandbox.querySelector('#outlet .mine button').click();
+        await until(() => text().includes('loaded now'));
+        eq(loads, 2);
+      });
+    } finally {
+      console.error = consoleError;
+    }
+  });
+
   await test('router: a later error in a page hole shows the error view', async () => {
     const boom = signal(false);
     const consoleError = console.error;

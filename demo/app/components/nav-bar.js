@@ -1,5 +1,6 @@
 import { define, html, signal } from 'pith';
 import { router } from '../router.js';
+import { brandMark } from '../brand.js';
 
 const links = [
   ['/', 'Home'],
@@ -31,7 +32,7 @@ define('nav-bar', () => {
 
   return html`
     <header class="site-header">
-      <a class="brand" href="/">⚡ Pith</a>
+      <a class="brand" href="/">${brandMark()} Pith</a>
       <nav aria-label="Main">
         <ul class="nav-links">
           ${links.map(([href, label]) => html`

@@ -1,5 +1,6 @@
-import { createRouter } from 'pith';
+import { createRouter, html } from 'pith';
 import { session } from './store.js';
+import { statusPage } from './brand.js';
 
 // The settings pages share one layout (side nav + a display name field). It downloads with the first
 // settings page, and stays mounted while you move between them.
@@ -27,5 +28,16 @@ export const router = createRouter(
     focus: '#main',
     // Routes marked `auth: true` need a signed-in visitor; others go to the profile page with a notice.
     guard: (to) => (to.route.auth && !session.signedIn.value ? '/settings/profile?denied=1' : true),
+    // A page whose code didn't load (offline, a new deploy) or that crashed: the rest of the app still works.
+    error: (err, retry) => statusPage({
+      code: 'Error',
+      title: 'Something went wrong',
+      text: "This page didn't load or hit a bug. The rest of the site still works.",
+      detail: err instanceof Error ? err.message : String(err),
+      actions: html`
+        <button class="btn primary" type="button" @click=${retry}>Try again</button>
+        <a class="btn" href="/">Go home</a>
+      `,
+    }),
   }
 );

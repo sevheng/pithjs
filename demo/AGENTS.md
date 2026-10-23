@@ -265,7 +265,8 @@ with `router.setQuery({ q })` (no re-render). Use it for filters and search boxe
 For a repeated key (`?tag=a&tag=b`): `router.queryAll('tag')` → `['a', 'b']`, and `router.setQuery({ tag: ['a', 'b'] })`.
 Navigate in code with `router.navigate('/path')` (import `router` from `app/router.js`). Plain `<a href="/path">` links just work.
 `router.preload('/checkout')` downloads a page's code ahead of time (e.g. the next step of a form).
-If a page's code fails to load, the router shows an error with a "Try again" button.
+If a page's code fails to load, or a page crashes, the router shows an error with a "Try again" button.
+Your own (e.g. branded) view: `createRouter(routes, { error: (err, retry) => html`...` })`; the 404 page is the `'*'` route.
 
 **Prerendering `:param` pages** (`prerender.mjs`, next to `index.html`, optional): list the real URLs for
 `npm run build` to turn into HTML files. It runs in Node at build time, like `api/*.mjs`:

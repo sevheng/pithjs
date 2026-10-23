@@ -362,6 +362,8 @@ const router = createRouter({
   '*': { title: 'Not found', load: () => import('./pages/not-found.js') },
 }, {
   guard: (to) => (to.route.auth && !store.user.value ? `/login?next=${encodeURIComponent(to.path)}` : true),
+  // Optional: your own view for a page whose code didn't load or that crashed (default: a heading + Try again).
+  error: (err, retry) => html`<h1>Something went wrong</h1><button @click=${retry}>Try again</button>`,
 });
 
 // layouts/settings.js

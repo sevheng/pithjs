@@ -5,7 +5,7 @@ import { flow } from 'pith/testing';
 
 flow('home: counter goes up and the double follows', async (app) => {
   await app.go('/');
-  await app.see('Simple is fast.');
+  await app.see('The essential core of a web app.');
   await app.see('Double: 10');
   await app.click('Increase');
   await app.see('Double: 12');
@@ -72,7 +72,7 @@ flow('navigation: links, title, and the back button', async (app) => {
   app.expect(app.document.title === 'Todos · Pith', `title should be "Todos · Pith", got "${app.document.title}"`);
   await app.back();
   await app.expectPath('/');
-  await app.see('Simple is fast.');
+  await app.see('The essential core of a web app.');
 });
 
 flow('navigation: unknown URL shows not found, with a way home', async (app) => {
@@ -92,7 +92,7 @@ const downloaded = (app, name) =>
 
 flow('lazy loading: a page downloads its code only when it is needed', async (app) => {
   await app.go('/');
-  await app.see('Simple is fast.');
+  await app.see('The essential core of a web app.');
   app.expect(downloaded(app, 'home'), 'home.js should be downloaded on /');
   app.expect(!downloaded(app, 'todos'), 'todos.js should not be downloaded before it is needed');
   app.expect(!downloaded(app, 'todo-list'), 'todo-list.js should not be downloaded yet');
@@ -103,7 +103,7 @@ flow('lazy loading: a page downloads its code only when it is needed', async (ap
 
 flow('lazy loading: pointing at a link starts downloading its page', async (app) => {
   await app.go('/');
-  await app.see('Simple is fast.');
+  await app.see('The essential core of a web app.');
   app.expect(!downloaded(app, 'about'), 'about.js should not be downloaded yet');
   const link = app.queryAll('nav a').find((a) => a.textContent.trim() === 'About');
   link.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));

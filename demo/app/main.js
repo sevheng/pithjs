@@ -11,7 +11,7 @@ root(() => {
     <nav-bar></nav-bar>
     <main id="main" class="page" tabindex="-1">${router.view}</main>
     <footer class="site-footer">
-      Built with Pith · no dependencies · no build step
+      Built with Pith · no runtime dependencies · no build step
     </footer>
   `);
 });

@@ -38,19 +38,21 @@ const parseQuery = (search) => Object.fromEntries(new URLSearchParams(search));
  *   prefetch?: boolean,
  *   loading?: () => unknown,
  *   guard?: (to: GuardTarget) => true | string,
+ *   error?: (err: unknown, retry: () => void) => unknown,
  * }} [options]
  *   title: formats document.title · focus: selector focused after navigation ·
  *   transitions: animate with View Transitions · prefetch: load a page's code on link hover/focus ·
  *   loading: shown only on first visit while the page's code downloads ·
- *   guard: runs before every page change; return true to allow it or a path to redirect there
+ *   guard: runs before every page change; return true to allow it or a path to redirect there ·
+ *   error: the view for a page whose code failed to load or that threw (default: a heading and Try again)
  */
 export function createRouter(
   routes,
-  { title = (t) => t, focus = null, transitions = true, prefetch = true, loading = () => null, guard = null } = {}
+  { title = (t) => t, focus = null, transitions = true, prefetch = true, loading = () => null, guard = null, error: errorOption = null } = {}
 ) {
   // Made inside a setup: its signals aren't that component's state.
   if (DEV && recording()) {
-    return silently(() => createRouter(routes, { title, focus, transitions, prefetch, loading, guard }));
+    return silently(() => createRouter(routes, { title, focus, transitions, prefetch, loading, guard, error: errorOption }));
   }
   const normalize = (pattern, route) => {
     const r = typeof route === 'function' ? { view: route } : route;
@@ -180,13 +182,13 @@ export function createRouter(
     if (t) document.title = title(t);
   });
 
-  const errorView = (err, retry) => html`
+  const errorView = errorOption ?? ((/** @type {any} */ err, retry) => html`
     <section class="section narrow" role="alert">
       <h1>This page didn't load</h1>
       <p class="muted">${String(err?.message ?? err)}</p>
       <button class="btn primary" type="button" @click=${retry}>Try again</button>
     </section>
-  `;
+  `);
   const failedView = (route) => errorView(route.error, () => load(route).catch(() => {}));
 
   // Dev only: registry.pages lists the current layout (when it holds state of its own), then the page.
