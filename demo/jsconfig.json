@@ -14,10 +14,10 @@
     "baseUrl": ".",
     "paths": {
       "pith": [
-        "../framework/pith/index.js"
+        "node_modules/pithjs/pith/index.js"
       ],
       "pith/testing": [
-        "../framework/tests/harness.js"
+        "node_modules/pithjs/tests/harness.js"
       ]
     }
   },

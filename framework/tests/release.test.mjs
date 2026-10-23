@@ -21,7 +21,7 @@ test('pith.min.js has no dev-only code (warnings, the state registry)', () => {
 test('pith.min.js is up to date with pith/*.js', async (t) => {
   const result = await checkRelease();
   if (result.skipped) return t.skip(result.skipped);
-  assert.ok(result.ok, 'pith.min.js is stale: run node framework/tools/release.mjs');
+  assert.ok(result.ok, 'pith.min.js is stale: run pith release (npm run release in demo/)');
 });
 
 test('forDeploy points the import map at pith.min.js and preloads just it, instead of every Pith file', () => {

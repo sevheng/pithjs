@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "pith": ["node_modules/pithjs/pith/index.js"],
+      "pith/testing": ["node_modules/pithjs/tests/harness.js"]
+    }
+  },
+  "include": ["app", "tests/*.js"]
+}

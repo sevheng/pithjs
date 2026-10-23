@@ -1,9 +1,27 @@
 {
-  "name": "pith",
+  "name": "pithjs",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A tiny framework built on native web tech. No dependencies, no build step.",
+  "description": "A tiny framework built on native web tech: no runtime dependencies, no build step. Import it as 'pith'.",
+  "bin": {
+    "pith": "tools/cli.mjs"
+  },
+  "exports": {
+    ".": "./pith/index.js",
+    "./testing": "./tests/harness.js",
+    "./min": "./pith/pith.min.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "pith",
+    "tools",
+    "tests",
+    "docs",
+    "template",
+    "AGENTS.md",
+    "README.md"
+  ],
   "scripts": {
     "test": "node --test tests/",
     "check": "node tools/check.mjs",

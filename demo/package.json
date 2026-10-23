@@ -3,21 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Demo app built with Pith (see ../framework).",
+  "description": "Demo app built with Pith (linked from ../framework, like an installed package).",
   "scripts": {
-    "dev": "node ../framework/tools/dev.mjs",
-    "dev:no-build": "node ../framework/tools/dev-server.mjs",
-    "build": "node ../framework/tools/build.mjs",
-    "preview": "node ../framework/tools/dev-server.mjs --dist",
-    "check": "node ../framework/tools/check.mjs",
-    "see": "node ../framework/tools/see.mjs",
-    "new": "node ../framework/tools/new.mjs",
+    "dev": "pith dev",
+    "dev:no-build": "pith serve",
+    "build": "pith build",
+    "preview": "pith preview",
+    "check": "pith check",
+    "see": "pith see",
+    "new": "pith new",
+    "release": "pith release",
     "types": "npx -y -p typescript@5.9.3 tsc -p jsconfig.json"
   },
   "engines": {
     "node": ">=24"
   },
   "devDependencies": {
+    "pithjs": "file:../framework",
     "vite": "8.3.5"
   }
 }

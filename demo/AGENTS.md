@@ -1,15 +1,15 @@
 # AGENTS.md: how to work on a Pith app
 
 You are working on a site built with **Pith**, a tiny framework that runs directly in the browser.
-There is **no build step and no npm dependencies**. Files are served exactly as written.
-This folder (`demo/`) is the app. The framework lives next to it in `../framework/`.
-Run every command from this folder. Read this file fully before changing code.
+There is **no build step and no runtime dependencies**. Files are served exactly as written.
+The framework and its tools come in one dev dependency, `pithjs` (in `node_modules/pithjs/`).
+Run every command from the project folder. Read this file fully before changing code.
 Requires Node 24+ and Chrome/Chromium for checks.
 
 ## The loop (always)
 
 1. Make a change.
-2. Run `npm run check`. Read every ✗ line. Each `[pith W…]`/`[pith E…]` message has a fix in `../framework/docs/errors.md`.
+2. Run `npm run check`. Read every ✗ line. Each `[pith W…]`/`[pith E…]` message has a fix in `node_modules/pithjs/docs/errors.md`.
 3. To see a page, run `npm run see /path`. It prints the page as a text outline and saves a screenshot you can open.
    Add `-- --state` to also print what the route, stores, page and each component hold (by variable name).
    A failing flow prints that state too, under the page outline: read it before changing code.
@@ -21,9 +21,9 @@ Requires Node 24+ and Chrome/Chromium for checks.
 
 | Command | What it does |
 |---|---|
-| `npm install` | once: installs Vite (the only dev dependency) |
+| `npm install` | once: installs Pith's tools (`pithjs`) and Vite, the two dev dependencies |
 | `npm run dev` | Vite dev server on :8000 (`PORT=3000` for another port): reloads on save, CSS updates in place |
-| `npm run dev:no-build` | the same app with no Vite at all (zero install) |
+| `npm run dev:no-build` | the same app with no Vite at all |
 | `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip) |
 | `npm run preview` | serve the built `dist/` locally (unknown paths get `dist/404.html`, the plain shell) |
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
@@ -43,12 +43,13 @@ app/store.js       shared state (signals, saved to localStorage)
 app/pages/*.js     one page per file: export default function XxxPage(params) { return html`...` }
 app/components/*.js  one component per file: define('tag-name', setup)
 styles/main.css    all CSS. Use the existing tokens (var(--accent), etc.) and classes.
-api/*.mjs          dev-only API: api/team.mjs answers /api/team (see "API" below)
+api/*.mjs          dev-only API: api/hello.mjs answers /api/hello (see "API" below)
 prerender.mjs      URLs of :param pages to prerender (build only, runs in Node)
 tests/flows.js     user flows: add one for each new feature
 
-../framework/pith/            the framework. Don't edit it for app features.
-../framework/docs/errors.md   every warning/error code with its fix
+node_modules/pithjs/                  the framework and its tools. Don't edit it.
+node_modules/pithjs/docs/errors.md    every warning/error code with its fix
+node_modules/pithjs/README.md         the full API reference
 ```
 
 Use `npm run new` instead of creating pages or components by hand. It also wires the route.
@@ -71,7 +72,7 @@ visited, or when the user points at a link to it. So:
    not `selected.value === i.id` (that re-runs every row on each change).
    A row replaced by a new object is rebuilt. Only for a big list whose rows change often (a live table),
    make the changing field a signal (`{ id, label: signal('') }`, `${r.label}`) and set `r.label.value`
-   (see framework/README.md, Lists). It costs memory per row, so not by default.
+   (see node_modules/pithjs/README.md, Lists). It costs memory per row, so not by default.
 
 ## Patterns (copy these)
 
@@ -210,7 +211,7 @@ submit focus moves to the first bad field. Also: `signup.values()`, `signup.rese
 `signup.setErrors({ email: '...' })`, `signup.valid.value`. Every field name must be in `initial` (W015, W016).
 
 **Animating removals and reorders:** `transition(() => (todos.value = ...))` plus a unique
-`style=${`view-transition-name: todo-${t.id}`}` on each row (see `app/components/todo-list.js`).
+`style=${`view-transition-name: todo-${t.id}`}` on each row.
 Don't add an animation library, and don't call `document.startViewTransition` yourself (it can stall).
 Appearing items: CSS `@starting-style` or a keyframe animation.
 
@@ -323,10 +324,24 @@ A failing step prints the whole page as an outline, so you can see what is actua
 ## Don'ts
 
 - Don't add npm packages or TypeScript files. Types are JSDoc comments in `.js` files.
-  Vite is the one dev dependency (for `npm run dev` and `npm run build`). App code never imports it.
+  `pithjs` and Vite are the only dev dependencies (tools, `npm run dev` and `npm run build`). App code imports `'pith'` only.
 - Don't set `innerHTML` with data. Use `html` holes, which escape it.
-- Don't edit `../framework/` to fix an app bug. If the framework really is wrong, add a test in
-  `../framework/tests/index.html` first.
+- Don't edit `node_modules/pithjs/` to fix an app bug. If Pith itself is really wrong, write a user flow that
+  shows it, and report it.
 - Don't write your own fetch + loading/error signals or form validation. Use `resource()` and `form()`.
 - Don't use `window.confirm`/`alert`. Use `app/ui.js`, and extend it there if you need more.
 - Don't use `document.querySelector` to update the UI. Change a signal and let the template update.
+
+## This app: the Pith demo
+
+This demo lives in the Pith repo, so `pithjs` is linked from `../framework` (`"pithjs": "file:../framework"`):
+framework changes show up here at once. To change the framework itself, follow `../CLAUDE.md` and
+`../framework/CONTRIBUTING.md`, not the "don't edit" rule above. Everything above this section is
+`../framework/AGENTS.md`, the copy every new project gets (a test keeps the two in sync).
+
+Pages, each showing one part of Pith:
+- Home (`/`): a counter component, `computed`.
+- Todos (`/todos`): a persisted store, `repeat()`, `transition()` animations (`app/components/todo-list.js`), `app/ui.js` confirm and toasts.
+- Team (`/team`, `/team/:id`): `paginated()` from `api/team.mjs`, search kept in `?q=`, member pages prerendered (`prerender.mjs`).
+- Contact (`/contact`): `form()` with server validation (`api/contact.mjs`).
+- About (`/about`): load-speed numbers. Settings (`/settings/*`): a shared layout and a sign-in guard.

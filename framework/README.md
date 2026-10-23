@@ -15,36 +15,51 @@ animation helpers beyond `transition()`) is app code an AI agent can write from 
 
 ```
 pith/        the framework (import it as 'pith'); pith.min.js is its one-file production copy (tools/release.mjs)
-tools/       dev (Vite), build (Vite), the no-build server, check, see, new: run them from a project folder
+tools/       the `pith` command (cli.mjs) and its tools: create, dev, serve, build, check, see, new, release
 tests/       framework tests, the test harness ('pith/testing'), and the pages check/see use
+template/    the starter project `pith create` copies
 docs/        errors.md: every warning and error code with its fix
+AGENTS.md    how to build a Pith app, for AI agents (and people): every new project gets a copy
+CONTRIBUTING.md  how to change the framework itself
 ```
 
-Working on the framework itself: `npm test` (Node) and `npm run check` (adds browser tests and types).
-For changes that affect apps, also run `npm run check` in `../demo`.
+This folder is the `pithjs` package (`package.json`). Working on the framework itself: `npm test` (Node) and
+`npm run check` (adds browser tests and types), then `npm run check` in `../demo`, which uses it like any project.
 
 ## Using Pith in a project
 
-A project sits next to this folder (see `../demo`) and calls the tools from its `package.json`:
+Start a project with `pith create`:
+
+```sh
+npx pithjs create my-app             # once Pith is on npm; from this repo: node framework/tools/cli.mjs create my-app
+cd my-app
+npm install                          # Pith's tools (pithjs) and Vite: the two dev dependencies
+npm run check                        # a new project prints "All good"
+```
+
+It writes `index.html` (import map and preloads), `app/` (router, home and not-found pages, nav bar, `ui.js`),
+`api/hello.mjs`, `styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
+`pithjs` (from this repo, linked as `file:...`) and calls the `pith` command:
 
 ```json
 "scripts": {
-  "dev": "node ../framework/tools/dev.mjs",
-  "dev:no-build": "node ../framework/tools/dev-server.mjs",
-  "build": "node ../framework/tools/build.mjs",
-  "preview": "node ../framework/tools/dev-server.mjs --dist",
-  "check": "node ../framework/tools/check.mjs",
-  "see": "node ../framework/tools/see.mjs",
-  "new": "node ../framework/tools/new.mjs"
+  "dev": "pith dev",
+  "dev:no-build": "pith serve",
+  "build": "pith build",
+  "preview": "pith preview",
+  "check": "pith check",
+  "see": "pith see",
+  "new": "pith new"
 }
 ```
 
 `npm run dev` is Vite with the Pith plugin (`tools/vite-plugin.mjs`). It reloads on save, updates CSS in place,
-and shows errors as an overlay, and it serves `api/` and the test pages at `/__pith/`. It needs `npm install --save-dev vite`.
-`npm run dev:no-build` is the zero-install server: the project folder as-is, the framework at `/pith/`.
+and shows errors as an overlay, and it serves `api/` and the test pages at `/__pith/`.
+`npm run dev:no-build` is the no-build server: the project folder as-is, the framework at `/pith/`, no Vite.
 `check` and `see` always use the no-build server, so their results don't depend on Vite.
 The project's `index.html` maps the imports:
 `<script type="importmap">{ "imports": { "pith": "/pith/index.js" } }</script>`.
+The import name is `'pith'`; the package is `pithjs` (`pith` was taken on npm).
 
 ```sh
 npm run dev                        # → http://localhost:8000  (PORT=3000 npm run dev for another port)
@@ -53,6 +68,9 @@ npm run see /todos [--mobile]      # the page as a text outline + a screenshot
 npm run new page contact -- --nav  # new page, wired into the router and nav
 npm run new component user-card    # new component
 ```
+
+Pith isn't published to npm yet (`package.json` has `"private": true`). To publish, remove that line and run
+`npm publish` in this folder; `pith create` then writes `"pithjs": "^0.1.0"` instead of a `file:` link.
 
 Needs Node 24+ and Chrome/Chromium (set `CHROME_PATH` if it isn't found). Checks run a few headless
 Chromes at a time (a quarter of your CPU cores); `PITH_CHROME_JOBS=2` lowers that on a busy machine.
@@ -136,7 +154,7 @@ two edits. Keep `/pith/index.js` in development so warnings stay on. In `../comp
 way is ready 2–19% sooner than Vue. It's 0–21% behind `npm run build`, which also bundles the app's own
 files and prerenders.
 
-Changing `pith/`? Run `node ../framework/tools/release.mjs` from `demo/` to rebuild the copy;
+Changing `pith/`? Run `npm run release` in `demo/` (`pith release`) to rebuild the copy;
 `npm run check` fails until you do.
 
 The dev server sends `index.html` for unknown paths, so reloading on `/todos` works. `npm run preview`

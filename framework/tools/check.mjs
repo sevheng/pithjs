@@ -288,7 +288,7 @@ if (json) {
   else if (report.release.ok) line(true, 'pith/pith.min.js (no-build production copy) is up to date');
   else {
     problems++;
-    line(false, report.release.error ?? 'pith/pith.min.js is out of date with pith/*.js: run  node ../framework/tools/release.mjs  (from demo/)');
+    line(false, report.release.error ?? 'pith/pith.min.js is out of date with pith/*.js: run  pith release  (npm run release in demo/)');
   }
   if (report.error) {
     problems++;

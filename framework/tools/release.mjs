@@ -2,7 +2,7 @@
 // state registry behind `npm run see --state`) taken out. For deploying a project without a build:
 // pith/*.js are the readable sources with dev help, which a no-build site would otherwise ship to
 // every visitor (~30 KB gzipped and ten requests, instead of ~10 KB and one).
-//   node framework/tools/release.mjs     rewrites it after changing pith/ (check fails while it's stale)
+//   pith release (npm run release in demo/)   rewrites it after changing pith/ (check fails while it's stale)
 // To deploy without a build, point the import map at it and preload just it (forDeploy() does this to
 // index.html). Development keeps using pith/index.js, so warnings stay on.
 // Needs the project's Vite to regenerate (the committed file needs nothing).

@@ -1,6 +1,6 @@
 # Pith demo
 
-An app built with [Pith](../framework/README.md): Home (counter), Todos (store + lists),
+An app built with [Pith](../framework/README.md), installed like any project (`pithjs`, linked from `../framework`): Home (counter), Todos (store + lists),
 Team (data loading from `/api/team`), Contact (a form with server validation) and About (load speed).
 
 ```sh
