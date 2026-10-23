@@ -13,6 +13,8 @@
 //   8. release: mini/mini.min.js, the no-build production copy, matches mini/*.js (tools/release.mjs)
 // Stages that don't apply (e.g. no app/router.js when run from framework/) are skipped.
 // Flags: --json prints one JSON object (for tools and AI agents).
+//        --browsers also runs the framework tests and user flows in Firefox and WebKit (tools/browsers.mjs;
+//        needs playwright-core in the project, and is skipped without it).
 //        --build builds the app with Vite first (npm run build) and checks the built dist/ instead,
 //        including that every route, and every URL prerender.mjs lists, was prerendered to dist/<path>/index.html.
 // Set CHROME_PATH if Chrome isn't found.
@@ -27,6 +29,7 @@ import { startServer, projectRoot } from './dev-server.mjs';
 import { BUDGET, measureFramework } from './size.mjs';
 import { checkPreloads } from './preloads.mjs';
 import { checkRelease } from './release.mjs';
+import { otherBrowsers } from './browsers.mjs';
 
 const frameworkTests = join(import.meta.dirname, '..', 'tests');
 const project = (...parts) => join(projectRoot, ...parts);
@@ -43,6 +46,7 @@ const hasFlows = existsSync(project('tests', 'flows.js'));
 const PROBLEM = /\[mini |Uncaught|Error|Failed to load/;
 const json = process.argv.includes('--json');
 const built = process.argv.includes('--build');
+const wantBrowsers = process.argv.includes('--browsers');
 
 // --build: the route's HTML file must hold its prerendered page, so it shows before JS runs.
 // Routes that redirect (a `redirect`, or the guard) are left out on purpose; other prerender warnings fail.
@@ -59,7 +63,7 @@ function prerenderProblems(path) {
   return [];
 }
 
-const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null, preloads: null, release: null };
+const report = { ok: true, build: null, node: null, framework: null, flows: null, pages: [], types: null, size: null, preloads: null, release: null, browsers: null };
 
 if (built) {
   const { buildProject } = await import('./build.mjs');
@@ -174,6 +178,10 @@ if (!chrome) {
         report.pages.push({ path, title: `${title} (prerendered file)`, ok: problems.length === 0, problems });
       }
     }
+    if (wantBrowsers) {
+      const other = await otherBrowsers({ base, flows: hasFlows });
+      report.browsers = 'skipped' in other ? { ok: true, ...other } : { ok: other.browsers.every((b) => b.ok), ...other };
+    }
   } finally {
     server.close();
   }
@@ -187,7 +195,7 @@ report.size = await sizeDone;
 report.release = await releaseDone;
 const preloads = checkPreloads();
 report.preloads = preloads.skipped ? { ok: true, ...preloads } : { ok: !preloads.missing.length && !preloads.unused.length, ...preloads };
-report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size, report.preloads, report.release].every((r) => r?.ok);
+report.ok &&= [report.build ?? { ok: true }, report.node, report.framework, report.flows, ...report.pages, report.types, report.size, report.preloads, report.release, report.browsers ?? { ok: true }].every((r) => r?.ok);
 
 // ---------- Output ----------
 if (json) {
@@ -263,6 +271,17 @@ if (json) {
   for (const url of report.preloads.unused ?? []) {
     problems++;
     line(false, `index.html preloads ${url}, which nothing loads at startup: remove that <link rel="modulepreload">`);
+  }
+  if (report.browsers) {
+    console.log('\nOther browsers');
+    if (report.browsers.skipped) skip(report.browsers.skipped);
+    for (const b of report.browsers.browsers ?? []) {
+      if (b.ok) line(true, `${b.name} ${dim(b.version)}: ${b.passed} passed`);
+      for (const f of b.failed) {
+        problems++;
+        line(false, `${b.name}: ${f.includes('\n') ? `${f.split('\n')[0]}\n${indent(f.split('\n').slice(1).join('\n'))}` : f}`);
+      }
+    }
   }
   console.log('\nRelease');
   if (report.release.skipped) skip(report.release.skipped);

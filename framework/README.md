@@ -520,3 +520,9 @@ Errors (`E…`) are always thrown. The full list with fixes is in [docs/errors.m
 ## Browser support
 
 Current Chrome, Edge, Firefox and Safari. No Internet Explorer.
+
+`npm run check` runs in Chrome. `npm run check -- --browsers` also runs the framework tests and the
+project's user flows in Firefox and WebKit (Safari's engine), through Playwright's browser driver. It's
+optional, and is skipped until you install it in the project once:
+`npm install --save-dev playwright-core && npx playwright-core install firefox webkit`.
+Last run (2026-10-23): all 105 framework tests and the demo's 25 flows pass in Firefox 157 and WebKit 27.2.

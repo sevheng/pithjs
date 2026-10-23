@@ -39,13 +39,13 @@ export default async function (t) {
 
   await test('a11y: names unlabeled fields, nameless buttons and links, and images without alt', async () => {
     const p = await page(`<h1>x</h1><input id="name" placeholder="Name"><select></select>
-      <button type="button"></button><a href="/x"><svg></svg></a><img src="cat.png">`);
+      <button type="button"></button><a href="/x"><svg></svg></a><img src="data:,cat">`);
     const problems = p.problems();
     has(problems, /<input#name> has no label: add <label for="name">/);
     has(problems, /<select> has no label/);
     has(problems, /<button> has no name/);
     has(problems, /<a> has no name/);
-    has(problems, /<img src="cat.png"> has no alt/);
+    has(problems, /<img src="data:,cat"> has no alt/);
     eq(problems.length, 5, problems.join('\n'));
     p.done();
   });

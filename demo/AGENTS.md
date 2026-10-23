@@ -27,6 +27,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 | `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip) |
 | `npm run preview` | serve the built `dist/` locally (unknown paths get `dist/404.html`, the plain shell) |
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
+| `npm run check -- --browsers` | also run the framework tests and user flows in Firefox and WebKit (Safari). Needs `playwright-core` installed once (the check says how); skipped otherwise |
 | `npm run check` | Node tests + framework tests + user flows + every route (also at phone width, and for accessibility in light and dark theme) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
 | `npm run types` | only the JSDoc type check (TypeScript via npx, nothing installed) |
 | `npm run see /todos [--mobile] [--state]` | text outline of the page + screenshot in `.mini/screenshots/` (`--state`: what the app holds) |

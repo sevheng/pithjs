@@ -195,6 +195,9 @@ export function createApp(frame) {
         frame.onload = resolve;
         frame.src = path;
       });
+      // Like a person on the page: its window has focus. Without this, Firefox ignores el.focus() in a new
+      // frame once a focused one was removed (each flow gets a fresh frame), so focus checks would fail.
+      frame.contentWindow?.focus();
       // A prerendered page (npm run check -- --build) is static until the app replaces it.
       await waitFor(() => !frame.contentDocument?.querySelector('[data-prerendered]'), {
         message: `go(${quote(path)}): the app never replaced the prerendered HTML. Did app/main.js fail to start?`,
