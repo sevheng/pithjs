@@ -43,6 +43,8 @@ try {
   console.log(problems ? `\nProblems:\n${problems}` : '\nNo errors or warnings.');
   const layout = pick('layout');
   if (layout) console.log(`\nLayout:\n${layout}`);
+  const a11y = pick('a11y');
+  if (a11y) console.log(`\nAccessibility:\n${a11y}`);
   if (jobs.length > 1) console.log(`\nScreenshot: ${shotFile}`);
 } finally {
   server.close();

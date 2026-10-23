@@ -46,7 +46,7 @@ The project's `index.html` maps the imports:
 
 ```sh
 npm run dev                        # → http://localhost:8000  (PORT=3000 npm run dev for another port)
-npm run check                      # everything: tests, user flows, every route, phone layout, types
+npm run check                      # everything: tests, user flows, every route, phone layout, accessibility, types
 npm run see /todos [--mobile]      # the page as a text outline + a screenshot
 npm run new page contact -- --nav  # new page, wired into the router and nav
 npm run new component user-card    # new component
@@ -151,7 +151,9 @@ use it automatically; nginx `try_files $uri $uri/index.html /404.html`, etc.).
   1. Node tests
   2. framework tests in Chrome
   3. the project's user flows (`tests/flows.js`) that click and type like a person
-  4. every route in `app/router.js` (failing on errors, warnings, or sideways scrolling at phone width)
+  4. every route in `app/router.js` (failing on errors, warnings, sideways scrolling at phone width, or
+     accessibility problems: labels, button and link names, alt, ids, one `<h1>`, lang, and text contrast
+     in the light and dark theme; see `tests/a11y.js`)
   5. a type check
   6. the framework's 10 KB size budget
   7. `index.html`'s `<link rel="modulepreload">` list: it must name exactly the modules the app loads at

@@ -32,15 +32,17 @@ async function slot() {
  * Load a URL in a fresh headless profile. Returns the final DOM (or a screenshot) and console lines.
  * @param {string} chrome
  * @param {string} url
- * @param {{ screenshot?: string, width?: number, height?: number }} [options]
+ * @param {{ screenshot?: string, width?: number, height?: number, dark?: boolean }} [options]
+ *   dark: the page sees prefers-color-scheme: dark (its own dark theme, not Chrome's auto-darkening)
  */
-export async function loadPage(chrome, url, { screenshot, width = 1280, height = 900 } = {}) {
+export async function loadPage(chrome, url, { screenshot, width = 1280, height = 900, dark = false } = {}) {
   const release = await slot();
   const profile = mkdtempSync(join(tmpdir(), 'mini-chrome-'));
   const args = [
     '--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run', '--hide-scrollbars',
     `--user-data-dir=${profile}`, '--enable-logging=stderr', '--v=0',
     `--window-size=${width},${height}`, '--virtual-time-budget=120000',
+    ...(dark ? ['--blink-settings=preferredColorScheme=0'] : []),
     screenshot ? `--screenshot=${screenshot}` : '--dump-dom', url,
   ];
   return new Promise((resolve) => {

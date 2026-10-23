@@ -6,14 +6,17 @@
   <style>body { margin: 0; background: #fff; color: #111; } pre { margin: 1rem; }</style>
 </head>
 <body>
-  <!-- Used by `npm run see`: loads ?path= in an iframe and prints its text outline (and with ?state, its state). -->
+  <!-- Used by `npm run see` and `npm run check`: loads ?path= in an iframe and prints its text outline (with ?state,
+       its state), sideways scrolling and accessibility problems (with ?dark, only contrast: the dark-theme pass). -->
   <pre id="outline">Loading…</pre>
   <pre id="state"></pre>
   <pre id="problems"></pre>
   <pre id="layout"></pre>
+  <pre id="a11y"></pre>
   <script type="module">
     import { createFrame, createApp } from './harness.js';
     import { stateText } from './state.js';
+    import { accessibilityProblems } from './a11y.js';
 
     const params = new URLSearchParams(location.search);
     const frame = createFrame({ width: +params.get('width') || 1024, height: +params.get('height') || 768 });
@@ -24,6 +27,7 @@
     if (params.has('state')) document.getElementById('state').textContent = stateText(app.window);
     document.getElementById('problems').textContent = app.problems.join('\n');
     document.getElementById('layout').textContent = findOverflow(app.document);
+    document.getElementById('a11y').textContent = accessibilityProblems(app.document, { contrastOnly: params.has('dark') }).join('\n');
 
     // If the page scrolls sideways, name the innermost elements that stick out past the screen edge.
     function findOverflow(doc) {

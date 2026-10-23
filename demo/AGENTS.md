@@ -27,7 +27,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 | `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip) |
 | `npm run preview` | serve the built `dist/` locally (unknown paths get `dist/404.html`, the plain shell) |
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
-| `npm run check` | Node tests + framework tests + user flows + every route (also at phone width) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
+| `npm run check` | Node tests + framework tests + user flows + every route (also at phone width, and for accessibility in light and dark theme) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
 | `npm run types` | only the JSDoc type check (TypeScript via npx, nothing installed) |
 | `npm run see /todos [--mobile] [--state]` | text outline of the page + screenshot in `.mini/screenshots/` (`--state`: what the app holds) |
 | `npm run new page <name> [--nav]` | new page file + lazy route (+ nav link) |
@@ -312,6 +312,9 @@ A failing step prints the whole page as an outline, so you can see what is actua
 - Icon-only buttons get `aria-label`. Buttons have `type="button"` unless they submit a form.
 - One `<h1>` per page. `npm run check` fails a route that renders none.
 - Pages must not scroll sideways on a phone (390px). `npm run check` names the element that sticks out.
+- Text contrast is at least 4.5:1 (3:1 for large text), in both themes. Fix it in the CSS tokens (`--muted`, etc.), not per element.
+- `npm run check` enforces all of these on every route (plus `alt` on images, unique ids, `<html lang>`), and
+  `npm run see /path` lists them under "Accessibility".
 
 ## Don'ts
 

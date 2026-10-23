@@ -509,7 +509,7 @@
 
     // Per-area test files. Each exports `default async function (t)` and calls t.test(...).
     const helpers = { test, eq, mount, tick, waitUntil, expectWarning, sandbox, warnings };
-    for (const area of ['router', 'component', 'resource', 'replay', 'state-record', 'store']) {
+    for (const area of ['router', 'component', 'resource', 'replay', 'state-record', 'store', 'a11y']) {
       try {
         const mod = await import(`./${area}.tests.js`);
         await mod.default(helpers);

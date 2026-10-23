@@ -5,6 +5,8 @@
 //   4. every route in app/router.js renders, with a title and no errors or [mini] warnings,
 //      and doesn't scroll sideways on a phone-sized screen (390px). :param routes are checked with the
 //      first URL the project's prerender.mjs lists for them (if it lists any).
+//      Accessibility too (tests/a11y.js): labels, button/link names, alt, ids, one <h1>, lang, and text
+//      contrast in the light and the dark theme (prefers-color-scheme: dark).
 //   5. types: JSDoc type check with TypeScript (fetched once by npx; skipped if offline)
 //   6. size: the whole framework, minified + gzipped, stays within its 10 KB budget (tools/size.mjs)
 //   7. preloads: index.html preloads exactly the modules the app loads at startup (tools/preloads.mjs)
@@ -129,14 +131,18 @@ if (!chrome) {
       };
     };
     const phone = (path) => loadPage(chrome, `${base}/__mini/see.html?${new URLSearchParams({ path, width: '390', height: '844' })}`);
+    const dark = (path) => loadPage(chrome, `${base}/__mini/see.html?${new URLSearchParams({ path, dark: '1' })}`, { dark: true });
     const [framework, flows, ...loaded] = await Promise.all([
       suite('/__mini/'),
       hasFlows ? suite('/__mini/flows.html') : null,
       ...PAGES.map((path) => loadPage(chrome, base + path)),
       ...PAGES.map(phone),
+      ...PAGES.map(dark),
     ]);
     const pages = loaded.slice(0, PAGES.length);
-    const phones = loaded.slice(PAGES.length);
+    const phones = loaded.slice(PAGES.length, 2 * PAGES.length);
+    const darks = loaded.slice(2 * PAGES.length);
+    const pick = (dom, id) => unescapeHtml(dom.match(new RegExp(`<pre id="${id}">([\\s\\S]*?)</pre>`))?.[1] ?? '');
     report.framework = framework;
     // Flows exercise the real app, so any console problem during them is a failure too.
     report.flows = flows ? { ...flows, ok: flows.ok && flows.console.length === 0 } : { ok: true, skipped: 'no tests/flows.js in this folder' };
@@ -150,8 +156,13 @@ if (!chrome) {
       if (!title) problems.unshift('the page has no title');
       if (!/<h1[\s>]/.test(dom)) problems.unshift('nothing rendered (no <h1>)');
       if (built && path !== NOT_FOUND) problems.push(...prerenderProblems(path));
-      const layout = unescapeHtml(phones[i].dom.match(/<pre id="layout">([\s\S]*?)<\/pre>/)?.[1] ?? '');
+      const layout = pick(phones[i].dom, 'layout');
       if (layout) problems.push(`on a phone (390px): ${layout}`);
+      const a11y = pick(phones[i].dom, 'a11y').split('\n').filter(Boolean);
+      problems.push(...a11y.map((p) => `accessibility: ${p}`));
+      // Dark theme: only contrast can differ; problems the light theme already has aren't repeated.
+      const darkA11y = pick(darks[i].dom, 'a11y').split('\n').filter((p) => p && !a11y.includes(p));
+      problems.push(...darkA11y.map((p) => `accessibility (dark theme): ${p}`));
       return { path: path === NOT_FOUND ? '(unknown URL)' : path, title, ok: problems.length === 0, problems };
     });
     // --build: the other prerender.mjs URLs only need their file (loading each in Chrome would be slow).
