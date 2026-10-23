@@ -1,4 +1,4 @@
-import { createRouter } from 'mini';
+import { createRouter } from 'pith';
 import { session } from './store.js';
 
 // The settings pages share one layout (side nav + a display name field). It downloads with the first
@@ -21,7 +21,7 @@ export const router = createRouter(
     '*': { title: 'Not found', load: () => import('./pages/not-found.js') },
   },
   {
-    title: (t) => `${t} · Mini`,
+    title: (t) => `${t} · Pith`,
     focus: '#main',
     // Routes marked `auth: true` need a signed-in visitor; others go to the profile page with a notice.
     guard: (to) => (to.route.auth && !session.signedIn.value ? '/settings/profile?denied=1' : true),

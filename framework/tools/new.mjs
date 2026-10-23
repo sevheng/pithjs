@@ -1,4 +1,4 @@
-// Generate files in the shape Mini expects, and wire them up.
+// Generate files in the shape Pith expects, and wire them up.
 //   npm run new page contact            → app/pages/contact.js + a lazy route '/contact'
 //   npm run new page about-us --nav     → same, plus a link in the nav bar
 //   npm run new component user-card     → app/components/user-card.js
@@ -35,7 +35,7 @@ if (kind === 'page') {
   const title = words(name).join(' ');
   const fn = `${words(name).join('')}Page`;
 
-  write(file, `import { html } from 'mini';
+  write(file, `import { html } from 'pith';
 
 export default function ${fn}() {
   return html\`
@@ -62,7 +62,7 @@ export default function ${fn}() {
   const file = `app/components/${name}.js`;
   if (existsSync(join(root, file))) fail(`${file} already exists`);
 
-  write(file, `import { define, html, signal } from 'mini';
+  write(file, `import { define, html, signal } from 'pith';
 
 define('${name}', (props, ctx) => {
   const count = signal(0);

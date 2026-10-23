@@ -31,7 +31,7 @@ export function readRouteTable(root) {
  */
 export const readRoutes = (root) => readRouteTable(root).map((r) => r.path).filter((p) => !p.includes(':'));
 
-/** @param {string} pattern a route key like '/team/:id' → a regex, the same one framework/mini/router.js builds */
+/** @param {string} pattern a route key like '/team/:id' → a regex, the same one framework/pith/router.js builds */
 const patternRegex = (pattern) =>
   new RegExp(`^${pattern.replace(/\/+$/, '').replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/:(\w+)/g, '([^/]+)')}/?$`);
 
@@ -91,13 +91,13 @@ export async function loadPrerenderPaths(root) {
     list = await mod.default();
     if (!Array.isArray(list)) throw new Error(`its default export returned ${typeof list}, not an array of URLs`);
   } catch (err) {
-    return { paths: [], warnings: [`[mini W066] prerender.mjs failed, so no :param pages were prerendered: ${err?.message ?? err}`] };
+    return { paths: [], warnings: [`[pith W066] prerender.mjs failed, so no :param pages were prerendered: ${err?.message ?? err}`] };
   }
   const paths = new Set();
   const warnings = [];
   for (const url of list) {
     const why = badUrl(url);
-    if (why) warnings.push(`[mini W065] prerender.mjs listed ${JSON.stringify(url)}, which ${why}, so it wasn't prerendered.`);
+    if (why) warnings.push(`[pith W065] prerender.mjs listed ${JSON.stringify(url)}, which ${why}, so it wasn't prerendered.`);
     else paths.add(/** @type {string} */ (url).replace(/(.)\/+$/, '$1'));
   }
   return { paths: [...paths], warnings };
@@ -116,7 +116,7 @@ export async function prerenderTargets(root) {
     if (targets.some((t) => t.path === path)) continue;
     const match = matchRoute(table, path);
     if (match) targets.push({ path, route: match.route, extra: true });
-    else warnings.push(`[mini W064] ${path} matches no route in app/router.js, so it wasn't prerendered.`);
+    else warnings.push(`[pith W064] ${path} matches no route in app/router.js, so it wasn't prerendered.`);
   }
   return { targets, warnings };
 }

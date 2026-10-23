@@ -6,7 +6,7 @@
     "runs": 5
   },
   "runtime": {
-    "mini": {
+    "pith": {
       "create 1,000 rows": 76,
       "replace 1,000 rows": 78.5,
       "update every 10th row": 26,
@@ -17,7 +17,7 @@
       "append 1,000 rows": 83.2,
       "clear 1,000 rows": 8.6
     },
-    "mini-vite": {
+    "pith-vite": {
       "create 1,000 rows": 79.3,
       "replace 1,000 rows": 78.6,
       "update every 10th row": 22.7,
@@ -52,13 +52,13 @@
     }
   },
   "memory": {
-    "mini": {
+    "pith": {
       "ready": 0.58,
       "1,000 rows": 1.62,
       "10,000 rows": 8.92,
       "after 5 create/clear": 0.79
     },
-    "mini-vite": {
+    "pith-vite": {
       "ready": 0.56,
       "1,000 rows": 1.6,
       "10,000 rows": 8.89,
@@ -78,9 +78,9 @@
     }
   },
   "load": {
-    "todo · mini · h1": {
+    "todo · pith · h1": {
       "app": "todo",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "http/1.1",
       "fcp": 716,
       "lcp": 716,
@@ -90,9 +90,9 @@
       "jsFiles": 11,
       "requests": 14
     },
-    "todo · mini · h2": {
+    "todo · pith · h2": {
       "app": "todo",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "h2",
       "fcp": 596,
       "lcp": 596,
@@ -102,9 +102,9 @@
       "jsFiles": 11,
       "requests": 14
     },
-    "todo · mini-vite · h1": {
+    "todo · pith-vite · h1": {
       "app": "todo",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "http/1.1",
       "fcp": 488,
       "lcp": 488,
@@ -114,9 +114,9 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "todo · mini-vite · h2": {
+    "todo · pith-vite · h2": {
       "app": "todo",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "h2",
       "fcp": 492,
       "lcp": 492,
@@ -174,9 +174,9 @@
       "jsFiles": 1,
       "requests": 4
     },
-    "crm · mini · h1": {
+    "crm · pith · h1": {
       "app": "crm",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "http/1.1",
       "fcp": 660,
       "lcp": 968,
@@ -186,9 +186,9 @@
       "jsFiles": 13,
       "requests": 17
     },
-    "crm · mini · h2": {
+    "crm · pith · h2": {
       "app": "crm",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "h2",
       "fcp": 588,
       "lcp": 888,
@@ -198,9 +198,9 @@
       "jsFiles": 13,
       "requests": 17
     },
-    "crm · mini-vite · h1": {
+    "crm · pith-vite · h1": {
       "app": "crm",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "http/1.1",
       "fcp": 484,
       "lcp": 624,
@@ -210,9 +210,9 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm · mini-vite · h2": {
+    "crm · pith-vite · h2": {
       "app": "crm",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "h2",
       "fcp": 488,
       "lcp": 624,
@@ -270,9 +270,9 @@
       "jsFiles": 5,
       "requests": 9
     },
-    "crm/customers · mini · h1": {
+    "crm/customers · pith · h1": {
       "app": "crm/customers",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "http/1.1",
       "fcp": 656,
       "lcp": 988,
@@ -282,9 +282,9 @@
       "jsFiles": 13,
       "requests": 17
     },
-    "crm/customers · mini · h2": {
+    "crm/customers · pith · h2": {
       "app": "crm/customers",
-      "impl": "mini",
+      "impl": "pith",
       "protocol": "h2",
       "fcp": 576,
       "lcp": 900,
@@ -294,9 +294,9 @@
       "jsFiles": 13,
       "requests": 17
     },
-    "crm/customers · mini-vite · h1": {
+    "crm/customers · pith-vite · h1": {
       "app": "crm/customers",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "http/1.1",
       "fcp": 472,
       "lcp": 628,
@@ -306,9 +306,9 @@
       "jsFiles": 3,
       "requests": 7
     },
-    "crm/customers · mini-vite · h2": {
+    "crm/customers · pith-vite · h2": {
       "app": "crm/customers",
-      "impl": "mini-vite",
+      "impl": "pith-vite",
       "protocol": "h2",
       "fcp": 484,
       "lcp": 644,

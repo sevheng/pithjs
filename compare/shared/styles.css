@@ -108,7 +108,7 @@ main:focus { outline: none; }
 .lead { font-size: 1.2rem; color: var(--muted); max-width: 40ch; }
 
 /* ---------- Layout ---------- */
-nav-bar, mini-counter, todo-list { display: block; }
+nav-bar, pith-counter, todo-list { display: block; }
 
 .site-header {
   display: flex;

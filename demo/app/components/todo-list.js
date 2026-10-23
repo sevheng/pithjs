@@ -1,4 +1,4 @@
-import { define, html, repeat, signal, computed, transition } from 'mini';
+import { define, html, repeat, signal, computed, transition } from 'pith';
 import { confirm, toast } from '../ui.js';
 import { todoStore } from '../store.js';
 

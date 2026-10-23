@@ -1,5 +1,5 @@
 // User flows for spec/todo.md. The same file tests every implementation.
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 flow('starts with the two welcome todos', async (app) => {
   await app.go('/');

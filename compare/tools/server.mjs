@@ -2,13 +2,13 @@
 // HTTP/1.1 (http://) or HTTP/2 (https://, local self-signed cert), plus the shared CRM API.
 //
 //   node tools/server.mjs <app> <impl> [--h2] [--port 8000]
-//   app:  todo | crm | bench          impl: mini | react | vue
+//   app:  todo | crm | bench          impl: pith | react | vue
 //
-// mini is served from source (no build step, as Mini is meant to run); react and vue are served
-// from their Vite production builds (dist/), as they are meant to run. mini-vite is Mini's source
+// pith is served from source (no build step, as Pith is meant to run); react and vue are served
+// from their Vite production builds (dist/), as they are meant to run. pith-vite is Pith's source
 // bundled and minified by Vite (tools/build.mjs), to show what skipping the build costs.
-// --deploy (deploy: true) serves mini as a no-build site is deployed: index.html loads Mini's one-file
-// production copy, mini/mini.min.js (framework/tools/release.mjs), instead of its dev sources.
+// --deploy (deploy: true) serves pith as a no-build site is deployed: index.html loads Pith's one-file
+// production copy, pith/pith.min.js (framework/tools/release.mjs), instead of its dev sources.
 
 import http from 'node:http';
 import http2 from 'node:http2';
@@ -21,7 +21,7 @@ import { forDeploy } from '../../framework/tools/release.mjs';
 const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
 export const APPS = ['todo', 'crm', 'bench'];
-export const IMPLS = ['mini', 'react', 'vue', 'mini-vite', 'mini-before', 'mini-fine'];
+export const IMPLS = ['pith', 'react', 'vue', 'pith-vite', 'pith-before', 'pith-fine'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -37,9 +37,9 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg']);
 
 /** Where an implementation's files are served from. */
 export function appRoot(app, impl) {
-  if (impl === 'mini' || impl === 'mini-before') return join(compare, app, 'mini');
-  if (impl === 'mini-vite') return join(compare, app, 'mini', 'dist');
-  if (impl === 'mini-fine') return join(compare, app, 'mini-fine'); // bench only: fine-grained rows
+  if (impl === 'pith' || impl === 'pith-before') return join(compare, app, 'pith');
+  if (impl === 'pith-vite') return join(compare, app, 'pith', 'dist');
+  if (impl === 'pith-fine') return join(compare, app, 'pith-fine'); // bench only: fine-grained rows
   return join(compare, app, impl, 'dist');
 }
 
@@ -61,21 +61,21 @@ const gzCache = new Map();
 /**
  * @param {{ app: string, impl: string, h2?: boolean, port?: number, flows?: string | null, deploy?: boolean }} options
  *   flows: a different flows file to serve as /tests/flows.js
- *   deploy: impl mini loads mini.min.js (production, no dev warnings), as deployed without a build
+ *   deploy: impl pith loads pith.min.js (production, no dev warnings), as deployed without a build
  * @returns {Promise<{ url: string, close: () => void }>}
  */
 export async function startServer({ app, impl, h2 = false, port = 0, flows = null, deploy = false }) {
   if (!APPS.includes(app) || !IMPLS.includes(impl)) throw new Error(`unknown app/impl: ${app} ${impl}`);
   const root = appRoot(app, impl);
-  // mini-before: the same app on Mini's html.js from before the optimization pass (.mini-before/).
+  // pith-before: the same app on Pith's html.js from before the optimization pass (.pith-before/).
   const mounts = [
-    ['/mini/', impl === 'mini-before' ? join(compare, '.mini-before') : join(framework, 'mini')],
-    ['/__mini/', join(framework, 'tests')],
+    ['/pith/', impl === 'pith-before' ? join(compare, '.pith-before') : join(framework, 'pith')],
+    ['/__pith/', join(framework, 'tests')],
   ];
   const exact = {
     '/styles.css': join(compare, 'shared', 'styles.css'),
     '/tests/flows.js': flows ?? join(compare, 'flows', `${app}.js`),
-    ...(impl === 'mini-fine' ? { '/app/data.js': join(compare, app, 'mini', 'app', 'data.js') } : {}),
+    ...(impl === 'pith-fine' ? { '/app/data.js': join(compare, app, 'pith', 'app', 'data.js') } : {}),
   };
 
   async function resolve(pathname) {
@@ -120,7 +120,7 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
       const ext = extname(file);
       const headers = { 'content-type': TYPES[ext] ?? 'application/octet-stream', 'cache-control': 'no-cache' };
       let data = await readFile(file);
-      const deployed = deploy && impl === 'mini' && ext === '.html';
+      const deployed = deploy && impl === 'pith' && ext === '.html';
       if (deployed) data = Buffer.from(forDeploy(data.toString('utf8')));
       if (COMPRESSIBLE.has(ext) && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '')) {
         const key = `${file}:${(await stat(file)).mtimeMs}${deployed ? ':deploy' : ''}`;
@@ -153,7 +153,7 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
 }
 
 if (import.meta.main) {
-  const [app = 'todo', impl = 'mini'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const [app = 'todo', impl = 'pith'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const portArg = process.argv.indexOf('--port');
   const port = portArg > 0 ? Number(process.argv[portArg + 1]) : 8000;
   const server = await startServer({ app, impl, h2: process.argv.includes('--h2'), port, deploy: process.argv.includes('--deploy') });

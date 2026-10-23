@@ -1,8 +1,8 @@
-// npm run build: a production build of a Mini project with Vite, into dist/.
+// npm run build: a production build of a Pith project with Vite, into dist/.
 //   - bundles each page with its imports (no import waterfall) and minifies everything
 //   - removes code the app doesn't use (e.g. the router in a one-page app)
 //   - fingerprints file names (app-3f9a1c.js), so browsers can cache them forever
-//   - turns Mini's dev warnings off at build time, so their code is dropped too
+//   - turns Pith's dev warnings off at build time, so their code is dropped too
 //   - prerenders each fixed route to dist/<route>/index.html with headless Chrome (see prerender.mjs),
 //     so pages show before JS runs. --no-prerender skips it (it's also skipped if Chrome isn't found).
 // Development stays build-free (npm run dev). Vite is only needed here:
@@ -14,7 +14,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { projectRoot } from './dev-server.mjs';
-import { mini } from './vite-plugin.mjs';
+import { pith } from './vite-plugin.mjs';
 
 // Load Vite from the project (it's the project's dev dependency, not the framework's).
 async function loadVite() {
@@ -33,15 +33,15 @@ async function loadVite() {
  *   onPrerender: gets prerender()'s result (pages written, redirected routes, warnings)
  */
 export async function buildProject({ root = projectRoot, quiet = false, prerender = true, onPrerender } = {}) {
-  if (!existsSync(join(root, 'index.html'))) throw new Error(`No index.html in ${root}: run this from a Mini project folder.`);
+  if (!existsSync(join(root, 'index.html'))) throw new Error(`No index.html in ${root}: run this from a Pith project folder.`);
   const { build } = await loadVite();
   const start = performance.now();
   const result = await build({
     configFile: false,
     root,
     logLevel: quiet ? 'silent' : 'info',
-    define: { 'globalThis.MINI_DEV': 'false' },
-    plugins: [mini({ projectRoot: root })],
+    define: { 'globalThis.PITH_DEV': 'false' },
+    plugins: [pith({ projectRoot: root })],
     build: { outDir: 'dist', emptyOutDir: true },
   });
   if (prerender) {

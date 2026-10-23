@@ -2,9 +2,9 @@
 // capture() is the inline script prerendered pages carry: it holds clicks and typed text made before
 // the app starts, then replays them on the live app once it replaces the [data-prerendered] markup.
 
-import { capture } from '../mini/replay.js';
-import { html } from '../mini/html.js';
-import { root } from '../mini/signal.js';
+import { capture } from '../pith/replay.js';
+import { html } from '../pith/html.js';
+import { root } from '../pith/signal.js';
 
 /** @param {any} t */
 export default async function (t) {

@@ -1,5 +1,5 @@
 // Correctness checks for the benchmark app: every implementation must do exactly the same thing.
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 const rows = (app) => app.queryAll('tbody tr');
 const labelOf = (tr) => tr.querySelector('.lbl').textContent;

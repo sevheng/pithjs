@@ -13,10 +13,10 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "mini": [
-        "../framework/mini/index.js"
+      "pith": [
+        "../framework/pith/index.js"
       ],
-      "mini/testing": [
+      "pith/testing": [
         "../framework/tests/harness.js"
       ]
     }

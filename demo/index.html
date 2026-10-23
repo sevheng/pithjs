@@ -4,26 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Mini: a tiny framework built on native web tech.">
-  <title>Mini</title>
+  <meta name="description" content="Pith: a tiny framework built on native web tech.">
+  <title>Pith</title>
   <script>
-    try { var t = localStorage.getItem('mini-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    try { var t = localStorage.getItem('pith-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
   <link rel="stylesheet" href="/styles/main.css">
   <script type="importmap">
-    { "imports": { "mini": "/mini/index.js" } }
+    { "imports": { "pith": "/pith/index.js" } }
   </script>
   <!-- Preload the app shell so the browser fetches it in parallel. Pages load on demand (see app/router.js). -->
-  <link rel="modulepreload" href="/mini/index.js">
-  <link rel="modulepreload" href="/mini/signal.js">
-  <link rel="modulepreload" href="/mini/dev.js">
-  <link rel="modulepreload" href="/mini/html.js">
-  <link rel="modulepreload" href="/mini/component.js">
-  <link rel="modulepreload" href="/mini/router.js">
-  <link rel="modulepreload" href="/mini/transition.js">
-  <link rel="modulepreload" href="/mini/store.js">
-  <link rel="modulepreload" href="/mini/resource.js">
-  <link rel="modulepreload" href="/mini/form.js">
+  <link rel="modulepreload" href="/pith/index.js">
+  <link rel="modulepreload" href="/pith/signal.js">
+  <link rel="modulepreload" href="/pith/dev.js">
+  <link rel="modulepreload" href="/pith/html.js">
+  <link rel="modulepreload" href="/pith/component.js">
+  <link rel="modulepreload" href="/pith/router.js">
+  <link rel="modulepreload" href="/pith/transition.js">
+  <link rel="modulepreload" href="/pith/store.js">
+  <link rel="modulepreload" href="/pith/resource.js">
+  <link rel="modulepreload" href="/pith/form.js">
   <link rel="modulepreload" href="/app/main.js">
   <link rel="modulepreload" href="/app/router.js">
   <link rel="modulepreload" href="/app/store.js">

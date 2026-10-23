@@ -1,97 +1,97 @@
 {
- "method": "Two feature requests (spec in each task), identical text for every framework. One fresh AI agent per framework and task (same model, no memory of this project), each in its own copy, allowed to edit only that framework's CRM folder, with the same verification tools (build + existing flows). Mini's agents were also pointed to Mini's docs, since no model has Mini in its training data. Graded afterwards with hidden acceptance flows the agents never saw, plus the 11 existing flows for regressions. One run per cell: treat it as a signal, not a statistic.",
+ "method": "Two feature requests (spec in each task), identical text for every framework. One fresh AI agent per framework and task (same model, no memory of this project), each in its own copy, allowed to edit only that framework's CRM folder, with the same verification tools (build + existing flows). Pith's agents were also pointed to Pith's docs, since no model has Pith in its training data. Graded afterwards with hidden acceptance flows the agents never saw, plus the 11 existing flows for regressions. One run per cell: treat it as a signal, not a statistic.",
  "tasks": [
   {
    "name": "Sortable table: hidden tests passed",
-   "mini": "**4/4**",
+   "pith": "**4/4**",
    "react": "**4/4**",
    "vue": "**4/4**"
   },
   {
    "name": "Sortable table: regressions",
-   "mini": "none",
+   "pith": "none",
    "react": "none",
    "vue": "none"
   },
   {
    "name": "Sortable table: tokens / tool calls / time",
-   "mini": "48.7k / 12 / 94 s",
+   "pith": "48.7k / 12 / 94 s",
    "react": "37.8k / 9 / 75 s",
    "vue": "40.4k / 11 / 75 s"
   },
   {
    "name": "Sortable table: lines changed",
-   "mini": "26",
+   "pith": "26",
    "react": "28",
    "vue": "29"
   },
   {
    "name": "Form rules + counter: hidden tests passed",
-   "mini": "**6/6**",
+   "pith": "**6/6**",
    "react": "**6/6**",
    "vue": "**6/6**"
   },
   {
    "name": "Form rules + counter: regressions",
-   "mini": "none",
+   "pith": "none",
    "react": "none",
    "vue": "none"
   },
   {
    "name": "Form rules + counter: tokens / tool calls / time",
-   "mini": "56.2k / 13 / 105 s",
+   "pith": "56.2k / 13 / 105 s",
    "react": "42.9k / 11 / 82 s",
    "vue": "41.9k / 13 / 116 s"
   },
   {
    "name": "Form rules + counter: lines changed",
-   "mini": "18",
+   "pith": "18",
    "react": "10",
    "vue": "11"
   },
   {
    "name": "Round 2 · Search bug fix: hidden tests passed",
-   "mini": "**3/3**",
+   "pith": "**3/3**",
    "react": "**3/3**",
    "vue": "**3/3**"
   },
   {
    "name": "Round 2 · Search bug fix: regressions",
-   "mini": "none",
+   "pith": "none",
    "react": "none",
    "vue": "none"
   },
   {
    "name": "Round 2 · Search bug fix: tokens / tool calls / time",
-   "mini": "34.4k / 5 / 28 s",
+   "pith": "34.4k / 5 / 28 s",
    "react": "33.1k / 4 / 25 s",
    "vue": "33.1k / 5 / 26 s"
   },
   {
    "name": "Round 2 · Search bug fix: lines changed",
-   "mini": "6",
+   "pith": "6",
    "react": "6",
    "vue": "4"
   },
   {
-   "name": "Round 2 · Sortable table (Mini only): hidden tests / tokens / tool calls / time",
-   "mini": "**4/4** · 51.5k / 11 / 63 s",
+   "name": "Round 2 · Sortable table (Pith only): hidden tests / tokens / tool calls / time",
+   "pith": "**4/4** · 51.5k / 11 / 63 s",
    "react": "–",
    "vue": "–"
   },
   {
-   "name": "Round 2 · Form rules + counter (Mini only): hidden tests / tokens / tool calls / time",
-   "mini": "**6/6** · 48.2k / 10 / 54 s",
+   "name": "Round 2 · Form rules + counter (Pith only): hidden tests / tokens / tool calls / time",
+   "pith": "**6/6** · 48.2k / 10 / 54 s",
    "react": "–",
    "vue": "–"
   }
  ],
  "notes": [
-  "Every agent succeeded on its first try, including on Mini, which the model had never seen: its docs and checks were enough.",
-  "Mini cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.",
-  "The Mini form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature.",
-  "Round 2 (2026-10-22, after Mini gained --state and the state block in failing flows; AGENTS.md grew from 244 to 316 lines). Same setup, one run per cell. Bug task: the same planted bug in all three CRMs (search only updated from 2 characters, so clearing the box kept the list filtered), a visible reproduction flow, graded with hidden flows (clearing restores all, one-letter search filters, search + status combine). Failing Mini flows showed `q = \"ada\"` under an empty search box; React and Vue showed only the page outline.",
-  "Bug task result: all three fixed it the same way (removed the 2-character rule, citing the spec) in 4–5 tool calls, at about the same cost (Mini +4%). The bug was found by reading one short file, so the state output had no room to help; a bigger app or a bug spread over several files would be a fairer test of it.",
-  "Mini re-run of the old tasks: sortable table 51.5k tokens (was 48.7k), form 48.2k (was 56.2k): no clear change from the bigger AGENTS.md. Round 1's React and Vue numbers came from an earlier session, possibly another model, so don't compare these Mini numbers with them directly. Times also aren't comparable across sessions."
+  "Every agent succeeded on its first try, including on Pith, which the model had never seen: its docs and checks were enough.",
+  "Pith cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.",
+  "The Pith form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature.",
+  "Round 2 (2026-10-22, after Pith gained --state and the state block in failing flows; AGENTS.md grew from 244 to 316 lines). Same setup, one run per cell. Bug task: the same planted bug in all three CRMs (search only updated from 2 characters, so clearing the box kept the list filtered), a visible reproduction flow, graded with hidden flows (clearing restores all, one-letter search filters, search + status combine). Failing Pith flows showed `q = \"ada\"` under an empty search box; React and Vue showed only the page outline.",
+  "Bug task result: all three fixed it the same way (removed the 2-character rule, citing the spec) in 4–5 tool calls, at about the same cost (Pith +4%). The bug was found by reading one short file, so the state output had no room to help; a bigger app or a bug spread over several files would be a fairer test of it.",
+  "Pith re-run of the old tasks: sortable table 51.5k tokens (was 48.7k), form 48.2k (was 56.2k): no clear change from the bigger AGENTS.md. Round 1's React and Vue numbers came from an earlier session, possibly another model, so don't compare these Pith numbers with them directly. Times also aren't comparable across sessions."
  ]
 }

@@ -1,4 +1,4 @@
-import { html, root } from 'mini';
+import { html, root } from 'pith';
 import { router } from './router.js';
 import './components/nav-bar.js';
 
@@ -11,7 +11,7 @@ root(() => {
     <nav-bar></nav-bar>
     <main id="main" class="page" tabindex="-1">${router.view}</main>
     <footer class="site-footer">
-      Built with Mini · no dependencies · no build step
+      Built with Pith · no dependencies · no build step
     </footer>
   `);
 });

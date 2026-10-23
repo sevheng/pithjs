@@ -1,6 +1,6 @@
 // Tiny static server for development, run from a project folder (npm run dev).
-//   /mini/*     → the framework (framework/mini)
-//   /__mini/*   → framework test pages and the test harness (framework/tests)
+//   /pith/*     → the framework (framework/pith)
+//   /__pith/*   → framework test pages and the test harness (framework/tests)
 //   everything else → the project folder; unknown paths without a file extension get index.html,
 //   so reloading on a route like /todos still works.
 // With --dist (npm run preview), "the project folder" is its dist/ build instead; tests/ and api/
@@ -16,12 +16,12 @@ import { extname, join, normalize, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const frameworkRoot = join(import.meta.dirname, '..');
-// The project being served: the folder npm runs scripts in, or MINI_PROJECT.
-export const projectRoot = process.env.MINI_PROJECT ?? process.cwd();
+// The project being served: the folder npm runs scripts in, or PITH_PROJECT.
+export const projectRoot = process.env.PITH_PROJECT ?? process.cwd();
 let siteRoot = projectRoot;
 let mounts = [
-  ['/mini/', join(frameworkRoot, 'mini')],
-  ['/__mini/', join(frameworkRoot, 'tests')],
+  ['/pith/', join(frameworkRoot, 'pith')],
+  ['/__pith/', join(frameworkRoot, 'tests')],
 ];
 const port = Number(process.env.PORT) || 8000;
 export const types = {
@@ -152,5 +152,5 @@ export function startServer(listenPort = port, { dist = false } = {}) {
 if (import.meta.main) {
   const dist = process.argv.includes('--dist');
   const server = await startServer(port, { dist });
-  console.log(`Mini ${dist ? 'preview' : 'dev'} server: http://localhost:${server.address().port}  (serving ${dist ? join(projectRoot, 'dist') : projectRoot})`);
+  console.log(`Pith ${dist ? 'preview' : 'dev'} server: http://localhost:${server.address().port}  (serving ${dist ? join(projectRoot, 'dist') : projectRoot})`);
 }

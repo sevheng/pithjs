@@ -1,7 +1,7 @@
 // Dialogs and toasts for this app: dialog(), confirm() and toast(), built on the browser's <dialog> and
-// popover. App code, not part of Mini: copy it into your own app and restyle it (see "UI helpers" in
+// popover. App code, not part of Pith: copy it into your own app and restyle it (see "UI helpers" in
 // styles/main.css). Import it from the page or component that uses it, so other pages never load it.
-import { html, root } from 'mini';
+import { html, root } from 'pith';
 
 let ids = 0;
 const canPopover = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
@@ -19,7 +19,7 @@ export function dialog(render, { label } = {}) {
   return new Promise((resolve) => {
     const before = /** @type {HTMLElement | null} */ (document.activeElement);
     const el = document.createElement('dialog');
-    el.className = 'mini-dialog';
+    el.className = 'pith-dialog';
     let done = false;
     /** @param {T} [value] */
     const close = (value) => {
@@ -35,14 +35,14 @@ export function dialog(render, { label } = {}) {
 
     // The body fills the dialog, so a click whose target is the <dialog> itself hit the backdrop.
     const body = document.createElement('div');
-    body.className = 'mini-dialog-body';
+    body.className = 'pith-dialog-body';
     el.append(body);
     const dispose = root((d) => (body.append(html`${render(close)}`), d));
 
     if (label) el.setAttribute('aria-label', label);
     else {
       const heading = body.querySelector('h1, h2, h3, h4, h5, h6');
-      if (heading) el.setAttribute('aria-labelledby', heading.id ||= `mini-dialog-${++ids}`);
+      if (heading) el.setAttribute('aria-labelledby', heading.id ||= `pith-dialog-${++ids}`);
       else console.warn('dialog() has no name: pass { label } or start its content with a heading.');
     }
 
@@ -64,8 +64,8 @@ export function dialog(render, { label } = {}) {
  */
 export async function confirm(message, { ok = 'OK', cancel = 'Cancel', danger = false } = {}) {
   const answer = await dialog((close) => html`
-    <p class="mini-dialog-message">${message}</p>
-    <div class="mini-dialog-actions">
+    <p class="pith-dialog-message">${message}</p>
+    <div class="pith-dialog-actions">
       <button type="button" class="btn" ?autofocus=${danger} @click=${() => close(false)}>${cancel}</button>
       <button type="button" class=${danger ? 'btn primary danger' : 'btn primary'} ?autofocus=${!danger}
         @click=${() => close(true)}>${ok}</button>
@@ -89,7 +89,7 @@ export function toast(message, { type = 'info', timeout = 4000 } = {}) {
   if (!TYPES.includes(type)) console.warn(`toast() type "${type}" is not one of ${TYPES.join(', ')}.`);
   if (!region?.isConnected) {
     region = document.createElement('div');
-    region.className = 'mini-toasts';
+    region.className = 'pith-toasts';
     region.setAttribute('role', 'status');
     region.setAttribute('aria-live', 'polite');
     if (canPopover) region.setAttribute('popover', 'manual');
@@ -104,9 +104,9 @@ export function toast(message, { type = 'info', timeout = 4000 } = {}) {
   const node = root((d) => {
     dispose = d;
     return html`
-      <div class=${`mini-toast ${type}`} role=${type === 'error' ? 'alert' : null}>
-        <p class="mini-toast-text">${message}</p>
-        <button type="button" class="mini-toast-close" aria-label="Dismiss" @click=${() => dismiss()}>×</button>
+      <div class=${`pith-toast ${type}`} role=${type === 'error' ? 'alert' : null}>
+        <p class="pith-toast-text">${message}</p>
+        <button type="button" class="pith-toast-close" aria-label="Dismiss" @click=${() => dismiss()}>×</button>
       </div>
     `.firstElementChild;
   });

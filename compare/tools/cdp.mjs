@@ -7,12 +7,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export async function launch(chromePath) {
-  const profile = mkdtempSync(join(tmpdir(), 'mini-cdp-'));
+  const profile = mkdtempSync(join(tmpdir(), 'pith-cdp-'));
   const child = spawn(chromePath, [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--ignore-certificate-errors',
     '--js-flags=--expose-gc', '--window-size=1280,900',
   ]);
+  // If the script ends without close() (an error, process.exit), don't leave Chrome running.
+  process.on('exit', () => {
+    child.kill('SIGKILL');
+    rmSync(profile, { recursive: true, force: true });
+  });
   const wsUrl = await new Promise((resolve, reject) => {
     let log = '';
     const timer = setTimeout(() => reject(new Error(`Chrome didn't start:\n${log}`)), 30_000);

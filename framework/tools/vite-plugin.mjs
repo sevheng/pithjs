@@ -1,8 +1,8 @@
-// The Mini plugin for Vite, used by both `npm run dev` (tools/dev.mjs) and `npm run build` (tools/build.mjs).
-//   - resolves `import ... from 'mini'` to the framework (and 'mini/testing' to the test harness)
+// The Pith plugin for Vite, used by both `npm run dev` (tools/dev.mjs) and `npm run build` (tools/build.mjs).
+//   - resolves `import ... from 'pith'` to the framework (and 'pith/testing' to the test harness)
 //   - drops index.html's import map and module preloads, which only the no-build server needs
 //   - dev only: serves the project's api/*.mjs (same handler as the no-build server), and the
-//     framework's test pages at /__mini/ plus the raw files they load (/mini/, /tests/)
+//     framework's test pages at /__pith/ plus the raw files they load (/pith/, /tests/)
 
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
@@ -19,12 +19,12 @@ export const stripNoBuildTags = (html) =>
  * @param {{ projectRoot: string }} options
  * @returns {import('vite').Plugin}
  */
-export function mini({ projectRoot }) {
-  // Served as-is, not through Vite: test pages load Mini through their own import map, and must
+export function pith({ projectRoot }) {
+  // Served as-is, not through Vite: test pages load Pith through their own import map, and must
   // share one copy of the harness with the flows file they import.
   const raw = [
-    ['/__mini/', join(framework, 'tests')],
-    ['/mini/', join(framework, 'mini')],
+    ['/__pith/', join(framework, 'tests')],
+    ['/pith/', join(framework, 'pith')],
     ['/tests/', join(projectRoot, 'tests')],
   ];
 
@@ -46,12 +46,12 @@ export function mini({ projectRoot }) {
   }
 
   return {
-    name: 'mini',
+    name: 'pith',
     config: () => ({
       resolve: {
         alias: [
-          { find: /^mini$/, replacement: join(framework, 'mini', 'index.js') },
-          { find: /^mini\/testing$/, replacement: join(framework, 'tests', 'harness.js') },
+          { find: /^pith$/, replacement: join(framework, 'pith', 'index.js') },
+          { find: /^pith\/testing$/, replacement: join(framework, 'tests', 'harness.js') },
         ],
       },
       server: { fs: { allow: [projectRoot, framework] } },

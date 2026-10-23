@@ -4,10 +4,10 @@
 //            per implementation per round, --rounds rounds in rotated order)
 //   memory:  JS heap after load, with 1k / 10k rows, and after create/clear cycles (leak check)
 //
-//   node tools/measure.mjs [load] [runtime] [--runs 5] [--rounds 4] [--source] [--impl mini,mini-fine,react,vue] [--out file.json]
-//   (mini-fine: Mini with fine-grained rows, bench only, runtime only; see README "Fine-grained rows")
-// Writes results/measure.json. Mini runs with dev warnings off (MINI_DEV=false), like the others'
-// production builds. Its load test serves it as deployed without a build: one file, mini.min.js
+//   node tools/measure.mjs [load] [runtime] [--runs 5] [--rounds 4] [--source] [--impl pith,pith-fine,react,vue] [--out file.json]
+//   (pith-fine: Pith with fine-grained rows, bench only, runtime only; see README "Fine-grained rows")
+// Writes results/measure.json. Pith runs with dev warnings off (PITH_DEV=false), like the others'
+// production builds. Its load test serves it as deployed without a build: one file, pith.min.js
 // (framework/tools/release.mjs). --source loads its dev sources instead (ten files, dev code included).
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -22,8 +22,8 @@ const want = (part) => !args.some((a) => ['load', 'runtime'].includes(a)) || arg
 const runsArg = args.indexOf('--runs');
 const RUNS = runsArg >= 0 ? Number(args[runsArg + 1]) : 5;
 const implArg = args.indexOf('--impl');
-const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['mini', 'mini-vite', 'react', 'vue', 'mini-fine'];
-const LOAD_IMPLS = IMPLS.filter((i) => i !== 'mini-fine'); // fine-grained rows exist for the bench app only
+const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['pith', 'pith-vite', 'react', 'vue', 'pith-fine'];
+const LOAD_IMPLS = IMPLS.filter((i) => i !== 'pith-fine'); // fine-grained rows exist for the bench app only
 const DEPLOY = !args.includes('--source');
 const OUT = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'measure.json';
 
@@ -48,8 +48,8 @@ results.environment = {
   runs: want('load') ? RUNS : results.environment?.runs,
 };
 
-// Turn off Mini's dev warnings for measurements (the server injects nothing into React/Vue).
-const prodScript = 'globalThis.MINI_DEV = false;';
+// Turn off Pith's dev warnings for measurements (the server injects nothing into React/Vue).
+const prodScript = 'globalThis.PITH_DEV = false;';
 
 // ---------- Load ----------
 const LOAD_PAGES = [

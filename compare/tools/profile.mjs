@@ -5,12 +5,12 @@ import { findChrome } from '../../framework/tools/chrome.mjs';
 import { launch } from './cdp.mjs';
 import { startServer } from './server.mjs';
 
-const [impl = 'mini', op = 'run'] = process.argv.slice(2);
+const [impl = 'pith', op = 'run'] = process.argv.slice(2);
 const server = await startServer({ app: 'bench', impl });
 const browser = await launch(findChrome());
 const page = await browser.newPage();
 await page.send('Page.enable');
-await page.send('Page.addScriptToEvaluateOnNewDocument', { source: 'globalThis.MINI_DEV = false;' });
+await page.send('Page.addScriptToEvaluateOnNewDocument', { source: 'globalThis.PITH_DEV = false;' });
 const loaded = page.once('Page.loadEventFired');
 await page.send('Page.navigate', { url: `${server.url}/` });
 await loaded;

@@ -1,5 +1,5 @@
 // npm run check -- --browsers: the framework tests and the project's user flows in Firefox and WebKit (Safari's
-// engine) too, not only Chrome. Mini leans on newer browser features (import maps, <dialog>, popover, View
+// engine) too, not only Chrome. Pith leans on newer browser features (import maps, <dialog>, popover, View
 // Transitions), so this catches what Chrome alone wouldn't.
 // Optional, like Vite: it needs Playwright's browser driver in the project, once:
 //   npm install --save-dev playwright-core && npx playwright-core install firefox webkit
@@ -34,7 +34,7 @@ export async function otherBrowsers({ base, flows, root = projectRoot }) {
       continue;
     }
     const result = { name, version: browser.version(), ok: true, passed: 0, failed: [] };
-    for (const [label, path] of [['framework tests', '/__mini/'], ...(flows ? [['user flows', '/__mini/flows.html']] : [])]) {
+    for (const [label, path] of [['framework tests', '/__pith/'], ...(flows ? [['user flows', '/__pith/flows.html']] : [])]) {
       const page = await browser.newPage();
       const errors = [];
       page.on('pageerror', (e) => errors.push(`uncaught: ${e.message}`));

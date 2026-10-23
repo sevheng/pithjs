@@ -1,4 +1,4 @@
-// The inline script prerendered pages carry, built from mini/replay.js: it holds clicks and typed text
+// The inline script prerendered pages carry, built from pith/replay.js: it holds clicks and typed text
 // made before the app starts, and replays them on the live app (see capture() there).
 // Minified with the project's Vite (synchronously, so injectPage can call it as a default), or the raw
 // source if Vite isn't installed. Built once per process.
@@ -6,7 +6,7 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { capture } from '../mini/replay.js';
+import { capture } from '../pith/replay.js';
 import { projectRoot } from './dev-server.mjs';
 
 export const REPLAY_BUDGET = 700; // bytes, minified + gzipped

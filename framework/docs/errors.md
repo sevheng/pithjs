@@ -1,6 +1,6 @@
-# Mini errors and warnings
+# Pith errors and warnings
 
-Every message looks like `[mini W001] ... See docs/errors.md#w001`.
+Every message looks like `[pith W001] ... See docs/errors.md#w001`.
 **Warnings** (`W`) show only on localhost. **Errors** (`E`) are thrown everywhere, because the output would be wrong.
 Each entry shows the mistake, the fix, and why.
 

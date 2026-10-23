@@ -1,4 +1,4 @@
-import { html, resource, fetchJSON } from 'mini';
+import { html, resource, fetchJSON } from 'pith';
 
 /** @param {{ id: string }} params */
 export default function MemberPage({ id }) {

@@ -1,9 +1,9 @@
 // router tests. Called by index.html with the shared helpers.
 
-import { createRouter } from '../mini/router.js';
-import { transition } from '../mini/transition.js';
-import { html } from '../mini/html.js';
-import { root, signal } from '../mini/signal.js';
+import { createRouter } from '../pith/router.js';
+import { transition } from '../pith/transition.js';
+import { html } from '../pith/html.js';
+import { root, signal } from '../pith/signal.js';
 
 /** @param {any} t */
 export default async function (t) {
@@ -30,7 +30,7 @@ export default async function (t) {
     let renders = 0;
     const routes = {
       [start]: () => (renders++, html`<p>start</p>`),
-      '/__mini/q/other': () => 'other',
+      '/__pith/q/other': () => 'other',
       '*': () => 'not found',
     };
     await withRouter(routes, {}, async (router) => {
@@ -62,7 +62,7 @@ export default async function (t) {
       await until(() => qa() === '9');
       eq(renders, 1);
 
-      router.navigate('/__mini/q/other?x=1');
+      router.navigate('/__pith/q/other?x=1');
       await until(() => text() === 'other');
       eq(router.query.value.x, '1');
       eq(router.query.value.a, undefined);
@@ -74,51 +74,51 @@ export default async function (t) {
     const seen = [];
     const routes = {
       [start]: () => 'start',
-      '/__mini/g/old': { redirect: '/__mini/g/new' },
-      '/__mini/g/u/:id': { redirect: ({ id }) => `/__mini/g/user/${id}` },
-      '/__mini/g/user/:id': ({ id }) => `user ${id}`,
-      '/__mini/g/new': () => 'new',
-      '/__mini/g/private': { view: () => 'secret', auth: true },
-      '/__mini/g/login': () => 'login',
+      '/__pith/g/old': { redirect: '/__pith/g/new' },
+      '/__pith/g/u/:id': { redirect: ({ id }) => `/__pith/g/user/${id}` },
+      '/__pith/g/user/:id': ({ id }) => `user ${id}`,
+      '/__pith/g/new': () => 'new',
+      '/__pith/g/private': { view: () => 'secret', auth: true },
+      '/__pith/g/login': () => 'login',
       '*': () => 'not found',
     };
     const guard = (to) => {
       seen.push(to);
-      return to.route.auth && !loggedIn ? `/__mini/g/login?next=${encodeURIComponent(to.path)}` : true;
+      return to.route.auth && !loggedIn ? `/__pith/g/login?next=${encodeURIComponent(to.path)}` : true;
     };
-    history.replaceState(null, '', '/__mini/g/old?keep=1');
+    history.replaceState(null, '', '/__pith/g/old?keep=1');
     await withRouter(routes, { guard }, async (router) => {
       // First load: replaced, not pushed.
-      eq(location.pathname, '/__mini/g/new');
+      eq(location.pathname, '/__pith/g/new');
       eq(text(), 'new');
 
-      router.navigate('/__mini/g/u/7');
+      router.navigate('/__pith/g/u/7');
       await until(() => text() === 'user 7');
-      eq(location.pathname, '/__mini/g/user/7');
+      eq(location.pathname, '/__pith/g/user/7');
 
       // The guard sees path, params, query and the route's own options.
-      router.navigate('/__mini/g/user/8?tab=2');
+      router.navigate('/__pith/g/user/8?tab=2');
       await until(() => text() === 'user 8');
       const last = seen.at(-1);
-      eq(last.path, '/__mini/g/user/8');
+      eq(last.path, '/__pith/g/user/8');
       eq(last.params.id, '8');
       eq(last.query.tab, '2');
-      eq(last.route.pattern, '/__mini/g/user/:id');
+      eq(last.route.pattern, '/__pith/g/user/:id');
 
       // A link click is guarded too.
-      mount(html`<a id="priv" href="/__mini/g/private">private</a>`);
+      mount(html`<a id="priv" href="/__pith/g/private">private</a>`);
       sandbox.querySelector('#priv').click();
       await until(() => text() === 'login');
-      eq(location.pathname, '/__mini/g/login');
-      eq(router.query.value.next, '/__mini/g/private');
+      eq(location.pathname, '/__pith/g/login');
+      eq(router.query.value.next, '/__pith/g/private');
 
       // Back/forward (popstate) is guarded.
-      history.pushState(null, '', '/__mini/g/private');
+      history.pushState(null, '', '/__pith/g/private');
       dispatchEvent(new PopStateEvent('popstate'));
-      await until(() => location.pathname === '/__mini/g/login');
+      await until(() => location.pathname === '/__pith/g/login');
 
       loggedIn = true;
-      router.navigate('/__mini/g/private');
+      router.navigate('/__pith/g/private');
       await until(() => text() === 'secret');
     });
   });
@@ -126,20 +126,20 @@ export default async function (t) {
   await test('router: a redirect loop stops and warns (W020)', async () => {
     const routes = {
       [start]: () => 'start',
-      '/__mini/loop/a': { redirect: '/__mini/loop/b' },
-      '/__mini/loop/b': { redirect: '/__mini/loop/a' },
+      '/__pith/loop/a': { redirect: '/__pith/loop/b' },
+      '/__pith/loop/b': { redirect: '/__pith/loop/a' },
       '*': () => 'not found',
     };
     await withRouter(routes, {}, async (router) => {
-      await expectWarning(/W020/, () => router.navigate('/__mini/loop/a'));
+      await expectWarning(/W020/, () => router.navigate('/__pith/loop/a'));
     });
   });
 
   await test('router: a guard that returns neither true nor a path warns (W022)', async () => {
-    const routes = { [start]: () => 'start', '/__mini/w22': () => 'w22', '*': () => 'not found' };
-    await withRouter(routes, { guard: (to) => to.path !== '/__mini/w22' || false }, async (router) => {
+    const routes = { [start]: () => 'start', '/__pith/w22': () => 'w22', '*': () => 'not found' };
+    await withRouter(routes, { guard: (to) => to.path !== '/__pith/w22' || false }, async (router) => {
       await expectWarning(/W022/, async () => {
-        router.navigate('/__mini/w22');
+        router.navigate('/__pith/w22');
         await until(() => text() === 'w22'); // anything but a string lets the navigation through
       });
     });
@@ -148,14 +148,14 @@ export default async function (t) {
   await test('router: scroll is saved per entry and restored on back/forward; #hash links scroll to it', async () => {
     const before = history.scrollRestoration;
     const tall = (label) => () => html`<p>${label}</p><div style="height:3000px"></div><p id="target">target</p><div style="height:3000px"></div>`;
-    const routes = { [start]: tall('start'), '/__mini/s/a': tall('a'), '/__mini/s/b': tall('b'), '*': () => 'not found' };
+    const routes = { [start]: tall('start'), '/__pith/s/a': tall('a'), '/__pith/s/b': tall('b'), '*': () => 'not found' };
     sandbox.style.display = 'block';
     try {
       await withRouter(routes, {}, async (router) => {
         eq(history.scrollRestoration, 'manual');
         await until(() => text().startsWith('start'));
         scrollTo(0, 500);
-        router.navigate('/__mini/s/a');
+        router.navigate('/__pith/s/a');
         await until(() => text().startsWith('a'));
         eq(scrollY, 0);
         scrollTo(0, 300);
@@ -169,7 +169,7 @@ export default async function (t) {
         await until(() => text().startsWith('a') && scrollY === 300);
 
         // A link to another page's #id scrolls to that element once the page is shown.
-        mount(html`<a id="hashlink" href="/__mini/s/b#target">b</a>`);
+        mount(html`<a id="hashlink" href="/__pith/s/b#target">b</a>`);
         sandbox.querySelector('#hashlink').click();
         await until(() => text().startsWith('b'));
         const top = sandbox.querySelector('#target').getBoundingClientRect().top;
@@ -194,15 +194,15 @@ export default async function (t) {
     const other = (page) => html`<section class="other">${page}</section>`;
     const routes = {
       [start]: () => 'home',
-      '/__mini/l/a': { layout: shell, view: () => (pageRuns++, html`<p>A ${count.value}</p>`) },
-      '/__mini/l/b': { layout: shell, view: () => (pageRuns++, 'B') },
+      '/__pith/l/a': { layout: shell, view: () => (pageRuns++, html`<p>A ${count.value}</p>`) },
+      '/__pith/l/b': { layout: shell, view: () => (pageRuns++, 'B') },
       // Two lazy layouts that load the same module share the layout too.
-      '/__mini/l/c': { layout: { load: () => Promise.resolve({ default: other }) }, view: () => 'C' },
-      '/__mini/l/d': { layout: { load: () => Promise.resolve({ default: other }) }, load: () => Promise.resolve({ default: () => 'D' }) },
+      '/__pith/l/c': { layout: { load: () => Promise.resolve({ default: other }) }, view: () => 'C' },
+      '/__pith/l/d': { layout: { load: () => Promise.resolve({ default: other }) }, load: () => Promise.resolve({ default: () => 'D' }) },
       '*': () => 'not found',
     };
     await withRouter(routes, {}, async (router) => {
-      router.navigate('/__mini/l/a');
+      router.navigate('/__pith/l/a');
       await until(() => sandbox.querySelector('#inner')?.textContent === 'A 0');
       const input = sandbox.querySelector('#li');
       input.value = 'typed';
@@ -214,7 +214,7 @@ export default async function (t) {
       eq(pageRuns, 1);
       eq(shellRuns, 1);
 
-      router.navigate('/__mini/l/b');
+      router.navigate('/__pith/l/b');
       await until(() => sandbox.querySelector('#inner')?.textContent === 'B');
       eq(sandbox.querySelector('#li'), input);
       eq(input.value, 'typed');
@@ -226,16 +226,16 @@ export default async function (t) {
       await until(() => text() === 'home');
       eq(sandbox.querySelector('.shell'), null);
 
-      router.navigate('/__mini/l/a');
+      router.navigate('/__pith/l/a');
       await until(() => sandbox.querySelector('#inner')?.textContent === 'A 1');
       eq(shellRuns, 2);
       eq(pageRuns, 3);
 
-      router.navigate('/__mini/l/c');
+      router.navigate('/__pith/l/c');
       await until(() => sandbox.querySelector('.other')?.textContent === 'C');
       const section = sandbox.querySelector('.other');
       eq(sandbox.querySelector('.shell'), null);
-      router.navigate('/__mini/l/d');
+      router.navigate('/__pith/l/d');
       await until(() => sandbox.querySelector('.other')?.textContent === 'D');
       eq(sandbox.querySelector('.other'), section);
     });
@@ -244,7 +244,7 @@ export default async function (t) {
   await test('router: warns about a layout that is not a function or { load } (W021)', () =>
     expectWarning(/W021/, () => {
       // @ts-expect-error: a wrong layout on purpose
-      createRouter({ '/__mini/w21': { layout: 'shell', view: () => 'x' }, '*': () => 'nf' }, { prefetch: false }).dispose();
+      createRouter({ '/__pith/w21': { layout: 'shell', view: () => 'x' }, '*': () => 'nf' }, { prefetch: false }).dispose();
     }));
 
   await test('router: a page that throws shows an error view, and Try again renders it again', async () => {

@@ -1,9 +1,11 @@
-# Mini
+# Pith
 
 A tiny web framework built on native browser tech: **no dependencies, no build step.**
 Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading and forms.
+The name: the *pith* is the essential core of something, and the core keeps only what's hard to get right.
+(It was called Mini until 2026-10-23; older notes in `../compare` measured the same framework under that name.)
 
-**Size budget: 10 KB.** The whole framework (`'mini'`, every export), built and gzipped, must stay within
+**Size budget: 10 KB.** The whole framework (`'pith'`, every export), built and gzipped, must stay within
 10 KB (10,000 bytes); it's 9.7 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
 over budget, so a new feature has to pay for itself. Apps usually ship less, since the build drops what
 they don't use. Only what most apps need, and is easy to get wrong, belongs in it; the rest (UI widgets,
@@ -12,16 +14,16 @@ animation helpers beyond `transition()`) is app code an AI agent can write from 
 ## This folder
 
 ```
-mini/        the framework (import it as 'mini'); mini.min.js is its one-file production copy (tools/release.mjs)
+pith/        the framework (import it as 'pith'); pith.min.js is its one-file production copy (tools/release.mjs)
 tools/       dev (Vite), build (Vite), the no-build server, check, see, new: run them from a project folder
-tests/       framework tests, the test harness ('mini/testing'), and the pages check/see use
+tests/       framework tests, the test harness ('pith/testing'), and the pages check/see use
 docs/        errors.md: every warning and error code with its fix
 ```
 
 Working on the framework itself: `npm test` (Node) and `npm run check` (adds browser tests and types).
 For changes that affect apps, also run `npm run check` in `../demo`.
 
-## Using Mini in a project
+## Using Pith in a project
 
 A project sits next to this folder (see `../demo`) and calls the tools from its `package.json`:
 
@@ -37,12 +39,12 @@ A project sits next to this folder (see `../demo`) and calls the tools from its 
 }
 ```
 
-`npm run dev` is Vite with the Mini plugin (`tools/vite-plugin.mjs`). It reloads on save, updates CSS in place,
-and shows errors as an overlay, and it serves `api/` and the test pages at `/__mini/`. It needs `npm install --save-dev vite`.
-`npm run dev:no-build` is the zero-install server: the project folder as-is, the framework at `/mini/`.
+`npm run dev` is Vite with the Pith plugin (`tools/vite-plugin.mjs`). It reloads on save, updates CSS in place,
+and shows errors as an overlay, and it serves `api/` and the test pages at `/__pith/`. It needs `npm install --save-dev vite`.
+`npm run dev:no-build` is the zero-install server: the project folder as-is, the framework at `/pith/`.
 `check` and `see` always use the no-build server, so their results don't depend on Vite.
 The project's `index.html` maps the imports:
-`<script type="importmap">{ "imports": { "mini": "/mini/index.js" } }</script>`.
+`<script type="importmap">{ "imports": { "pith": "/pith/index.js" } }</script>`.
 
 ```sh
 npm run dev                        # → http://localhost:8000  (PORT=3000 npm run dev for another port)
@@ -53,11 +55,11 @@ npm run new component user-card    # new component
 ```
 
 Needs Node 24+ and Chrome/Chromium (set `CHROME_PATH` if it isn't found). Checks run a few headless
-Chromes at a time (a quarter of your CPU cores); `MINI_CHROME_JOBS=2` lowers that on a busy machine.
+Chromes at a time (a quarter of your CPU cores); `PITH_CHROME_JOBS=2` lowers that on a busy machine.
 
 ### Production builds
 
-`npm run build` makes `dist/`, using the same Mini plugin as `npm run dev`:
+`npm run build` makes `dist/`, using the same Pith plugin as `npm run dev`:
 - each page is bundled with its imports, so there is no import waterfall;
 - unused code is removed (a one-page app doesn't ship the router);
 - everything is minified and fingerprinted;
@@ -92,7 +94,7 @@ URL was prerendered.
 
 **Clicks before the app starts aren't lost.** Until the app replaces it the prerendered page is static: its
 components don't start (they'd have no props or context yet). A small inline script (~0.7 KB gzipped, only
-in prerendered HTML, not in `'mini'`) keeps what the user does in that moment: clicks on buttons,
+in prerendered HTML, not in `'pith'`) keeps what the user does in that moment: clicks on buttons,
 checkboxes, radios and `<summary>`, and form submits, are held (no page reload) and replayed on the live
 app once it starts, along with typed text and focus. A held click replays only if the live element at the
 same place looks the same (tag and text or `aria-label`), so a page that renders differently drops it
@@ -103,7 +105,7 @@ parsed, before that script runs, aren't caught.
 
 Prerendered pages show the app's starting state (no saved data, default theme toggle). Pages that load
 data from `/api` get what the dev `api/` returned *during the build* baked in: the HTML, and the JSON answers
-of the GETs the page made (a `#mini-data` script). When the app starts, the first `fetchJSON` of each of
+of the GETs the page made (a `#pith-data` script). When the app starts, the first `fetchJSON` of each of
 those URLs uses its baked answer instead of a request, so the data on screen isn't swapped for "Loading…"
 (on a slow phone that flash lasted a whole round trip). Answers are used once, and the ones startup didn't
 use are dropped, so a refetch, a search or "Load more" always asks the server. The baked data is from build
@@ -114,27 +116,27 @@ and W064–W066 name routes and URLs that couldn't be prerendered.
 
 `npm run preview` serves it, and `npm run check -- --build` runs every check against it
 (and checks every route was prerendered).
-Measured in `../compare`: a bundled Mini app is ready 17–21% sooner than the same app in Vue on a slow phone.
+Measured in `../compare`: a bundled Pith app is ready 17–21% sooner than the same app in Vue on a slow phone.
 
 ### Deploying without a build
 
-You can also deploy the project folder as it is, with no build tool. Copy `framework/mini/mini.min.js` to
-`/mini/mini.min.js` on the host, then change two things in the deployed `index.html`: the import map
-points at it, and it is Mini's only preload.
+You can also deploy the project folder as it is, with no build tool. Copy `framework/pith/pith.min.js` to
+`/pith/pith.min.js` on the host, then change two things in the deployed `index.html`: the import map
+points at it, and it is Pith's only preload.
 
 ```html
-<script type="importmap">{ "imports": { "mini": "/mini/mini.min.js" } }</script>
-<link rel="modulepreload" href="/mini/mini.min.js">   <!-- instead of /mini/index.js, /mini/signal.js, ... -->
+<script type="importmap">{ "imports": { "pith": "/pith/pith.min.js" } }</script>
+<link rel="modulepreload" href="/pith/pith.min.js">   <!-- instead of /pith/index.js, /pith/signal.js, ... -->
 ```
 
-`mini.min.js` is the whole framework in one minified file, without the dev-only code (warnings, the
+`pith.min.js` is the whole framework in one minified file, without the dev-only code (warnings, the
 state recording): ~10 KB gzipped and one request, instead of ~30 KB in ten files. It's built once and
 committed, so deploying needs nothing installed. `forDeploy(html)` in `tools/release.mjs` makes those
-two edits. Keep `/mini/index.js` in development so warnings stay on. In `../compare`, a site deployed this
+two edits. Keep `/pith/index.js` in development so warnings stay on. In `../compare`, a site deployed this
 way is ready 2–19% sooner than Vue. It's 0–21% behind `npm run build`, which also bundles the app's own
 files and prerenders.
 
-Changing `mini/`? Run `node ../framework/tools/release.mjs` from `demo/` to rebuild the copy;
+Changing `pith/`? Run `node ../framework/tools/release.mjs` from `demo/` to rebuild the copy;
 `npm run check` fails until you do.
 
 The dev server sends `index.html` for unknown paths, so reloading on `/todos` works. `npm run preview`
@@ -146,7 +148,7 @@ use it automatically; nginx `try_files $uri $uri/index.html /404.html`, etc.).
 
 - **`AGENTS.md`** (in the project) has the rules, patterns and workflow in one file. Claude Code,
   Copilot, Cursor and other AI tools read it automatically (`CLAUDE.md` points to it).
-- **Every mistake has a code.** Messages like `[mini W001]` point to `docs/errors.md`, which shows the fix.
+- **Every mistake has a code.** Messages like `[pith W001]` point to `docs/errors.md`, which shows the fix.
 - **`npm run check` proves it works.** It runs:
   1. Node tests
   2. framework tests in Chrome
@@ -161,29 +163,29 @@ use it automatically; nginx `try_files $uri $uri/index.html /404.html`, etc.).
 
   Add `-- --json` for output tools can read.
 - **`npm run see /path` lets you look without a browser.** It prints headings, links, buttons and
-  inputs as text, flags layout overflow, and saves a screenshot to `.mini/screenshots/`.
+  inputs as text, flags layout overflow, and saves a screenshot to `.pith/screenshots/`.
 - **The state is text too.** `npm run see /path --state` adds what the app holds, by variable name:
   ```
   route /todos
-  store "mini-todos": todos = 3 items [{ id, text, done }, …], filter = "all"
+  store "pith-todos": todos = 3 items [{ id, text, done }, …], filter = "all"
   <todo-list>: draft = "", visible = computed · 3 items [{ id, text, done }, …], left = computed · 3
   ```
   A failing user flow prints the same block under the page outline, so an agent sees *why* a step
-  failed without adding `console.log`s. In dev mode the core records it in `globalThis.__mini`
-  (`mini/dev.js`); in production that code is removed (0 bytes). Names come from the setup or page
+  failed without adding `console.log`s. In dev mode the core records it in `globalThis.__pith`
+  (`pith/dev.js`); in production that code is removed (0 bytes). Names come from the setup or page
   function's source (`const draft = signal('')`); a value it can't name shows as `signal#2`.
 - **JSDoc types**: editors autocomplete and flag mistakes (`count.valu` → "did you mean 'value'?"),
   while the files stay plain JavaScript.
 
-Test pages can also be opened by hand while `npm run dev` runs: `/__mini/` (framework tests) and
-`/__mini/flows.html` (the project's user flows).
+Test pages can also be opened by hand while `npm run dev` runs: `/__pith/` (framework tests) and
+`/__pith/flows.html` (the project's user flows).
 
 ## API
 
 ### Signals
 
 ```js
-import { signal, computed, effect, batch } from 'mini';
+import { signal, computed, effect, batch } from 'pith';
 
 const count = signal(0);
 const double = computed(() => count.value * 2);
@@ -208,7 +210,7 @@ Changing `selected` re-runs only the two rows whose answer changed, not every ro
 ### Templates
 
 ```js
-import { html, repeat } from 'mini';
+import { html, repeat } from 'pith';
 
 html`
   <p>${name}</p>                       <!-- text, always escaped -->
@@ -244,7 +246,7 @@ So use it for the fields that change, in lists that are big and busy, not by def
 ### Components
 
 ```js
-import { define, html, signal } from 'mini';
+import { define, html, signal } from 'pith';
 
 define('my-counter', (props, ctx) => {
   const count = signal(Number(props.start.value) || 0);
@@ -278,7 +280,7 @@ define('info-card', (props, ctx) => html`
 **Context**: share a value with every component inside, without passing props down.
 
 ```js
-import { define, provide, inject, signal } from 'mini';
+import { define, provide, inject, signal } from 'pith';
 
 define('theme-box', (props, ctx) => {
   provide('theme', signal('dark'));   // inside setup
@@ -303,7 +305,7 @@ define('stock-price', setup, { fallback: (err, retry) => html`<p>Price unavailab
 ### Router
 
 ```js
-import { createRouter, html } from 'mini';
+import { createRouter, html } from 'pith';
 
 const router = createRouter({
   '/': { title: 'Home', load: () => import('./pages/home.js') },        // lazy: page file has `export default`
@@ -368,7 +370,7 @@ app's start until the answer is in. After that the guard reads a signal, so it c
 
 ```js
 // app/router.js
-import { createRouter, fetchJSON } from 'mini';
+import { createRouter, fetchJSON } from 'pith';
 import { session } from './store.js'; // createStore({ user: null })
 
 session.user.value = await fetchJSON('/api/me').catch(() => null); // 401 or offline → signed out
@@ -392,7 +394,7 @@ it mounted while you move between them, so its state (open menus, inputs, scroll
 ### Store
 
 ```js
-import { createStore } from 'mini';
+import { createStore } from 'pith';
 const store = createStore({ todos: [] }, { persist: 'my-key' }); // saved to localStorage
 store.todos.value = [...store.todos.value, item];
 const session = createStore({ user: null }, { name: 'session' }); // not saved; `name` labels it in --state
@@ -406,7 +408,7 @@ for `npm run see --state` (default: the `persist` key, else `"store"`).
 ### Data loading
 
 ```js
-import { resource, fetchJSON } from 'mini';
+import { resource, fetchJSON } from 'pith';
 
 const query = signal('');
 const users = resource(({ signal }) => fetchJSON(`/api/users?q=${query.value}`, { signal }));
@@ -425,7 +427,7 @@ users.mutate(data);    // replace locally
   (`err.status`, `err.body`) for non-2xx responses.
 
 ```js
-import { paginated } from 'mini';
+import { paginated } from 'pith';
 
 // Optimistic update: show the change now, undo it if the save fails (the error is rethrown).
 await todos.optimistic(
@@ -448,7 +450,7 @@ html`${people.render((list) => html`<ul>${repeat(list, (p) => p.id, (p) => html`
 ### Forms
 
 ```js
-import { form, rules } from 'mini';
+import { form, rules } from 'pith';
 
 const f = form({
   initial: { email: '', agree: false },
@@ -476,7 +478,7 @@ html`<form novalidate @submit=${f.submit}>
 
 ### Dialogs and toasts
 
-Not part of Mini: the browser's `<dialog>` (modal, Esc, focus trap) and `popover` do the hard parts, and
+Not part of Pith: the browser's `<dialog>` (modal, Esc, focus trap) and `popover` do the hard parts, and
 each app wants its own look. The demo's `app/ui.js` (`dialog`, `confirm`, `toast`, with its CSS under
 "UI helpers" in `styles/main.css`) is an accessible starting point to copy and restyle.
 
@@ -501,7 +503,7 @@ the change in `transition()` and give each row its own `view-transition-name`: t
 list before and after, fades out what left and slides what moved.
 
 ```js
-import { transition } from 'mini';
+import { transition } from 'pith';
 const remove = (id) => transition(() => (todos.value = todos.value.filter((t) => t.id !== id)));
 // each row: <li style=${`view-transition-name: todo-${t.id}`}>   (names must be unique on the page)
 ```
@@ -513,8 +515,8 @@ Use it rather than calling `document.startViewTransition` yourself, which can st
 
 ## Dev warnings
 
-On `localhost`, Mini prints `[mini W…]` warnings for common mistakes (each message once). They are
-off on any other host. Force them with `globalThis.MINI_DEV = true/false` before importing mini.
+On `localhost`, Pith prints `[pith W…]` warnings for common mistakes (each message once). They are
+off on any other host. Force them with `globalThis.PITH_DEV = true/false` before importing pith.
 Errors (`E…`) are always thrown. The full list with fixes is in [docs/errors.md](docs/errors.md).
 
 ## Browser support

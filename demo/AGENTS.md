@@ -1,6 +1,6 @@
-# AGENTS.md: how to work on a Mini app
+# AGENTS.md: how to work on a Pith app
 
-You are working on a site built with **Mini**, a tiny framework that runs directly in the browser.
+You are working on a site built with **Pith**, a tiny framework that runs directly in the browser.
 There is **no build step and no npm dependencies**. Files are served exactly as written.
 This folder (`demo/`) is the app. The framework lives next to it in `../framework/`.
 Run every command from this folder. Read this file fully before changing code.
@@ -9,7 +9,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 ## The loop (always)
 
 1. Make a change.
-2. Run `npm run check`. Read every ✗ line. Each `[mini W…]`/`[mini E…]` message has a fix in `../framework/docs/errors.md`.
+2. Run `npm run check`. Read every ✗ line. Each `[pith W…]`/`[pith E…]` message has a fix in `../framework/docs/errors.md`.
 3. To see a page, run `npm run see /path`. It prints the page as a text outline and saves a screenshot you can open.
    Add `-- --state` to also print what the route, stores, page and each component hold (by variable name).
    A failing flow prints that state too, under the page outline: read it before changing code.
@@ -30,7 +30,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
 | `npm run check -- --browsers` | also run the framework tests and user flows in Firefox and WebKit (Safari). Needs `playwright-core` installed once (the check says how); skipped otherwise |
 | `npm run check` | Node tests + framework tests + user flows + every route (also at phone width, and for accessibility in light and dark theme) + type check + the framework's 10 KB size budget + `index.html` preloads match what loads at startup |
 | `npm run types` | only the JSDoc type check (TypeScript via npx, nothing installed) |
-| `npm run see /todos [--mobile] [--state]` | text outline of the page + screenshot in `.mini/screenshots/` (`--state`: what the app holds) |
+| `npm run see /todos [--mobile] [--state]` | text outline of the page + screenshot in `.pith/screenshots/` (`--state`: what the app holds) |
 | `npm run new page <name> [--nav]` | new page file + lazy route (+ nav link) |
 | `npm run new component <tag-name>` | new component file |
 
@@ -47,7 +47,7 @@ api/*.mjs          dev-only API: api/team.mjs answers /api/team (see "API" below
 prerender.mjs      URLs of :param pages to prerender (build only, runs in Node)
 tests/flows.js     user flows: add one for each new feature
 
-../framework/mini/            the framework. Don't edit it for app features.
+../framework/pith/            the framework. Don't edit it for app features.
 ../framework/docs/errors.md   every warning/error code with its fix
 ```
 
@@ -60,7 +60,7 @@ visited, or when the user points at a link to it. So:
 
 ## The 6 rules
 
-1. **Import from `'mini'`**: `import { html, signal } from 'mini';` (an import map in `index.html` maps it to `/mini/index.js`). Dialogs and toasts are app code: `app/ui.js`.
+1. **Import from `'pith'`**: `import { html, signal } from 'pith';` (an import map in `index.html` maps it to `/pith/index.js`). Dialogs and toasts are app code: `app/ui.js`.
 2. **Reactive = signal or function as the whole hole.** `${count}` and `${() => count.value * 2}` update. `${count.value}` is a snapshot that never updates.
 3. **Events take functions.** `@click=${() => save()}` ✓, but `@click=${save()}` ✗ (W001).
 4. **Attribute holes are whole values.** `class=${cls}` ✓, but `class="btn ${cls}"` ✗ (E001). Build the string in JS instead: ``class=${`btn ${cls}`}``.
@@ -77,7 +77,7 @@ visited, or when the user points at a link to it. So:
 
 **Page** (`app/pages/contact.js`):
 ```js
-import { html } from 'mini';
+import { html } from 'pith';
 import '../components/contact-form.js'; // importing defines the tag
 
 export default function ContactPage() {
@@ -92,7 +92,7 @@ export default function ContactPage() {
 
 **Component with state, events, derived values, and a list:**
 ```js
-import { define, html, repeat, signal, computed } from 'mini';
+import { define, html, repeat, signal, computed } from 'pith';
 
 define('shopping-list', (props, ctx) => {
   const items = signal([]);
@@ -147,7 +147,7 @@ changes made in the user's other tabs by itself. Give an unsaved store a `name` 
 
 **Loading data: always use `resource()`**, never a hand-written `fetch` with your own loading/error signals:
 ```js
-import { html, signal, resource, fetchJSON } from 'mini';
+import { html, signal, resource, fetchJSON } from 'pith';
 
 const query = signal('');
 // Signals read here (query) re-run the request when they change; the old request is cancelled.
@@ -163,7 +163,7 @@ Also: `users.loading.value` (true during any request, e.g. an "Updating…" hint
 
 **Long lists load in pages** (don't fetch everything):
 ```js
-import { paginated, fetchJSON, repeat } from 'mini';
+import { paginated, fetchJSON, repeat } from 'pith';
 const people = paginated(({ page, signal }) => fetchJSON(`/api/team?page=${page}`, { signal }), { pageSize: 5 });
 html`${people.render((list) => html`<ul>${repeat(list, (p) => p.id, (p) => html`<li>${p.name}</li>`)}</ul>`)}
   ${() => people.error.value && html`<p role="alert">${people.error.value.message}</p>`}
@@ -175,7 +175,7 @@ so inside a form's `onSubmit` the error shows as `submitError`.
 
 **Forms: always use `form()`.** It handles values, validation, accessible errors, submitting and server errors:
 ```js
-import { html, signal, form, rules, fetchJSON } from 'mini';
+import { html, signal, form, rules, fetchJSON } from 'pith';
 
 const signup = form({
   initial: { email: '', password: '', plan: 'free', terms: false },
@@ -295,7 +295,7 @@ No `${}` inside `<textarea>`, `<title>`, `<style>` or comments (E002).
 Find things the way a person does, by visible text or label, not by CSS class:
 
 ```js
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 flow('contact: sending the form shows a thank-you', async (app) => {
   await app.go('/contact');

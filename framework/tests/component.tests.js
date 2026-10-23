@@ -1,8 +1,8 @@
 // component tests. Called by index.html with the shared helpers.
 
-import { define, provide, inject } from '../mini/component.js';
-import { signal } from '../mini/signal.js';
-import { html } from '../mini/html.js';
+import { define, provide, inject } from '../pith/component.js';
+import { signal } from '../pith/signal.js';
+import { html } from '../pith/html.js';
 
 // Run fn with console.error captured, so expected component errors don't show as problems.
 async function quietErrors(fn) {

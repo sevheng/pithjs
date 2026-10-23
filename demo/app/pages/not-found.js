@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 
 export default function NotFoundPage() {
   return html`

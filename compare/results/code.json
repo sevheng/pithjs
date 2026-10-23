@@ -1,13 +1,13 @@
 {
   "code": {
-    "todo/mini": {
+    "todo/pith": {
       "files": 3,
       "lines": 109,
       "chars": 3617,
       "list": [
-        "todo/mini/app/main.js",
-        "todo/mini/app/todos.js",
-        "todo/mini/index.html"
+        "todo/pith/app/main.js",
+        "todo/pith/app/todos.js",
+        "todo/pith/index.html"
       ]
     },
     "todo/react": {
@@ -30,22 +30,22 @@
         "todo/vue/src/main.js"
       ]
     },
-    "crm/mini": {
+    "crm/pith": {
       "files": 11,
       "lines": 257,
       "chars": 9071,
       "list": [
-        "crm/mini/app/format.js",
-        "crm/mini/app/main.js",
-        "crm/mini/app/pages/customer-form.js",
-        "crm/mini/app/pages/customer.js",
-        "crm/mini/app/pages/customers.js",
-        "crm/mini/app/pages/dashboard.js",
-        "crm/mini/app/pages/edit-customer.js",
-        "crm/mini/app/pages/new-customer.js",
-        "crm/mini/app/pages/not-found.js",
-        "crm/mini/app/router.js",
-        "crm/mini/index.html"
+        "crm/pith/app/format.js",
+        "crm/pith/app/main.js",
+        "crm/pith/app/pages/customer-form.js",
+        "crm/pith/app/pages/customer.js",
+        "crm/pith/app/pages/customers.js",
+        "crm/pith/app/pages/dashboard.js",
+        "crm/pith/app/pages/edit-customer.js",
+        "crm/pith/app/pages/new-customer.js",
+        "crm/pith/app/pages/not-found.js",
+        "crm/pith/app/router.js",
+        "crm/pith/index.html"
       ]
     },
     "crm/react": {
@@ -91,14 +91,14 @@
         "crm/vue/src/router.js"
       ]
     },
-    "bench/mini": {
+    "bench/pith": {
       "files": 3,
       "lines": 89,
       "chars": 3714,
       "list": [
-        "bench/mini/app/data.js",
-        "bench/mini/app/main.js",
-        "bench/mini/index.html"
+        "bench/pith/app/data.js",
+        "bench/pith/app/main.js",
+        "bench/pith/index.html"
       ]
     },
     "bench/react": {
@@ -125,7 +125,7 @@
     }
   },
   "deps": {
-    "mini": {
+    "pith": {
       "direct": 0,
       "total": 0,
       "diskMB": 0

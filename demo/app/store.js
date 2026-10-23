@@ -1,4 +1,4 @@
-import { createStore } from 'mini';
+import { createStore } from 'pith';
 
 export const todoStore = createStore(
   {
@@ -8,7 +8,7 @@ export const todoStore = createStore(
     ],
     filter: 'all',
   },
-  { persist: 'mini-todos' }
+  { persist: 'pith-todos' }
 );
 
 // A pretend sign-in, for the guarded /settings/account page. Not saved: a reload signs you out.

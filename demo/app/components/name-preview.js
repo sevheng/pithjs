@@ -1,4 +1,4 @@
-import { define, html, inject } from 'mini';
+import { define, html, inject } from 'pith';
 
 // Shows the display name typed in the settings layout, provided by <settings-context>.
 define('name-preview', () => {

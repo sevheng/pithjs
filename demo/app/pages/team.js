@@ -1,4 +1,4 @@
-import { html, signal, paginated, repeat, fetchJSON } from 'mini';
+import { html, signal, paginated, repeat, fetchJSON } from 'pith';
 import { router } from '../router.js';
 
 export default function TeamPage() {

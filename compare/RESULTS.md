@@ -8,7 +8,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 
 ### Over HTTP/1.1
 
-| `todo` | Mini | Mini + Vite | React | Vue |
+| `todo` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | 10.8 | **6.7** | 67.2 | 26 |
 | JS files | 3 | **1** | **1** | **1** |
@@ -16,7 +16,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 | Ready (ms) | 468.1 | **467** | 800.1 | 578.8 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
-| `crm` | Mini | Mini + Vite | React | Vue |
+| `crm` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | **10.8** | 11.1 | 97.9 | 37.1 |
 | JS files | 5 | **3** | 4 | 5 |
@@ -24,7 +24,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 | Ready (ms) | 982.8 | **830.6** | 1388 | 1008.2 |
 | Blocking (ms) | **0** | 7 | 39 | 42 |
 
-| `crm/customers` | Mini | Mini + Vite | React | Vue |
+| `crm/customers` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | **11.4** | 11.5 | 98.3 | 37.6 |
 | JS files | 5 | **3** | 4 | 5 |
@@ -34,7 +34,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 
 ### Over HTTP/2
 
-| `todo` | Mini | Mini + Vite | React | Vue |
+| `todo` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | 10.8 | **6.7** | 67.2 | 26 |
 | JS files | 3 | **1** | **1** | **1** |
@@ -42,7 +42,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 | Ready (ms) | 478 | **463.8** | 789.6 | 571.9 |
 | Blocking (ms) | **0** | **0** | **0** | **0** |
 
-| `crm` | Mini | Mini + Vite | React | Vue |
+| `crm` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | **10.8** | 11.1 | 97.9 | 37.1 |
 | JS files | 5 | **3** | 4 | 5 |
@@ -50,7 +50,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 | Ready (ms) | 989.7 | **837.4** | 1357.8 | 1028.9 |
 | Blocking (ms) | **0** | 5 | 19 | 50 |
 
-| `crm/customers` | Mini | Mini + Vite | React | Vue |
+| `crm/customers` | Pith | Pith + Vite | React | Vue |
 |---|---:|---:|---:|---:|
 | JS downloaded (KB, gzip) | **11.4** | 11.5 | 98.3 | 37.6 |
 | JS files | 5 | **3** | 4 | 5 |
@@ -62,7 +62,7 @@ Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowd
 
 js-framework-benchmark-style operations on the bench app, desktop CPU. Time from click to DOM updated and laid out.
 
-| Operation | Mini | Mini + Vite | React | Vue | Mini, fine-grained rows |
+| Operation | Pith | Pith + Vite | React | Vue | Pith, fine-grained rows |
 |---|---:|---:|---:|---:|---:|
 | create 1,000 rows | 51 | 48.3 | 50.6 | 48.2 | **47.2** |
 | replace 1,000 rows | 58 | 60.4 | 58.9 | **54.8** | 60.7 |
@@ -74,15 +74,15 @@ js-framework-benchmark-style operations on the bench app, desktop CPU. Time from
 | append 1,000 rows | 62.8 | 62.6 | 60.1 | 60.3 | **58.3** |
 | clear 1,000 rows | 6.5 | 6.6 | 9.4 | 7.6 | **6.3** |
 
-"Mini, fine-grained rows" is the same Mini app with each row's label as a signal (bench/mini-fine), an opt-in pattern for big, busy lists. "Mini" is the default way to write it.
+"Pith, fine-grained rows" is the same Pith app with each row's label as a signal (bench/pith-fine), an opt-in pattern for big, busy lists. "Pith" is the default way to write it.
 
-### Mini before and after the optimization pass
+### Pith before and after the optimization pass
 
-Same session, old and new Mini alternated 6 times (medians), so session-to-session noise cancels out.
+Same session, old and new Pith alternated 6 times (medians), so session-to-session noise cancels out.
 Measured 2026-10-22, before runs started right after a frame: that timing penalised remove and select, so
 their "after" here is worse than in the main table above. The other operations show the pass itself.
 
-| Operation | Mini before | Mini after | change |
+| Operation | Pith before | Pith after | change |
 |---|---:|---:|---:|
 | create 1,000 rows | 76.5 | 66.3 | -13% |
 | replace 1,000 rows | 83.9 | 67.7 | -19% |
@@ -96,7 +96,7 @@ their "after" here is worse than in the main table above. The other operations s
 
 ## Memory (JS heap, MB, lower is better)
 
-| State | Mini | Mini + Vite | React | Vue | Mini, fine-grained rows |
+| State | Pith | Pith + Vite | React | Vue | Pith, fine-grained rows |
 |---|---:|---:|---:|---:|---:|
 | ready | 0.59 | **0.56** | 0.97 | 0.75 | 0.59 |
 | 1,000 rows | 1.61 | **1.57** | 2.7 | 2.68 | 2.34 |
@@ -105,7 +105,7 @@ their "after" here is worse than in the main table above. The other operations s
 
 ## Code (lines of app code, without comments and blank lines)
 
-| App | Mini | React | Vue |
+| App | Pith | React | Vue |
 |---|---:|---:|---:|
 | todo | 109 | 106 | **91** |
 | crm | **257** | 406 | 394 |
@@ -113,7 +113,7 @@ their "after" here is worse than in the main table above. The other operations s
 
 ## Developer experience
 
-|  | Mini | React | Vue |
+|  | Pith | React | Vue |
 |---|---:|---:|---:|
 | npm packages to install | 0 | 22 | 67 |
 | node_modules size (MB) | 0 | 44 | 53 |
@@ -123,9 +123,9 @@ their "after" here is worse than in the main table above. The other operations s
 
 ## AI-friendliness
 
-Two feature requests (spec in each task), identical text for every framework. One fresh AI agent per framework and task (same model, no memory of this project), each in its own copy, allowed to edit only that framework's CRM folder, with the same verification tools (build + existing flows). Mini's agents were also pointed to Mini's docs, since no model has Mini in its training data. Graded afterwards with hidden acceptance flows the agents never saw, plus the 11 existing flows for regressions. One run per cell: treat it as a signal, not a statistic.
+Two feature requests (spec in each task), identical text for every framework. One fresh AI agent per framework and task (same model, no memory of this project), each in its own copy, allowed to edit only that framework's CRM folder, with the same verification tools (build + existing flows). Pith's agents were also pointed to Pith's docs, since no model has Pith in its training data. Graded afterwards with hidden acceptance flows the agents never saw, plus the 11 existing flows for regressions. One run per cell: treat it as a signal, not a statistic.
 
-| Task | Mini | React | Vue |
+| Task | Pith | React | Vue |
 |---|---:|---:|---:|
 | Sortable table: hidden tests passed | **4/4** | **4/4** | **4/4** |
 | Sortable table: regressions | none | none | none |
@@ -139,12 +139,12 @@ Two feature requests (spec in each task), identical text for every framework. On
 | Round 2 · Search bug fix: regressions | none | none | none |
 | Round 2 · Search bug fix: tokens / tool calls / time | 34.4k / 5 / 28 s | 33.1k / 4 / 25 s | 33.1k / 5 / 26 s |
 | Round 2 · Search bug fix: lines changed | 6 | 6 | 4 |
-| Round 2 · Sortable table (Mini only): hidden tests / tokens / tool calls / time | **4/4** · 51.5k / 11 / 63 s | – | – |
-| Round 2 · Form rules + counter (Mini only): hidden tests / tokens / tool calls / time | **6/6** · 48.2k / 10 / 54 s | – | – |
+| Round 2 · Sortable table (Pith only): hidden tests / tokens / tool calls / time | **4/4** · 51.5k / 11 / 63 s | – | – |
+| Round 2 · Form rules + counter (Pith only): hidden tests / tokens / tool calls / time | **6/6** · 48.2k / 10 / 54 s | – | – |
 
-- Every agent succeeded on its first try, including on Mini, which the model had never seen: its docs and checks were enough.
-- Mini cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.
-- The Mini form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature.
-- Round 2 (2026-10-22, after Mini gained --state and the state block in failing flows; AGENTS.md grew from 244 to 316 lines). Same setup, one run per cell. Bug task: the same planted bug in all three CRMs (search only updated from 2 characters, so clearing the box kept the list filtered), a visible reproduction flow, graded with hidden flows (clearing restores all, one-letter search filters, search + status combine). Failing Mini flows showed `q = "ada"` under an empty search box; React and Vue showed only the page outline.
-- Bug task result: all three fixed it the same way (removed the 2-character rule, citing the spec) in 4–5 tool calls, at about the same cost (Mini +4%). The bug was found by reading one short file, so the state output had no room to help; a bigger app or a bug spread over several files would be a fairer test of it.
-- Mini re-run of the old tasks: sortable table 51.5k tokens (was 48.7k), form 48.2k (was 56.2k): no clear change from the bigger AGENTS.md. Round 1's React and Vue numbers came from an earlier session, possibly another model, so don't compare these Mini numbers with them directly. Times also aren't comparable across sessions.
+- Every agent succeeded on its first try, including on Pith, which the model had never seen: its docs and checks were enough.
+- Pith cost about 15-30% more tokens, mostly spent reading AGENTS.md and the README first.
+- The Pith form agent made the live counter work by passing a function as a field hint, which worked but was undocumented (it needed a type cast). That is now an official, tested feature.
+- Round 2 (2026-10-22, after Pith gained --state and the state block in failing flows; AGENTS.md grew from 244 to 316 lines). Same setup, one run per cell. Bug task: the same planted bug in all three CRMs (search only updated from 2 characters, so clearing the box kept the list filtered), a visible reproduction flow, graded with hidden flows (clearing restores all, one-letter search filters, search + status combine). Failing Pith flows showed `q = "ada"` under an empty search box; React and Vue showed only the page outline.
+- Bug task result: all three fixed it the same way (removed the 2-character rule, citing the spec) in 4–5 tool calls, at about the same cost (Pith +4%). The bug was found by reading one short file, so the state output had no room to help; a bigger app or a bug spread over several files would be a fairer test of it.
+- Pith re-run of the old tasks: sortable table 51.5k tokens (was 48.7k), form 48.2k (was 56.2k): no clear change from the bigger AGENTS.md. Round 1's React and Vue numbers came from an earlier session, possibly another model, so don't compare these Pith numbers with them directly. Times also aren't comparable across sessions.

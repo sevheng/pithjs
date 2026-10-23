@@ -20,7 +20,7 @@ if (!chrome) {
   process.exit(1);
 }
 
-const shotDir = join(projectRoot, '.mini', 'screenshots');
+const shotDir = join(projectRoot, '.pith', 'screenshots');
 const shotFile = join(shotDir, `${path === '/' ? 'home' : path.slice(1).replace(/[^\w-]+/g, '_')}${mobile ? '-mobile' : ''}.png`);
 
 const server = await startServer(0);
@@ -28,7 +28,7 @@ const base = `http://localhost:${server.address().port}`;
 try {
   const query = new URLSearchParams({ path, width: String(width), height: String(height) });
   if (args.includes('--state')) query.set('state', '1');
-  const jobs = [loadPage(chrome, `${base}/__mini/see.html?${query}`)];
+  const jobs = [loadPage(chrome, `${base}/__pith/see.html?${query}`)];
   if (!args.includes('--no-shot')) {
     mkdirSync(shotDir, { recursive: true });
     jobs.push(loadPage(chrome, base + path, { screenshot: shotFile, width, height }));

@@ -34,7 +34,7 @@ function countLines(text) {
 
 const code = {};
 for (const app of APPS) {
-  for (const impl of ['mini', 'react', 'vue']) {
+  for (const impl of ['pith', 'react', 'vue']) {
     const list = files(join(compare, app, impl)).filter((f) => !f.endsWith('vite.config.js'));
     const texts = list.map((f) => readFileSync(f, 'utf8'));
     code[`${app}/${impl}`] = {
@@ -84,7 +84,7 @@ function diskMB(keys) {
 
 const toolchain = ['vite'];
 const sets = {
-  mini: [],
+  pith: [],
   react: ['react', 'react-dom', 'react-router', '@vitejs/plugin-react', ...toolchain],
   vue: ['vue', 'vue-router', '@vitejs/plugin-vue', ...toolchain],
 };

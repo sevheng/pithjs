@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 import '../components/name-preview.js';
 
 export default function SettingsAppearancePage() {

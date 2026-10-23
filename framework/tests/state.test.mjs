@@ -1,21 +1,21 @@
-// stateText(): the app's dev-mode state as text. Runs on a hand-made fake registry (see mini/dev.js).
+// stateText(): the app's dev-mode state as text. Runs on a hand-made fake registry (see pith/dev.js).
 // Fakes, kept minimal:
 // - a signal is { peek() } (stateText never reads .value, so it never subscribes);
 // - an element is { nodeType: 1, localName, children, shadowRoot? }: stateText walks #app's element tree
 //   (into shadow roots) to find components in document order, so a host that isn't in the tree is
 //   "disconnected" and skipped;
-// - the window is { __mini, document: { getElementById } }.
+// - the window is { __pith, document: { getElementById } }.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { stateText } from './state.js';
 
 const sig = (v) => ({ peek: () => v, get value() { throw new Error('stateText must use peek(), not .value'); } });
 const el = (localName, children = []) => ({ nodeType: 1, localName, children });
-const host = (tag, children, { props = {}, state = [] } = {}) => Object.assign(el(tag, children), { __miniState: { tag, props, state } });
+const host = (tag, children, { props = {}, state = [] } = {}) => Object.assign(el(tag, children), { __pithState: { tag, props, state } });
 
 function fakeWindow({ app = el('div'), components = [], pages = [], stores = [], router = null } = {}) {
   return {
-    __mini: { components: new Set(components), pages, stores, router },
+    __pith: { components: new Set(components), pages, stores, router },
     document: { getElementById: (id) => (id === 'app' ? app : null) },
   };
 }
@@ -37,12 +37,12 @@ test('route, stores, page and components, in the documented format', () => {
     app: el('div', [el('main', [list])]),
     components: [card, list],
     router: { path: sig('/team'), search: sig('?q=ada') },
-    stores: [{ name: 'mini-todos', signals: { todos: sig([{ id: 1, text: 'a', done: false }, {}, {}]), filter: sig('all') } }],
+    stores: [{ name: 'pith-todos', signals: { todos: sig([{ id: 1, text: 'a', done: false }, {}, {}]), filter: sig('all') } }],
     pages: [{ path: '/team', name: 'TeamPage', state: [['query', 'signal', sig('ada')], ['people', 'paginated', people]]}],
   });
   assert.equal(stateText(win), [
     'route /team?q=ada',
-    'store "mini-todos": todos = 3 items [{ id, text, done }, …], filter = "all"',
+    'store "pith-todos": todos = 3 items [{ id, text, done }, …], filter = "all"',
     'page /team (TeamPage): query = "ada", people = paginated · 4 items · hasMore true',
     '<todo-list>: draft = "", visible = computed · 2 items [{ id }, …]',
     '  <info-card> props: title = "Errors stay contained"',

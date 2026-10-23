@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gzipSync } from 'node:zlib';
 import { REPLAY_BUDGET, replayScript } from '../tools/replay.mjs';
-import { capture } from '../mini/replay.js';
+import { capture } from '../pith/replay.js';
 
 test('replayScript() is a small, valid inline script that calls capture on #app', () => {
   const js = replayScript();

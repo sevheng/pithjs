@@ -15,8 +15,8 @@ export function findChrome() {
 }
 
 // Each Chrome is a dozen processes: running one per page at once overloads the machine and makes
-// timing-based checks flaky. MINI_CHROME_JOBS overrides how many run at the same time.
-const jobs = Number(process.env.MINI_CHROME_JOBS) || Math.max(2, Math.floor(availableParallelism() / 4));
+// timing-based checks flaky. PITH_CHROME_JOBS overrides how many run at the same time.
+const jobs = Number(process.env.PITH_CHROME_JOBS) || Math.max(2, Math.floor(availableParallelism() / 4));
 let running = 0;
 const waiting = [];
 async function slot() {
@@ -37,7 +37,7 @@ async function slot() {
  */
 export async function loadPage(chrome, url, { screenshot, width = 1280, height = 900, dark = false } = {}) {
   const release = await slot();
-  const profile = mkdtempSync(join(tmpdir(), 'mini-chrome-'));
+  const profile = mkdtempSync(join(tmpdir(), 'pith-chrome-'));
   const args = [
     '--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run', '--hide-scrollbars',
     `--user-data-dir=${profile}`, '--enable-logging=stderr', '--v=0',

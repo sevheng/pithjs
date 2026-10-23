@@ -1,5 +1,5 @@
 // Hidden acceptance flows for the "phone validation + notes counter" task (not shown to the AI agents).
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 const api = async (path, init) => {
   const res = await fetch(path, init);

@@ -8,8 +8,8 @@ def edit(rel, pairs):
     for a, b in pairs:
         assert s.count(a) == 1, (rel, a); s = s.replace(a, b)
     p.write_text(s)
-if impl == 'mini':
-    edit('crm/mini/app/pages/customers.js', [
+if impl == 'pith':
+    edit('crm/pith/app/pages/customers.js', [
         ("  const status = signal('all');\n",
          f"  const status = signal('all');\n  // {COMMENT}\n  const onSearch = (value) => {{\n    if (value.trim().length >= 2) q.value = value;\n  }};\n"),
         ("@input=${(e) => (q.value = e.target.value)}>", "@input=${(e) => onSearch(e.target.value)}>"),

@@ -1,13 +1,13 @@
-// state-record tests: what the core records in globalThis.__mini (dev only). Called by index.html.
+// state-record tests: what the core records in globalThis.__pith (dev only). Called by index.html.
 
-import { signal, computed, root } from '../mini/signal.js';
-import { html } from '../mini/html.js';
-import { define } from '../mini/component.js';
-import { createStore } from '../mini/store.js';
-import { createRouter } from '../mini/router.js';
-import { resource, paginated } from '../mini/resource.js';
-import { form } from '../mini/form.js';
-import { registry } from '../mini/dev.js';
+import { signal, computed, root } from '../pith/signal.js';
+import { html } from '../pith/html.js';
+import { define } from '../pith/component.js';
+import { createStore } from '../pith/store.js';
+import { createRouter } from '../pith/router.js';
+import { resource, paginated } from '../pith/resource.js';
+import { form } from '../pith/form.js';
+import { registry } from '../pith/dev.js';
 
 /** @param {any} t */
 export default async function (t) {
@@ -16,7 +16,7 @@ export default async function (t) {
   const shape = (state) => state.map(([name, kind]) => `${name}:${kind}`).join(' ');
 
   await test('state-record: the registry is on the window in dev', () => {
-    eq(globalThis.__mini, registry);
+    eq(globalThis.__pith, registry);
     eq(registry.components instanceof Set, true);
   });
 
@@ -34,7 +34,7 @@ export default async function (t) {
     root(() => mount(html`<rec-state title="Hi"></rec-state>`));
     const host = sandbox.querySelector('rec-state');
     eq(registry.components.has(host), true);
-    const s = host.__miniState;
+    const s = host.__pithState;
     eq(s.tag, 'rec-state');
     eq(s.props, host._props);
     eq(s.props.title.value, 'Hi');
@@ -61,9 +61,9 @@ export default async function (t) {
     root(() => mount(html`<rec-parent></rec-parent>`));
     const parent = sandbox.querySelector('rec-parent');
     const child = sandbox.querySelector('rec-child');
-    eq(shape(parent.__miniState.state), 'list:paginated');
-    eq(shape(child.__miniState.state), 'open:signal');
-    eq(child.__miniState.props.label.value, 'x');
+    eq(shape(parent.__pithState.state), 'list:paginated');
+    eq(shape(child.__pithState.state), 'open:signal');
+    eq(child.__pithState.props.label.value, 'x');
     parent.remove();
     await tick();
     eq(registry.components.has(parent) || registry.components.has(child), false);
@@ -83,8 +83,8 @@ export default async function (t) {
     eq(registry.components.has(host), false); // showing the fallback: its state was disposed
     retry();
     eq(registry.components.has(host), true);
-    eq(shape(host.__miniState.state), 'attempt:signal');
-    eq(host.__miniState.state[0][2].peek(), 2);
+    eq(shape(host.__pithState.state), 'attempt:signal');
+    eq(host.__pithState.state[0][2].peek(), 2);
   });
 
   await test('state-record: names fall back to kind#n when the counts in the source do not match', () => {
@@ -95,7 +95,7 @@ export default async function (t) {
       return html`<p>${total}</p>`;
     });
     root(() => mount(html`<rec-loop></rec-loop>`));
-    const state = sandbox.querySelector('rec-loop').__miniState.state;
+    const state = sandbox.querySelector('rec-loop').__pithState.state;
     // 3 signals ran but the source names only one (signal(n) in the map has no name): no guessing.
     eq(shape(state), 'signal#1:signal signal#2:signal signal#3:signal total:computed');
   });
@@ -103,17 +103,17 @@ export default async function (t) {
   await test('state-record: a store is recorded by its persist key, or as "store"', () => {
     const before = registry.stores.length;
     const plain = createStore({ a: 1 });
-    const saved = createStore({ todos: [] }, { persist: '__mini-rec-test' });
+    const saved = createStore({ todos: [] }, { persist: '__pith-rec-test' });
     try {
       const added = registry.stores.slice(before);
       eq(added.length, 2);
       eq(added[0].name, 'store');
       eq(added[0].signals, plain);
-      eq(added[1].name, '__mini-rec-test');
+      eq(added[1].name, '__pith-rec-test');
       eq(added[1].signals.todos, saved.todos);
     } finally {
       registry.stores.splice(before);
-      localStorage.removeItem('__mini-rec-test');
+      localStorage.removeItem('__pith-rec-test');
     }
   });
 
@@ -126,7 +126,7 @@ export default async function (t) {
         return html`<p>${count}${local.x}</p>`;
       });
       root(() => mount(html`<rec-store></rec-store>`));
-      eq(shape(sandbox.querySelector('rec-store').__miniState.state), 'count:signal');
+      eq(shape(sandbox.querySelector('rec-store').__pithState.state), 'count:signal');
     } finally {
       registry.stores.splice(before);
     }
@@ -145,7 +145,7 @@ export default async function (t) {
       const step = signal(1);
       return html`<p>other ${step}</p>`;
     }
-    const router = createRouter({ [start]: StartPage, '/__mini/rec/other': OtherPage, '*': () => 'nf' },
+    const router = createRouter({ [start]: StartPage, '/__pith/rec/other': OtherPage, '*': () => 'nf' },
       { transitions: false, prefetch: false });
     try {
       eq(registry.router.path, router.path);
@@ -156,19 +156,19 @@ export default async function (t) {
         return html`<div id="outlet" data-theme=${theme}>${router.view}</div>`;
       });
       root(() => mount(html`<rec-app></rec-app>`));
-      eq(shape(sandbox.querySelector('rec-app').__miniState.state), 'theme:signal');
+      eq(shape(sandbox.querySelector('rec-app').__pithState.state), 'theme:signal');
       eq(registry.pages.length, 1);
       eq(registry.pages[0].path, start);
       eq(registry.pages[0].name, 'StartPage');
       eq(shape(registry.pages[0].state), 'query:signal people:resource');
 
-      router.navigate('/__mini/rec/other');
+      router.navigate('/__pith/rec/other');
       await until(() => sandbox.textContent.includes('other'));
       eq(registry.pages.length, 1);
-      eq(registry.pages[0].path, '/__mini/rec/other');
+      eq(registry.pages[0].path, '/__pith/rec/other');
       eq(registry.pages[0].name, 'OtherPage');
       eq(shape(registry.pages[0].state), 'step:signal');
-      eq(registry.router.path.value, '/__mini/rec/other');
+      eq(registry.router.path.value, '/__pith/rec/other');
     } finally {
       router.dispose();
       history.replaceState(null, '', startUrl);

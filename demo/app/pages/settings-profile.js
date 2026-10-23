@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 import { router } from '../router.js';
 import { session } from '../store.js';
 import '../components/name-preview.js';

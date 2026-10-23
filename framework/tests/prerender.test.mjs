@@ -9,7 +9,7 @@ import { loadPrerenderPaths, matchRoute, prerenderTargets, readRouteTable, readR
 const shell = `<!doctype html>
 <html lang="en">
 <head>
-  <title>Mini</title>
+  <title>Pith</title>
   <script type="module" crossorigin src="/assets/index-abc.js"></script>
 </head>
 <body>
@@ -20,9 +20,9 @@ const shell = `<!doctype html>
 </html>`;
 
 test('injectPage puts the markup in #app, marks it, and sets the title', () => {
-  const out = injectPage(shell, { html: '<main><h1>Todos</h1></main>', title: 'Todos · Mini' });
+  const out = injectPage(shell, { html: '<main><h1>Todos</h1></main>', title: 'Todos · Pith' });
   assert.match(out, /<div id="app"><div data-prerendered style="display:contents"><main><h1>Todos<\/h1><\/main><\/div><\/div>/);
-  assert.match(out, /<title>Todos · Mini<\/title>/);
+  assert.match(out, /<title>Todos · Pith<\/title>/);
   assert.doesNotMatch(out, /noscript/);
   assert.match(out, /<script type="module" crossorigin src="\/assets\/index-abc.js"><\/script>/);
   assert.equal(out.match(/<title>/g).length, 1);
@@ -45,14 +45,14 @@ test('injectPage adds module preloads to the head', () => {
   assert.match(out, /<link rel="modulepreload" crossorigin href="\/assets\/todos-1.js">\s*<\/head>/);
 });
 
-test('injectPage writes the GET answers the page was built with as #mini-data (safe inside a <script>)', () => {
+test('injectPage writes the GET answers the page was built with as #pith-data (safe inside a <script>)', () => {
   const data = { '/api/team?q=': [{ name: '</script><b>$&' }] };
   const out = injectPage(shell, { html: '<h1>Team</h1>', title: 'Team', script: '', data });
-  const block = out.match(/<\/div><\/div><script type="application\/json" id="mini-data">(.*?)<\/script>\s*<\/body>/)?.[1];
-  assert.ok(block, 'no #mini-data block after #app');
+  const block = out.match(/<\/div><\/div><script type="application\/json" id="pith-data">(.*?)<\/script>\s*<\/body>/)?.[1];
+  assert.ok(block, 'no #pith-data block after #app');
   assert.doesNotMatch(block, /</);
   assert.deepEqual(JSON.parse(block), data);
-  assert.doesNotMatch(injectPage(shell, { html: '<h1>x</h1>', title: 'x', data: {} }), /mini-data/);
+  assert.doesNotMatch(injectPage(shell, { html: '<h1>x</h1>', title: 'x', data: {} }), /pith-data/);
 });
 
 test('recordData adds a fetch recorder to the head; extractData reads what it recorded from the dumped DOM', () => {
@@ -61,7 +61,7 @@ test('recordData adds a fetch recorder to the head; extractData reads what it re
   assert.ok(script, 'no recorder script at the start of <head>');
   assert.doesNotThrow(() => new Function(script), 'the recorder does not parse');
   assert.match(script, /fetch/);
-  const dom = `<html><head><script type="application/json" id="mini-prerender-data">{"/api/x":{"a":"\\u003c"}}</script></head></html>`;
+  const dom = `<html><head><script type="application/json" id="pith-prerender-data">{"/api/x":{"a":"\\u003c"}}</script></head></html>`;
   assert.deepEqual(extractData(dom), { '/api/x': { a: '<' } });
   assert.deepEqual(extractData('<html></html>'), {});
 });
@@ -71,12 +71,12 @@ test('injectPage fails loudly when the shell has no #app', () => {
 });
 
 test('extractPage reads #app (with nested divs) and the title from a dumped DOM', () => {
-  const dom = `<html><head><title>Team &amp; co · Mini</title></head><body>
+  const dom = `<html><head><title>Team &amp; co · Pith</title></head><body>
   <div id="app"><div class="a"><div>one</div></div><p>two</p></div><div id="toast">not mine</div>
 </body></html>`;
   assert.deepEqual(extractPage(dom), {
     html: '<div class="a"><div>one</div></div><p>two</p>',
-    title: 'Team & co · Mini',
+    title: 'Team & co · Pith',
   });
   assert.equal(extractPage('<html><body></body></html>'), null);
 });
@@ -100,7 +100,7 @@ test('escapeHtml escapes the five HTML characters', () => {
 });
 
 test('readRoutes lists fixed routes only; readRouteTable finds page files', () => {
-  const root = mkdtempSync(join(tmpdir(), 'mini-routes-'));
+  const root = mkdtempSync(join(tmpdir(), 'pith-routes-'));
   try {
     mkdirSync(join(root, 'app'));
     writeFileSync(
@@ -125,7 +125,7 @@ test('readRoutes lists fixed routes only; readRouteTable finds page files', () =
 });
 
 test('readRouteTable reads each route title and whether it redirects', () => {
-  const root = mkdtempSync(join(tmpdir(), 'mini-routes-'));
+  const root = mkdtempSync(join(tmpdir(), 'pith-routes-'));
   try {
     mkdirSync(join(root, 'app'));
     writeFileSync(
@@ -150,9 +150,9 @@ test('readRouteTable reads each route title and whether it redirects', () => {
 });
 
 test('landedElsewhere spots a route that a redirect or guard sent to another page', () => {
-  assert.equal(landedElsewhere({ title: 'Account', redirect: false }, 'Profile · Mini'), true);
-  assert.equal(landedElsewhere({ title: 'Account', redirect: false }, 'Account · Mini'), false);
-  assert.equal(landedElsewhere({ title: null, redirect: true }, 'Profile · Mini'), true);
+  assert.equal(landedElsewhere({ title: 'Account', redirect: false }, 'Profile · Pith'), true);
+  assert.equal(landedElsewhere({ title: 'Account', redirect: false }, 'Account · Pith'), false);
+  assert.equal(landedElsewhere({ title: null, redirect: true }, 'Profile · Pith'), true);
   assert.equal(landedElsewhere({ title: null, redirect: false }, 'Anything'), false);
 });
 
@@ -179,7 +179,7 @@ test('matchRoute matches :params like the browser router, first route wins', () 
 
 /** A temp project with app/router.js and, optionally, prerender.mjs. */
 function project(prerenderSource) {
-  const root = mkdtempSync(join(tmpdir(), 'mini-paths-'));
+  const root = mkdtempSync(join(tmpdir(), 'pith-paths-'));
   mkdirSync(join(root, 'app'));
   writeFileSync(
     join(root, 'app', 'router.js'),
@@ -210,7 +210,7 @@ test('loadPrerenderPaths reads the default export, and warns about bad URLs (W06
     const { paths, warnings } = await loadPrerenderPaths(root);
     assert.deepEqual(paths, ['/team/1', '/team/2']);
     assert.equal(warnings.length, 9);
-    assert.ok(warnings.every((w) => w.startsWith('[mini W065] ')), warnings.join('\n'));
+    assert.ok(warnings.every((w) => w.startsWith('[pith W065] ')), warnings.join('\n'));
     assert.match(warnings[0], /"team\/3"/);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -229,7 +229,7 @@ test('loadPrerenderPaths warns (W066) when prerender.mjs throws or returns no ar
       const { paths, warnings } = await loadPrerenderPaths(root);
       assert.deepEqual(paths, []);
       assert.equal(warnings.length, 1);
-      assert.match(warnings[0], /^\[mini W066\] prerender\.mjs/);
+      assert.match(warnings[0], /^\[pith W066\] prerender\.mjs/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -245,7 +245,7 @@ test('prerenderTargets: fixed routes, then prerender.mjs URLs with their route; 
       [['/', '/', false], ['/team', '/team', false], ['/team/1', '/team/:id', true], ['/team/2', '/team/:id', true]]
     );
     assert.equal(warnings.length, 1);
-    assert.match(warnings[0], /^\[mini W064\] \/nowhere\/1 matches no route/);
+    assert.match(warnings[0], /^\[pith W064\] \/nowhere\/1 matches no route/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

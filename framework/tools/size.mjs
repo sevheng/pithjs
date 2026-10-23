@@ -1,4 +1,4 @@
-// Mini's size budget: the whole core ('mini', every export) built for production, minified and gzipped,
+// Pith's size budget: the whole core ('pith', every export) built for production, minified and gzipped,
 // must stay within 10 KB. Measured like `npm run build` (dev warnings stripped), but with nothing
 // tree-shaken away, so it's the most any app can ship.
 // Used by check.mjs; needs the project's Vite (skipped without it).
@@ -10,12 +10,12 @@ import { projectRoot } from './dev-server.mjs';
 
 export const BUDGET = 10_000; // bytes, minified + gzipped
 
-const mini = join(import.meta.dirname, '..', 'mini');
+const pith = join(import.meta.dirname, '..', 'pith');
 
 /**
  * @param {{ root?: string }} [options] root: a project folder with Vite installed
  * @returns {Promise<{ core: number, code: string, skipped?: undefined } | { skipped: string }>}
- *   code: the minified framework (what tools/release.mjs writes to mini/mini.min.js)
+ *   code: the minified framework (what tools/release.mjs writes to pith/pith.min.js)
  */
 export async function measureFramework({ root = projectRoot } = {}) {
   let vite;
@@ -28,11 +28,11 @@ export async function measureFramework({ root = projectRoot } = {}) {
     const out = await vite.build({
       configFile: false,
       logLevel: 'silent',
-      define: { 'globalThis.MINI_DEV': 'false' },
+      define: { 'globalThis.PITH_DEV': 'false' },
       build: {
         write: false,
         minify: true,
-        rollupOptions: { input: join(mini, entry), preserveEntrySignatures: 'strict' },
+        rollupOptions: { input: join(pith, entry), preserveEntrySignatures: 'strict' },
       },
     });
     return [out].flat().flatMap((r) => r.output).filter((c) => c.type === 'chunk').map((c) => c.code).join('\n');

@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 import '../components/todo-list.js';
 
 export default function TodosPage() {

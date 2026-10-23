@@ -1,8 +1,8 @@
 // resource tests. Called by index.html with the shared helpers.
 
-import { resource, paginated, fetchJSON } from '../mini/resource.js';
-import { signal, root } from '../mini/signal.js';
-import { html } from '../mini/html.js';
+import { resource, paginated, fetchJSON } from '../pith/resource.js';
+import { signal, root } from '../pith/signal.js';
+import { html } from '../pith/html.js';
 
 // A promise you settle by hand.
 /** @returns {{ promise: Promise<any>, resolve: (v?: any) => void, reject: (e?: any) => void }} */
@@ -264,12 +264,12 @@ export default async function (t) {
       eq(p.hasMore.value, false);
     }));
 
-  // Prerendered pages carry the GET answers they were built with (<script type="application/json" id="mini-data">).
+  // Prerendered pages carry the GET answers they were built with (<script type="application/json" id="pith-data">).
   /** @param {Record<string, unknown>} data */
   const bake = (data) => {
     const el = document.createElement('script');
     el.type = 'application/json';
-    el.id = 'mini-data';
+    el.id = 'pith-data';
     el.textContent = JSON.stringify(data);
     document.head.append(el);
   };
@@ -284,7 +284,7 @@ export default async function (t) {
       await fn(calls);
     } finally {
       window.fetch = real;
-      document.getElementById('mini-data')?.remove();
+      document.getElementById('pith-data')?.remove();
     }
   }
 
@@ -293,7 +293,7 @@ export default async function (t) {
       bake({ '/api/x': { n: 1 } });
       eq((await fetchJSON('/api/x')).n, 1);
       eq(calls.length, 0);
-      eq(document.getElementById('mini-data'), null);
+      eq(document.getElementById('pith-data'), null);
       eq((await fetchJSON('/api/x')).n, 2);
       eq(calls.join(), 'GET /api/x');
     }));

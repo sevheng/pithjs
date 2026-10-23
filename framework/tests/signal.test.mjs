@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { signal, computed, effect, batch, root, untrack, onCleanup, catchError, selector } from '../mini/signal.js';
+import { signal, computed, effect, batch, root, untrack, onCleanup, catchError, selector } from '../pith/signal.js';
 
 test('effect re-runs when a signal it read changes', () => {
   const s = signal(1);
@@ -156,18 +156,18 @@ test('catchError is disposed with its owner', () => {
   assert.equal(runs, 1);
 });
 
-test('the state registry is off in production: no globalThis.__mini, registry is null', async () => {
-  const prev = globalThis.MINI_DEV;
-  globalThis.MINI_DEV = false;
+test('the state registry is off in production: no globalThis.__pith, registry is null', async () => {
+  const prev = globalThis.PITH_DEV;
+  globalThis.PITH_DEV = false;
   try {
-    // A fresh copy of dev.js (the query makes Node load it again), read with MINI_DEV = false.
-    const dev = await import('../mini/dev.js?production');
+    // A fresh copy of dev.js (the query makes Node load it again), read with PITH_DEV = false.
+    const dev = await import('../pith/dev.js?production');
     assert.equal(dev.DEV, false);
     assert.equal(dev.registry, null);
-    assert.equal(globalThis.__mini, undefined);
+    assert.equal(globalThis.__pith, undefined);
   } finally {
-    if (prev === undefined) delete globalThis.MINI_DEV;
-    else globalThis.MINI_DEV = prev;
+    if (prev === undefined) delete globalThis.PITH_DEV;
+    else globalThis.PITH_DEV = prev;
   }
 });
 

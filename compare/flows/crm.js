@@ -1,6 +1,6 @@
 // User flows for spec/crm.md. The same file tests every implementation.
 // Each flow resets the API's data first, and reads expected values from the API itself.
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 const api = async (path, init) => {
   const res = await fetch(path, init);

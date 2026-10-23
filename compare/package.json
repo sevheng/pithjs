@@ -1,8 +1,8 @@
 {
-  "name": "mini-compare",
+  "name": "pith-compare",
   "private": true,
   "type": "module",
-  "description": "The same apps built with Mini, React and Vue, measured the same way.",
+  "description": "The same apps built with Pith, React and Vue, measured the same way.",
   "scripts": {
     "build": "node tools/build.mjs",
     "flows": "node tools/flows.mjs",

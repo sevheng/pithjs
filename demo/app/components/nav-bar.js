@@ -1,4 +1,4 @@
-import { define, html, signal } from 'mini';
+import { define, html, signal } from 'pith';
 import { router } from '../router.js';
 
 const links = [
@@ -22,7 +22,7 @@ define('nav-bar', () => {
     theme.value = theme.value === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme.value;
     try {
-      localStorage.setItem('mini-theme', theme.value);
+      localStorage.setItem('pith-theme', theme.value);
     } catch {
       // storage blocked: theme still applies for this visit
     }
@@ -30,7 +30,7 @@ define('nav-bar', () => {
 
   return html`
     <header class="site-header">
-      <a class="brand" href="/">⚡ Mini</a>
+      <a class="brand" href="/">⚡ Pith</a>
       <nav aria-label="Main">
         <ul class="nav-links">
           ${links.map(([href, label]) => html`

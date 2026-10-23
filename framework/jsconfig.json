@@ -13,10 +13,10 @@
     "noEmit": true
   },
   "include": [
-    "mini",
+    "pith",
     "tests/*.js"
   ],
   "exclude": [
-    "mini/mini.min.js"
+    "pith/pith.min.js"
   ]
 }

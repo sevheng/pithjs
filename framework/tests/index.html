@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mini Tests</title>
+  <title>Pith Tests</title>
   <script type="importmap">
-    { "imports": { "mini": "/mini/index.js" } }
+    { "imports": { "pith": "/pith/index.js" } }
   </script>
   <style>
     body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; background: #fff; color: #111; }
@@ -15,13 +15,13 @@
   </style>
 </head>
 <body>
-  <h1>Mini tests</h1>
+  <h1>Pith tests</h1>
   <p id="summary">Running…</p>
   <ul id="results"></ul>
   <div id="sandbox"></div>
 
   <script type="module">
-    import { html, repeat, signal, define, root, createRouter, resource, form, rules, HttpError } from 'mini';
+    import { html, repeat, signal, define, root, createRouter, resource, form, rules, HttpError } from 'pith';
 
     const results = [];
     const sandbox = document.getElementById('sandbox');
@@ -228,11 +228,11 @@
       console.error = () => {}; // the failure cases below log on purpose
       const router = createRouter({
         [start]: { title: 'Start', load: () => later(10, { default: () => 'page start' }) },
-        '/__mini/slow': { load: () => later(200, { default: () => 'page slow' }) },
-        '/__mini/fast': { load: () => later(10, { default: () => 'page fast' }) },
-        '/__mini/user/:id': { load: () => later(1, { default: ({ id }) => `user ${id}` }) },
-        '/__mini/broken': { load: () => Promise.reject(new Error('network down')) },
-        '/__mini/no-default': { load: () => later(1, { Page: () => 'x' }) },
+        '/__pith/slow': { load: () => later(200, { default: () => 'page slow' }) },
+        '/__pith/fast': { load: () => later(10, { default: () => 'page fast' }) },
+        '/__pith/user/:id': { load: () => later(1, { default: ({ id }) => `user ${id}` }) },
+        '/__pith/broken': { load: () => Promise.reject(new Error('network down')) },
+        '/__pith/no-default': { load: () => later(1, { Page: () => 'x' }) },
         '*': () => 'not found',
       }, { transitions: false, prefetch: false, loading: () => 'loading…' });
       try {
@@ -242,21 +242,21 @@
         await until(() => text() === 'page start');
 
         // A slow page clicked, then a fast one: the fast one must win, even though the slow one finishes last.
-        router.navigate('/__mini/slow');
-        router.navigate('/__mini/fast');
+        router.navigate('/__pith/slow');
+        router.navigate('/__pith/fast');
         await until(() => text() === 'page fast');
         await new Promise((r) => setTimeout(r, 300));
         eq(text(), 'page fast');
-        eq(location.pathname, '/__mini/fast');
+        eq(location.pathname, '/__pith/fast');
 
-        router.navigate('/__mini/user/42');
+        router.navigate('/__pith/user/42');
         await until(() => text() === 'user 42');
 
-        router.navigate('/__mini/broken');
+        router.navigate('/__pith/broken');
         await until(() => text().includes("didn't load"));
         if (!text().includes('network down')) throw new Error('the error message should be shown');
 
-        router.navigate('/__mini/no-default');
+        router.navigate('/__pith/no-default');
         await until(() => text().includes('E005'));
       } finally {
         console.error = realError;
@@ -273,15 +273,15 @@
       addEventListener('unhandledrejection', onUnhandled);
       const router = createRouter({
         [start]: () => 'start',
-        '/__mini/a': () => 'a',
-        '/__mini/b': () => 'b',
+        '/__pith/a': () => 'a',
+        '/__pith/b': () => 'b',
         '*': () => 'not found',
       }, { prefetch: false });
       try {
         root(() => mount(html`<div id="outlet">${router.view}</div>`));
-        router.navigate('/__mini/a');
+        router.navigate('/__pith/a');
         await new Promise((r) => setTimeout(r, 5));
-        router.navigate('/__mini/b'); // starts a new transition while the first is running
+        router.navigate('/__pith/b'); // starts a new transition while the first is running
         await waitUntil(() => sandbox.querySelector('#outlet').textContent === 'b', 2000);
         await new Promise((r) => setTimeout(r, 400));
         eq(unhandled.join(' / '), '');

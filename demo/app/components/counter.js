@@ -1,7 +1,7 @@
-import { define, html, signal, computed } from 'mini';
+import { define, html, signal, computed } from 'pith';
 
 define(
-  'mini-counter',
+  'pith-counter',
   (props) => {
     const count = signal(Number(props.start.value) || 0);
     const double = computed(() => count.value * 2);

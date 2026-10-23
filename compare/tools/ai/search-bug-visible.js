@@ -1,5 +1,5 @@
 // Reproduces the bug report: after searching, clearing the search box should show every customer again.
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 const api = async (path, init) => {
   const res = await fetch(path, init);

@@ -1,4 +1,4 @@
-import { define, html } from 'mini';
+import { define, html } from 'pith';
 
 // A card with a title slot: <info-card><span slot="title">Title</span><p>Body</p></info-card>
 define('info-card', (props, ctx) => html`

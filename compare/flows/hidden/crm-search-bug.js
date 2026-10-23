@@ -1,5 +1,5 @@
 // Hidden acceptance flows for the search bug (never shown to the agents).
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 const api = async (path, init) => {
   const res = await fetch(path, init);

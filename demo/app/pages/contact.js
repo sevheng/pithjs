@@ -1,4 +1,4 @@
-import { html, signal, form, rules, fetchJSON } from 'mini';
+import { html, signal, form, rules, fetchJSON } from 'pith';
 
 export default function ContactPage() {
   const sentBy = signal('');

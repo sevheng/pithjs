@@ -108,7 +108,7 @@ main:focus { outline: none; }
 .lead { font-size: 1.2rem; color: var(--muted); max-width: 40ch; }
 
 /* ---------- Layout ---------- */
-nav-bar, mini-counter, todo-list { display: block; }
+nav-bar, pith-counter, todo-list { display: block; }
 
 .site-header {
   display: flex;
@@ -385,7 +385,7 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
 }
 
 /* ---------- UI helpers (app/ui.js: dialog, confirm, toast) ---------- */
-.mini-dialog {
+.pith-dialog {
   width: min(28rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
   padding: 0; /* the body fills the dialog, so clicks on the <dialog> itself are backdrop clicks */
@@ -396,16 +396,16 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
   box-shadow: var(--shadow);
   overflow-wrap: anywhere;
 }
-.mini-dialog[open] { animation: mini-pop 0.15s ease-out; }
-.mini-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
-.mini-dialog-body { padding: 1.25rem; }
-.mini-dialog-body > :first-child { margin-top: 0; }
-.mini-dialog-body > :last-child { margin-bottom: 0; }
-.mini-dialog-message { font-size: 1.05rem; }
-.mini-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
+.pith-dialog[open] { animation: pith-pop 0.15s ease-out; }
+.pith-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+.pith-dialog-body { padding: 1.25rem; }
+.pith-dialog-body > :first-child { margin-top: 0; }
+.pith-dialog-body > :last-child { margin-bottom: 0; }
+.pith-dialog-message { font-size: 1.05rem; }
+.pith-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
 .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 
-.mini-toasts {
+.pith-toasts {
   position: fixed;
   inset: auto 1rem 1rem auto;
   z-index: 1000; /* for browsers without popover; with it, the top layer puts it above everything */
@@ -419,7 +419,7 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
   background: transparent;
   overflow: visible;
 }
-.mini-toast {
+.pith-toast {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -430,12 +430,12 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
-  animation: mini-toast-in 0.2s ease-out;
+  animation: pith-toast-in 0.2s ease-out;
 }
-.mini-toast.success { border-left-color: #2e9e5b; }
-.mini-toast.error { border-left-color: var(--danger); }
-.mini-toast-text { flex: 1; min-width: 0; margin: 0; padding: 0.5rem 0; overflow-wrap: anywhere; }
-.mini-toast-close {
+.pith-toast.success { border-left-color: #2e9e5b; }
+.pith-toast.error { border-left-color: var(--danger); }
+.pith-toast-text { flex: 1; min-width: 0; margin: 0; padding: 0.5rem 0; overflow-wrap: anywhere; }
+.pith-toast-close {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
@@ -446,11 +446,11 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
   font-size: 1.3rem;
   cursor: pointer;
 }
-.mini-toast-close:hover { background: var(--accent-soft); color: var(--text); }
+.pith-toast-close:hover { background: var(--accent-soft); color: var(--text); }
 
-@keyframes mini-pop { from { opacity: 0; transform: scale(0.97); } }
-@keyframes mini-toast-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes pith-pop { from { opacity: 0; transform: scale(0.97); } }
+@keyframes pith-toast-in { from { opacity: 0; transform: translateY(6px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .mini-dialog[open], .mini-toast { animation: none; }
+  .pith-dialog[open], .pith-toast { animation: none; }
 }

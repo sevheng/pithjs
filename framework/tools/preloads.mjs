@@ -13,10 +13,10 @@ import { projectRoot } from './dev-server.mjs';
 const STATIC_IMPORT = /^\s*(?:import|export)\b[^'"`;]*?\bfrom\s*['"]([^'"]+)['"]|^\s*import\s*['"]([^'"]+)['"]/gm;
 
 /**
- * @param {{ root?: string, mini?: string }} [options] mini: the framework folder served at /mini/
+ * @param {{ root?: string, pith?: string }} [options] pith: the framework folder served at /pith/
  * @returns {{ missing: string[], unused: string[], skipped?: undefined } | { skipped: string }}
  */
-export function checkPreloads({ root = projectRoot, mini = join(import.meta.dirname, '..', 'mini') } = {}) {
+export function checkPreloads({ root = projectRoot, pith = join(import.meta.dirname, '..', 'pith') } = {}) {
   const indexFile = join(root, 'index.html');
   if (!existsSync(indexFile)) return { skipped: 'no index.html in this folder' };
   const page = readFileSync(indexFile, 'utf8');
@@ -25,7 +25,7 @@ export function checkPreloads({ root = projectRoot, mini = join(import.meta.dirn
   const imports = JSON.parse(page.match(/<script type="importmap">([\s\S]*?)<\/script>/)?.[1] || '{}').imports ?? {};
   const preloads = [...page.matchAll(/<link\b[^>]*\brel="modulepreload"[^>]*\bhref="([^"]+)"/g)].map((m) => m[1]);
 
-  const fileOf = (url) => (url.startsWith('/mini/') ? join(mini, url.slice('/mini/'.length)) : join(root, url));
+  const fileOf = (url) => (url.startsWith('/pith/') ? join(pith, url.slice('/pith/'.length)) : join(root, url));
   const loaded = new Set();
   const visit = (url) => {
     if (loaded.has(url) || !existsSync(fileOf(url))) return;

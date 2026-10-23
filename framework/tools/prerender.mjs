@@ -11,9 +11,9 @@
 // A :param route is prerendered only for the URLs prerender.mjs lists (see routes.mjs, loadPrerenderPaths):
 //   export default async function paths() { return team.map((p) => `/team/${p.id}`); }
 // The '*' not-found route isn't prerendered.
-// Each page also carries the JSON answers of the GETs it fetched while prerendering (#mini-data), so the
+// Each page also carries the JSON answers of the GETs it fetched while prerendering (#pith-data), so the
 // live app's first fetchJSON of those URLs uses them instead of showing "Loading…" over data already on
-// screen (see fetchJSON in mini/resource.js). They're the answers from build time, used once at startup.
+// screen (see fetchJSON in pith/resource.js). They're the answers from build time, used once at startup.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -23,7 +23,7 @@ import { prerenderTargets } from './routes.mjs';
 import { replayScript } from './replay.mjs';
 
 const NOT_FOUND = '/__prerender-unknown-page__';
-const PROBLEM = /\[mini |Uncaught|Error|Failed to load/;
+const PROBLEM = /\[pith |Uncaught|Error|Failed to load/;
 
 /** @param {string} s */
 export const escapeHtml = (s) =>
@@ -66,11 +66,11 @@ export function extractPage(dom) {
 // JSON that's safe inside a <script> element (no "</script>" or "<!--" can appear).
 const scriptJson = (data) => JSON.stringify(data).replace(/</g, '\\u003c');
 
-const RECORDED = 'mini-prerender-data';
+const RECORDED = 'pith-prerender-data';
 
 /**
  * The shell served while prerendering: a script first in <head> records the JSON answer of each successful
- * GET the page fetches, keyed by the URL as the app passed it (as fetchJSON sees it), into #mini-prerender-data.
+ * GET the page fetches, keyed by the URL as the app passed it (as fetchJSON sees it), into #pith-prerender-data.
  * @param {string} shell the built index.html
  */
 export function recordData(shell) {
@@ -104,13 +104,13 @@ export function extractData(dom) {
  * @param {{ html: string, title: string, preload?: string[], script?: string, data?: Record<string, unknown> }} page
  *   preload: JS files to fetch early · script: inline JS run right after #app, before the app's (deferred)
  *   module (default: replayScript(), which keeps clicks made before the app starts) · data: the GET answers
- *   the page was built with, for fetchJSON at startup (#mini-data)
+ *   the page was built with, for fetchJSON at startup (#pith-data)
  */
 export function injectPage(shell, { html, title, preload = [], script = replayScript(), data = {} }) {
   const app = /<div\b([^>]*\bid="app"[^>]*)>[\s\S]*?<\/div>(\s*<\/body>)/;
   if (!app.test(shell)) throw new Error('The built index.html has no <div id="app"></div> right before </body>.');
   const links = preload.map((href) => `  <link rel="modulepreload" crossorigin href="${escapeHtml(href)}">\n`).join('');
-  const inline = (Object.keys(data).length ? `<script type="application/json" id="mini-data">${scriptJson(data)}</script>` : '')
+  const inline = (Object.keys(data).length ? `<script type="application/json" id="pith-data">${scriptJson(data)}</script>` : '')
     + (script ? `<script>${script.replace(/<\/script/gi, '<\\/script')}</script>` : '');
   return shell
     .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`)
@@ -140,7 +140,7 @@ export const landedElsewhere = (route, renderedTitle) =>
  */
 export async function prerender({ root = projectRoot, chunks = [] } = {}) {
   if (resolve(root) !== resolve(projectRoot)) {
-    throw new Error(`prerender serves ${projectRoot}/dist; run it from ${root} (or set MINI_PROJECT=${root}).`);
+    throw new Error(`prerender serves ${projectRoot}/dist; run it from ${root} (or set PITH_PROJECT=${root}).`);
   }
   const chrome = findChrome();
   if (!chrome) return { skipped: 'Chrome not found (set CHROME_PATH to prerender pages)', pages: [], warnings: [] };
@@ -173,14 +173,14 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
     const { dom, consoleLines } = loaded[i];
     const page = extractPage(dom);
     const problems = consoleLines.filter((l) => PROBLEM.test(l));
-    if (problems.length) return warnings.push(`[mini W062] ${path} logged errors while prerendering, so it wasn't written:\n  ${problems.join('\n  ')}`);
-    if (!page?.html) return warnings.push(`[mini W061] ${path} rendered nothing into #app, so it wasn't prerendered.`);
+    if (problems.length) return warnings.push(`[pith W062] ${path} logged errors while prerendering, so it wasn't written:\n  ${problems.join('\n  ')}`);
+    if (!page?.html) return warnings.push(`[pith W061] ${path} rendered nothing into #app, so it wasn't prerendered.`);
     if (page.title === notFoundTitle) {
       return warnings.push(extra
-        ? `[mini W064] ${path} (from prerender.mjs) showed the not-found page ("${page.title}"), so it wasn't prerendered.`
-        : `[mini W060] ${path} showed the not-found page ("${page.title}"), so it wasn't prerendered.`);
+        ? `[pith W064] ${path} (from prerender.mjs) showed the not-found page ("${page.title}"), so it wasn't prerendered.`
+        : `[pith W060] ${path} showed the not-found page ("${page.title}"), so it wasn't prerendered.`);
     }
-    if (landedElsewhere(route, page.title)) return redirected.push(path), warnings.push(`[mini W063] ${path} redirected to another page ("${page.title}"), so it wasn't prerendered.`);
+    if (landedElsewhere(route, page.title)) return redirected.push(path), warnings.push(`[pith W063] ${path} redirected to another page ("${page.title}"), so it wasn't prerendered.`);
     const chunk = chunks.find((c) => c.facadeModuleId && pageFile && resolve(c.facadeModuleId) === pageFile);
     const preload = chunk ? [chunk.fileName, ...(chunk.imports ?? [])].map((f) => `/${f}`).filter((f) => !shell.includes(f)) : [];
     const file = routeFile(path);

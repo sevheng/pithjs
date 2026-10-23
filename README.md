@@ -1,8 +1,8 @@
 # webFramwork
 
 ```
-framework/   Mini: the framework, its tools (dev server, check, see, new), tests and docs
-demo/        an app built with Mini: pages, components, a dev API, styles and user flows
+framework/   Pith: the framework, its tools (dev server, check, see, new), tests and docs
+demo/        an app built with Pith: pages, components, a dev API, styles and user flows
 ```
 
 Start here:
@@ -18,6 +18,6 @@ npm run preview  # serve dist/ locally
 
 - Building the app: read [demo/AGENTS.md](demo/AGENTS.md)
 - How the framework works: read [framework/README.md](framework/README.md)
-- Error codes like `[mini W001]`: see [framework/docs/errors.md](framework/docs/errors.md)
+- Error codes like `[pith W001]`: see [framework/docs/errors.md](framework/docs/errors.md)
 
-Needs Node 24+ and Chrome/Chromium. Mini itself has no dependencies. Without installing anything, `npm run dev:no-build` still works.
+Needs Node 24+ and Chrome/Chromium. Pith itself has no dependencies. Without installing anything, `npm run dev:no-build` still works.

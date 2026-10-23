@@ -1,14 +1,14 @@
 // store tests: names in the state output, and keeping a saved store in step across browser tabs.
 // Called by index.html with the shared helpers.
 
-import { createStore } from '../mini/store.js';
-import { registry } from '../mini/dev.js';
-import { html } from '../mini/html.js';
+import { createStore } from '../pith/store.js';
+import { registry } from '../pith/dev.js';
+import { html } from '../pith/html.js';
 
 /** @param {any} t */
 export default async function (t) {
   const { test, eq, mount, tick, sandbox } = t;
-  const KEY = '__mini-store-test';
+  const KEY = '__pith-store-test';
   // Another tab saving: the browser fires `storage` only in the other tabs, so tests dispatch it.
   const otherTab = (key, newValue) => {
     if (key && newValue != null) localStorage.setItem(key, newValue);

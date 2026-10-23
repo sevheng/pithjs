@@ -1,4 +1,4 @@
-import { html, signal } from 'mini';
+import { html, signal } from 'pith';
 import '../components/info-card.js';
 import '../components/risky-widget.js';
 
@@ -57,7 +57,7 @@ export default function AboutPage() {
         <p class="muted">If a component throws, only that component shows a fallback. The rest of the page keeps working.</p>
         <risky-widget></risky-widget>
       </info-card>
-      <p><a href="/__mini/" data-reload>Run the framework tests →</a></p>
+      <p><a href="/__pith/" data-reload>Run the framework tests →</a></p>
     </section>
   `;
 }

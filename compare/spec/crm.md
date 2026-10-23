@@ -1,4 +1,4 @@
-# Medium app: mini CRM
+# Medium app: pith CRM
 
 A customer admin with 6 routes. Every implementation must match this text exactly, so the same
 user flows (`flows/crm.js`) test all of them. Uses `/styles.css` (shared) and the shared API.

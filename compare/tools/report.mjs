@@ -12,10 +12,10 @@ const code = read('code.json');
 const builds = read('build.json');
 const ai = read('ai.json');
 
-const IMPLS = ['mini', 'mini-vite', 'react', 'vue'];
-const NAMES = { mini: 'Mini', 'mini-vite': 'Mini + Vite', react: 'React', vue: 'Vue', 'mini-fine': 'Mini, fine-grained rows' };
-// Runtime and memory also show Mini with fine-grained rows (bench/mini-fine, an opt-in pattern), when measured.
-const BENCH_IMPLS = [...IMPLS, ...(measure.runtime?.['mini-fine'] ? ['mini-fine'] : [])];
+const IMPLS = ['pith', 'pith-vite', 'react', 'vue'];
+const NAMES = { pith: 'Pith', 'pith-vite': 'Pith + Vite', react: 'React', vue: 'Vue', 'pith-fine': 'Pith, fine-grained rows' };
+// Runtime and memory also show Pith with fine-grained rows (bench/pith-fine, an opt-in pattern), when measured.
+const BENCH_IMPLS = [...IMPLS, ...(measure.runtime?.['pith-fine'] ? ['pith-fine'] : [])];
 const out = [];
 const table = (head, rows) => {
   out.push(`| ${head.join(' | ')} |`, `|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
@@ -59,39 +59,39 @@ if (measure.load) {
 if (measure.runtime) {
   out.push('## Runtime (ms, lower is better)', '',
     'js-framework-benchmark-style operations on the bench app, desktop CPU. Time from click to DOM updated and laid out.', '');
-  const ops = Object.keys(measure.runtime.mini ?? {});
+  const ops = Object.keys(measure.runtime.pith ?? {});
   table(['Operation', ...BENCH_IMPLS.map((i) => NAMES[i])], ops.map((op) => [op, ...boldBest(BENCH_IMPLS.map((i) => measure.runtime[i]?.[op]))]));
-  if (BENCH_IMPLS.includes('mini-fine')) {
-    out.push('"Mini, fine-grained rows" is the same Mini app with each row\'s label as a signal (bench/mini-fine), an opt-in pattern for big, busy lists. "Mini" is the default way to write it.', '');
+  if (BENCH_IMPLS.includes('pith-fine')) {
+    out.push('"Pith, fine-grained rows" is the same Pith app with each row\'s label as a signal (bench/pith-fine), an opt-in pattern for big, busy lists. "Pith" is the default way to write it.', '');
   }
 }
 
 const ab = read('ab-runtime.json');
 if (ab) {
-  out.push('### Mini before and after the optimization pass', '',
-    'Same session, old and new Mini alternated 6 times (medians), so session-to-session noise cancels out.',
+  out.push('### Pith before and after the optimization pass', '',
+    'Same session, old and new Pith alternated 6 times (medians), so session-to-session noise cancels out.',
     'Measured 2026-10-22, before runs started right after a frame: that timing penalised remove and select, so',
     'their "after" here is worse than in the main table above. The other operations show the pass itself.', '');
-  table(['Operation', 'Mini before', 'Mini after', 'change'], Object.entries(ab).map(([op, { before, after }]) =>
+  table(['Operation', 'Pith before', 'Pith after', 'change'], Object.entries(ab).map(([op, { before, after }]) =>
     [op, Math.round(before * 10) / 10, Math.round(after * 10) / 10, `${after < before ? '' : '+'}${Math.round(((after - before) / before) * 100)}%`]));
 }
 
 if (measure.memory) {
   out.push('## Memory (JS heap, MB, lower is better)', '');
-  const rows = Object.keys(measure.memory.mini ?? {});
+  const rows = Object.keys(measure.memory.pith ?? {});
   table(['State', ...BENCH_IMPLS.map((i) => NAMES[i])], rows.map((r) => [r, ...boldBest(BENCH_IMPLS.map((i) => measure.memory[i]?.[r]))]));
 }
 
 if (code) {
   out.push('## Code (lines of app code, without comments and blank lines)', '');
-  table(['App', 'Mini', 'React', 'Vue'], ['todo', 'crm', 'bench'].map((app) => [
-    app, ...boldBest(['mini', 'react', 'vue'].map((i) => code.code[`${app}/${i}`].lines)),
+  table(['App', 'Pith', 'React', 'Vue'], ['todo', 'crm', 'bench'].map((app) => [
+    app, ...boldBest(['pith', 'react', 'vue'].map((i) => code.code[`${app}/${i}`].lines)),
   ]));
   out.push('## Developer experience', '');
   const b = (app, impl) => builds?.[`${app}/${impl}`];
-  table(['', 'Mini', 'React', 'Vue'], [
-    ['npm packages to install', ...['mini', 'react', 'vue'].map((i) => code.deps[i].total)],
-    ['node_modules size (MB)', ...['mini', 'react', 'vue'].map((i) => code.deps[i].diskMB)],
+  table(['', 'Pith', 'React', 'Vue'], [
+    ['npm packages to install', ...['pith', 'react', 'vue'].map((i) => code.deps[i].total)],
+    ['node_modules size (MB)', ...['pith', 'react', 'vue'].map((i) => code.deps[i].diskMB)],
     ['Build step', 'none', 'Vite', 'Vite'],
     ['Production build of the CRM (ms)', '0', b('crm', 'react') ?? '–', b('crm', 'vue') ?? '–'],
     ['Config files', '0', '1 (vite.config.js)', '1 (vite.config.js)'],
@@ -100,7 +100,7 @@ if (code) {
 
 if (ai) {
   out.push('## AI-friendliness', '', ai.method, '');
-  table(['Task', 'Mini', 'React', 'Vue'], ai.tasks.map((t) => [t.name, ...['mini', 'react', 'vue'].map((i) => t[i])]));
+  table(['Task', 'Pith', 'React', 'Vue'], ai.tasks.map((t) => [t.name, ...['pith', 'react', 'vue'].map((i) => t[i])]));
   if (ai.notes) out.push(...ai.notes.map((n) => `- ${n}`), '');
 }
 

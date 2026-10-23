@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 import '../components/counter.js';
 
 const features = [
@@ -12,7 +12,7 @@ export default function HomePage() {
     <section class="hero">
       <h1>Simple is fast.</h1>
       <p class="lead">
-        Mini is a small framework built on native web tech: the speed of old-school HTML
+        Pith is a small framework built on native web tech: the speed of old-school HTML
         with the feel of a modern app.
       </p>
       <div class="row">
@@ -24,7 +24,7 @@ export default function HomePage() {
     <section class="section">
       <h2>A reactive counter</h2>
       <p class="muted">Each click changes one signal. Only the two numbers re-render.</p>
-      <mini-counter start="5"></mini-counter>
+      <pith-counter start="5"></pith-counter>
     </section>
 
     <section class="section grid">

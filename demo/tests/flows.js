@@ -1,7 +1,7 @@
 // User flows: what a person does, and what they should see. Run by `npm run check`.
 // Find things by the name a person sees (button text, label, aria-label), not by CSS classes,
 // so flows keep working when the styling changes.
-import { flow } from 'mini/testing';
+import { flow } from 'pith/testing';
 
 flow('home: counter goes up and the double follows', async (app) => {
   await app.go('/');
@@ -69,7 +69,7 @@ flow('navigation: links, title, and the back button', async (app) => {
   await app.click('Todos');
   await app.expectPath('/todos');
   await app.see('Saved in your browser');
-  app.expect(app.document.title === 'Todos · Mini', `title should be "Todos · Mini", got "${app.document.title}"`);
+  app.expect(app.document.title === 'Todos · Pith', `title should be "Todos · Pith", got "${app.document.title}"`);
   await app.back();
   await app.expectPath('/');
   await app.see('Simple is fast.');
@@ -128,7 +128,7 @@ flow('team: clicking a person opens their page, with their role', async (app) =>
   await app.waitFor(() => app.query('h1')?.textContent === 'Dieter Rams', 'the page heading should be the person');
   await app.see('Product designer');
   await app.notSee('Grace Hopper'); // the list is gone
-  app.expect(app.document.title === 'Member · Mini', `title should be "Member · Mini", got "${app.document.title}"`);
+  app.expect(app.document.title === 'Member · Pith', `title should be "Member · Pith", got "${app.document.title}"`);
 });
 
 flow('team: an unknown person id shows "No such person" on that URL', async (app) => {
@@ -150,7 +150,7 @@ flow('contact: the server rejects a blocked email, shown under the email field',
   await app.go('/contact');
   await app.type('Your name', 'Ann');
   await app.type('Email', 'ann@blocked.test');
-  await app.type('Message', 'Hello, I have a question about Mini.');
+  await app.type('Message', 'Hello, I have a question about Pith.');
   await app.click('I agree to be contacted by email');
   await app.click('Send message');
   await app.see('This address is blocked');
@@ -163,7 +163,7 @@ flow('contact: a valid message is sent and can be followed by another', async (a
   await app.go('/contact');
   await app.type('Your name', 'Ann');
   await app.type('Email', 'ann@mail.test');
-  await app.type('Message', 'Hello, I have a question about Mini.');
+  await app.type('Message', 'Hello, I have a question about Pith.');
   await app.click('I agree to be contacted by email');
   await app.click('Send message');
   await app.see('Thanks, Ann!');
@@ -253,7 +253,7 @@ flow('settings: /settings opens Profile, and the layout keeps its state across p
   await app.click('Settings');
   await app.expectPath('/settings/profile');
   await app.see('Type a display name');
-  app.expect(app.document.title === 'Profile · Mini', `title should be "Profile · Mini", got "${app.document.title}"`);
+  app.expect(app.document.title === 'Profile · Pith', `title should be "Profile · Pith", got "${app.document.title}"`);
   await app.type('Display name', 'Ann');
   await app.see('Hello, Ann!'); // the page reads the layout's value via inject()
   await app.click('Appearance');

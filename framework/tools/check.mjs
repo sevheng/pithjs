@@ -2,7 +2,7 @@
 //   1. Node tests: framework/tests/*.test.mjs and the project's tests/*.test.mjs
 //   2. framework tests (framework/tests/index.html) in headless Chrome
 //   3. user flows (the project's tests/flows.js): click, type, see, like a person
-//   4. every route in app/router.js renders, with a title and no errors or [mini] warnings,
+//   4. every route in app/router.js renders, with a title and no errors or [pith] warnings,
 //      and doesn't scroll sideways on a phone-sized screen (390px). :param routes are checked with the
 //      first URL the project's prerender.mjs lists for them (if it lists any).
 //      Accessibility too (tests/a11y.js): labels, button/link names, alt, ids, one <h1>, lang, and text
@@ -10,7 +10,7 @@
 //   5. types: JSDoc type check with TypeScript (fetched once by npx; skipped if offline)
 //   6. size: the whole framework, minified + gzipped, stays within its 10 KB budget (tools/size.mjs)
 //   7. preloads: index.html preloads exactly the modules the app loads at startup (tools/preloads.mjs)
-//   8. release: mini/mini.min.js, the no-build production copy, matches mini/*.js (tools/release.mjs)
+//   8. release: pith/pith.min.js, the no-build production copy, matches pith/*.js (tools/release.mjs)
 // Stages that don't apply (e.g. no app/router.js when run from framework/) are skipped.
 // Flags: --json prints one JSON object (for tools and AI agents).
 //        --browsers also runs the framework tests and user flows in Firefox and WebKit (tools/browsers.mjs;
@@ -43,7 +43,7 @@ const SAMPLES = EXTRA.filter((t, i) => EXTRA.findIndex((u) => u.route === t.rout
 const NOT_FOUND = '/__check-unknown-page__';
 const PAGES = ROUTES.length || SAMPLES.length ? [...ROUTES, ...SAMPLES, NOT_FOUND] : [];
 const hasFlows = existsSync(project('tests', 'flows.js'));
-const PROBLEM = /\[mini |Uncaught|Error|Failed to load/;
+const PROBLEM = /\[pith |Uncaught|Error|Failed to load/;
 const json = process.argv.includes('--json');
 const built = process.argv.includes('--build');
 const wantBrowsers = process.argv.includes('--browsers');
@@ -74,7 +74,7 @@ if (built) {
   }
 }
 
-// The size budget is measured in the background too, and the same build is compared with mini.min.js.
+// The size budget is measured in the background too, and the same build is compared with pith.min.js.
 const minified = measureFramework();
 const sizeDone = minified.then(
   ({ code, ...size }) => (size.skipped ? { ok: true, ...size } : { ok: size.core <= BUDGET, budget: BUDGET, ...size }),
@@ -134,11 +134,11 @@ if (!chrome) {
         console: consoleLines.filter((l) => PROBLEM.test(l)),
       };
     };
-    const phone = (path) => loadPage(chrome, `${base}/__mini/see.html?${new URLSearchParams({ path, width: '390', height: '844' })}`);
-    const dark = (path) => loadPage(chrome, `${base}/__mini/see.html?${new URLSearchParams({ path, dark: '1' })}`, { dark: true });
+    const phone = (path) => loadPage(chrome, `${base}/__pith/see.html?${new URLSearchParams({ path, width: '390', height: '844' })}`);
+    const dark = (path) => loadPage(chrome, `${base}/__pith/see.html?${new URLSearchParams({ path, dark: '1' })}`, { dark: true });
     const [framework, flows, ...loaded] = await Promise.all([
-      suite('/__mini/'),
-      hasFlows ? suite('/__mini/flows.html') : null,
+      suite('/__pith/'),
+      hasFlows ? suite('/__pith/flows.html') : null,
       ...PAGES.map((path) => loadPage(chrome, base + path)),
       ...PAGES.map(phone),
       ...PAGES.map(dark),
@@ -285,10 +285,10 @@ if (json) {
   }
   console.log('\nRelease');
   if (report.release.skipped) skip(report.release.skipped);
-  else if (report.release.ok) line(true, 'mini/mini.min.js (no-build production copy) is up to date');
+  else if (report.release.ok) line(true, 'pith/pith.min.js (no-build production copy) is up to date');
   else {
     problems++;
-    line(false, report.release.error ?? 'mini/mini.min.js is out of date with mini/*.js: run  node ../framework/tools/release.mjs  (from demo/)');
+    line(false, report.release.error ?? 'pith/pith.min.js is out of date with pith/*.js: run  node ../framework/tools/release.mjs  (from demo/)');
   }
   if (report.error) {
     problems++;

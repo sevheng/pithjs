@@ -1,4 +1,4 @@
-import { define, html, signal } from 'mini';
+import { define, html, signal } from 'pith';
 
 // Throws from one of its holes when broken. The custom fallback replaces only this widget;
 // "Try again" re-runs setup, so `broken` starts as false again.

@@ -1,4 +1,4 @@
-import { html } from 'mini';
+import { html } from 'pith';
 import '../components/name-preview.js';
 
 // Guarded: the router only shows it when session.signedIn is true (see `auth: true` in app/router.js).

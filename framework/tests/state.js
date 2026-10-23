@@ -1,5 +1,5 @@
-// Prints the app's state as text (dev mode), from the registry the core keeps in globalThis.__mini
-// (see mini/dev.js). Used by `npm run see /path --state` and by failing user flows.
+// Prints the app's state as text (dev mode), from the registry the core keeps in globalThis.__pith
+// (see pith/dev.js). Used by `npm run see /path --state` and by failing user flows.
 // It runs in the test page on the app iframe's window (another realm), so it checks shapes and
 // nodeType, never instanceof. Values are read with peek() (no subscribing), and a value that throws
 // while being read prints as `?`.
@@ -81,7 +81,7 @@ function entries(list) {
 
 const signals = (record) => entries(Object.entries(record ?? {}).map(([name, s]) => [name, 'signal', s]));
 
-// Mini components inside `root`, in document order (shadow content before light children, as rendered).
+// Pith components inside `root`, in document order (shadow content before light children, as rendered).
 function findComponents(root, set) {
   const found = [];
   const walk = (node, depth) => {
@@ -96,7 +96,7 @@ function findComponents(root, set) {
 }
 
 function componentLine(hostEl, depth) {
-  const info = hostEl.__miniState ?? {};
+  const info = hostEl.__pithState ?? {};
   const props = signals(info.props);
   const state = entries(info.state ?? []);
   let text = `<${info.tag ?? hostEl.localName}>`;
@@ -111,13 +111,13 @@ function componentLine(hostEl, depth) {
  * @returns {string}
  */
 export function stateText(win) {
-  let mini;
+  let pith;
   try {
-    mini = /** @type {any} */ (win)?.__mini;
+    pith = /** @type {any} */ (win)?.__pith;
   } catch {
     // a cross-origin window
   }
-  if (!mini) return '(state is only recorded in dev mode)';
+  if (!pith) return '(state is only recorded in dev mode)';
   const lines = [];
   const add = (fn) => {
     try {
@@ -127,12 +127,12 @@ export function stateText(win) {
     }
   };
 
-  if (mini.router) add(() => {
-    const search = String(peek(mini.router.search) ?? '');
-    return `route ${peek(mini.router.path)}${search && !search.startsWith('?') ? '?' : ''}${search}`;
+  if (pith.router) add(() => {
+    const search = String(peek(pith.router.search) ?? '');
+    return `route ${peek(pith.router.path)}${search && !search.startsWith('?') ? '?' : ''}${search}`;
   });
-  for (const store of mini.stores ?? []) add(() => `store ${JSON.stringify(store.name)}: ${signals(store.signals) || '(empty)'}`);
-  for (const page of mini.pages ?? []) {
+  for (const store of pith.stores ?? []) add(() => `store ${JSON.stringify(store.name)}: ${signals(store.signals) || '(empty)'}`);
+  for (const page of pith.pages ?? []) {
     add(() => {
       const state = entries(page.state ?? []);
       const label = page.layout ? `layout ${page.name || 'anonymous'}` : `page ${page.path} (${page.name || 'anonymous'})`;
@@ -142,7 +142,7 @@ export function stateText(win) {
 
   let components = [];
   try {
-    const set = mini.components;
+    const set = pith.components;
     const doc = win.document;
     const root = doc?.getElementById('app') ?? doc?.body;
     if (set?.size && root) components = findComponents(root, set);

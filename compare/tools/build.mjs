@@ -1,7 +1,7 @@
 // Production builds for every app with Vite, timed:
 //   react, vue   → <app>/<impl>/dist   (their own vite.config.js)
-//   mini-vite    → <app>/mini/dist     (Mini's source, bundled + minified, to see what no-build costs)
-// Mini itself needs no build. Writes results/build.json.
+//   pith-vite    → <app>/pith/dist     (Pith's source, bundled + minified, to see what no-build costs)
+// Pith itself needs no build. Writes results/build.json.
 
 import { build } from 'vite';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -11,7 +11,7 @@ const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
 const APPS = ['todo', 'crm', 'bench'];
 
-// Mini's index.html loads 'mini' through an import map and preloads its files; a bundle replaces both.
+// Pith's index.html loads 'pith' through an import map and preloads its files; a bundle replaces both.
 const stripNoBuildTags = {
   name: 'strip-no-build-tags',
   transformIndexHtml: {
@@ -22,12 +22,12 @@ const stripNoBuildTags = {
 };
 
 function configFor(app, impl) {
-  if (impl === 'mini-vite') {
+  if (impl === 'pith-vite') {
     return {
       configFile: false,
-      root: join(compare, app, 'mini'),
+      root: join(compare, app, 'pith'),
       logLevel: 'silent',
-      resolve: { alias: { mini: join(framework, 'mini', 'index.js') } },
+      resolve: { alias: { pith: join(framework, 'pith', 'index.js') } },
       plugins: [stripNoBuildTags],
       build: { outDir: 'dist', emptyOutDir: true },
     };
@@ -37,7 +37,7 @@ function configFor(app, impl) {
 
 const times = {};
 for (const app of APPS) {
-  for (const impl of ['react', 'vue', 'mini-vite']) {
+  for (const impl of ['react', 'vue', 'pith-vite']) {
     const start = performance.now();
     await build(configFor(app, impl));
     const ms = Math.round(performance.now() - start);
