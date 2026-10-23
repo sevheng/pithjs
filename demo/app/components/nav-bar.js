@@ -3,6 +3,7 @@ import { router } from '../router.js';
 
 const links = [
   ['/', 'Home'],
+  ['/features', 'Features'],
   ['/todos', 'Todos'],
   ['/team', 'Team'],
   ['/contact', 'Contact'],

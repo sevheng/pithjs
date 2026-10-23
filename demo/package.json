@@ -13,7 +13,8 @@
     "see": "pith see",
     "new": "pith new",
     "release": "pith release",
-    "types": "npx -y -p typescript@5.9.3 tsc -p jsconfig.json"
+    "types": "npx -y -p typescript@5.9.3 tsc -p jsconfig.json",
+    "examples": "node scripts/examples.mjs"
   },
   "engines": {
     "node": ">=24"

@@ -9,6 +9,8 @@ const settings = { load: () => import('./layouts/settings.js') };
 export const router = createRouter(
   {
     '/': { title: 'Home', load: () => import('./pages/home.js') },
+    '/features': { title: 'Features', load: () => import('./pages/features.js') },
+    '/features/:name': { title: 'Feature', load: () => import('./pages/feature.js') },
     '/todos': { title: 'Todos', load: () => import('./pages/todos.js') },
     '/team': { title: 'Team', load: () => import('./pages/team.js') },
     '/team/:id': { title: 'Member', load: () => import('./pages/member.js') },

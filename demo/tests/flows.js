@@ -289,3 +289,116 @@ flow('about: a broken widget shows its fallback, the page keeps working, and it 
   await app.see('This widget is working.');
   await app.notSee('This widget crashed');
 });
+
+// ---------- Features showcase (/features): every example works ----------
+
+flow('features: the list links to each feature, with its live example and code', async (app) => {
+  await app.go('/features');
+  await app.see('Selecting a row');
+  await app.click('Forms');
+  await app.expectPath('/features/forms');
+  await app.see('The code');
+  app.expect(app.query('pre.code').textContent.includes("form({"), 'the code panel should show forms.js');
+  await app.click('Routing →');
+  await app.expectPath('/features/router');
+});
+
+flow('features: an unknown feature name says so', async (app) => {
+  await app.go('/features/nope');
+  await app.see('No such feature');
+});
+
+flow('features/signals: +1 updates the count and its double', async (app) => {
+  await app.go('/features/signals');
+  await app.click('+1');
+  await app.click('+1');
+  await app.see('2 × 2 = 4');
+});
+
+flow('features/lists: add and remove an item', async (app) => {
+  await app.go('/features/lists');
+  await app.type('New item', 'Milk');
+  await app.click('Add');
+  await app.see('Milk');
+  await app.click('Remove Milk');
+  await app.notSee('Milk');
+  await app.see('Coffee');
+});
+
+flow('features/selector: a click re-runs 2 rows with selector(), every row without it', async (app) => {
+  await app.go('/features/selector');
+  await app.click('7');
+  await app.see('Rows re-run by the last click: 1 of 100'); // first pick: only row 7 changes
+  await app.click('9');
+  await app.see('Rows re-run by the last click: 2 of 100');
+  await app.click('Compare in every row instead');
+  await app.click('12');
+  await app.see('Rows re-run by the last click: 100 of 100');
+});
+
+flow('features/components: clicking a star sets the rating', async (app) => {
+  await app.go('/features/components');
+  await app.see('A tiny framework');
+  await app.click('2 stars');
+  app.expect(!!app.query('[aria-label="Rating: 2 of 5"]'), 'the rating should be 2 of 5');
+});
+
+flow('features/errors: a crash shows the fallback, and Try again recovers', async (app) => {
+  await app.go('/features/errors');
+  await app.click('Break it');
+  await app.see('Crashed: Something broke inside this panel.');
+  await app.see('This text is outside the panel');
+  await app.click('Try again');
+  await app.see('Working fine.');
+});
+
+flow('features/store: the note survives a reload', async (app) => {
+  await app.go('/features/store');
+  await app.type('A note that survives reloads', 'remember me');
+  await app.go('/features/store');
+  app.expect(app.query('#store-note').value === 'remember me', 'the note should be restored after a reload');
+});
+
+flow('features/resource: searching loads matching people from the API', async (app) => {
+  await app.go('/features/resource');
+  await app.see('Ada Lovelace');
+  await app.type('Search people', 'grace');
+  await app.see('Grace Hopper');
+  await app.notSee('Ada Lovelace');
+});
+
+flow('features/paginated: Load more appends the next page', async (app) => {
+  await app.go('/features/paginated');
+  await app.see('Susan Kare');
+  await app.notSee('Margaret Hamilton');
+  await app.click('Load more');
+  await app.see('Margaret Hamilton');
+});
+
+flow('features/forms: required fields, a server error, then success', async (app) => {
+  await app.go('/features/forms');
+  await app.click('Send');
+  await app.see('This field is required');
+  await app.type('Name', 'Ann');
+  await app.type('Email', 'ann@blocked.test');
+  await app.type('Message', 'Hello there, Pith!');
+  await app.click('Send');
+  await app.see('This address is blocked');
+  await app.type('Email', 'ann@example.com');
+  await app.click('Send');
+  await app.see('Thanks, Ann!');
+});
+
+flow('features/router: a tab is kept in the ?query', async (app) => {
+  await app.go('/features/router');
+  await app.click('Tab two');
+  await app.see('Showing tab two');
+  app.expect(app.window.location.search === '?tab=two', `the URL should have ?tab=two, not ${app.window.location.search}`);
+});
+
+flow('features/dialogs: confirm, then a toast', async (app) => {
+  await app.go('/features/dialogs');
+  await app.click('Confirm…');
+  await app.click('Delete');
+  await app.see('Deleted');
+});

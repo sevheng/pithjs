@@ -16,7 +16,8 @@ export default function HomePage() {
         with the feel of a modern app.
       </p>
       <div class="row">
-        <a class="btn primary" href="/todos">Try the todo app</a>
+        <a class="btn primary" href="/features">See every feature</a>
+        <a class="btn" href="/todos">Try the todo app</a>
         <a class="btn" href="/about">How fast is it?</a>
       </div>
     </section>

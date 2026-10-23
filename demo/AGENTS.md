@@ -340,6 +340,9 @@ framework changes show up here at once. To change the framework itself, follow `
 `../framework/AGENTS.md`, the copy every new project gets (a test keeps the two in sync).
 
 Pages, each showing one part of Pith:
+- Features (`/features`, `/features/<name>`): one live example per feature, with its source. Each example is a
+  file in `app/examples/` listed in `app/examples/index.js`; after changing one, run `npm run examples` to
+  refresh `app/examples/sources.js` (the code shown on the page; a test fails while it's stale). Add a flow too.
 - Home (`/`): a counter component, `computed`.
 - Todos (`/todos`): a persisted store, `repeat()`, `transition()` animations (`app/components/todo-list.js`), `app/ui.js` confirm and toasts.
 - Team (`/team`, `/team/:id`): `paginated()` from `api/team.mjs`, search kept in `?q=`, member pages prerendered (`prerender.mjs`).
