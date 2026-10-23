@@ -1,9 +1,10 @@
 // Measure every implementation the same way, with real (not virtual) time:
 //   load:    fresh profile per run, "slow 4G + 4x slower CPU" phone profile, over HTTP/1.1 and HTTP/2
-//   runtime: js-framework-benchmark-style operations (median of 10, after warm-up, GC between runs)
+//   runtime: js-framework-benchmark-style operations (median of 10, after warm-up, GC between runs; 3 pages
+//            per implementation per round, --rounds rounds in rotated order)
 //   memory:  JS heap after load, with 1k / 10k rows, and after create/clear cycles (leak check)
 //
-//   node tools/measure.mjs [load] [runtime] [--runs 5] [--source] [--impl mini,mini-fine,react,vue] [--out file.json]
+//   node tools/measure.mjs [load] [runtime] [--runs 5] [--rounds 4] [--source] [--impl mini,mini-fine,react,vue] [--out file.json]
 //   (mini-fine: Mini with fine-grained rows, bench only, runtime only; see README "Fine-grained rows")
 // Writes results/measure.json. Mini runs with dev warnings off (MINI_DEV=false), like the others'
 // production builds. Its load test serves it as deployed without a build: one file, mini.min.js
@@ -21,7 +22,8 @@ const want = (part) => !args.some((a) => ['load', 'runtime'].includes(a)) || arg
 const runsArg = args.indexOf('--runs');
 const RUNS = runsArg >= 0 ? Number(args[runsArg + 1]) : 5;
 const implArg = args.indexOf('--impl');
-const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['mini', 'mini-vite', 'react', 'vue'];
+const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['mini', 'mini-vite', 'react', 'vue', 'mini-fine'];
+const LOAD_IMPLS = IMPLS.filter((i) => i !== 'mini-fine'); // fine-grained rows exist for the bench app only
 const DEPLOY = !args.includes('--source');
 const OUT = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'measure.json';
 
@@ -108,12 +110,18 @@ async function loadOnce(url, selector) {
 if (want('load')) {
   results.load = {};
   for (const { app, path, ready } of LOAD_PAGES) {
-    for (const impl of IMPLS) {
+    for (const impl of LOAD_IMPLS) {
       for (const h2 of [false, true]) {
         const server = await startServer({ app, impl, h2, deploy: DEPLOY });
         const runs = [];
         try {
-          for (let i = 0; i < RUNS; i++) runs.push(await loadOnce(server.url + path, ready));
+          for (let i = 0; i < RUNS; i++) {
+            // A rare load hangs (seen once in ~200 over HTTP/2); retry it once instead of losing the whole run.
+            runs.push(await loadOnce(server.url + path, ready).catch((err) => {
+              console.warn(`  retrying after: ${err.message}`);
+              return loadOnce(server.url + path, ready);
+            }));
+          }
         } finally {
           server.close();
         }
@@ -183,12 +191,18 @@ async function heapMB(page) {
   return Math.round((usedSize / 1024 / 1024) * 100) / 100;
 }
 
+// Runtime runs in rounds, the implementations in a rotated order each round, and takes medians over all of
+// them: whichever runs first (right after the load phase) is otherwise measured on a warmer, busier machine.
+const roundsArg = args.indexOf('--rounds');
+const ROUNDS = roundsArg >= 0 ? Number(args[roundsArg + 1]) : 4;
 if (want('runtime')) {
   results.runtime = {};
   results.memory = {};
-  for (const impl of IMPLS) {
+  const pagesOf = Object.fromEntries(IMPLS.map((i) => [i, []]));
+  for (let round = 0; round < ROUNDS; round++)
+  for (const impl of [...IMPLS.slice(round % IMPLS.length), ...IMPLS.slice(0, round % IMPLS.length)]) {
     const server = await startServer({ app: 'bench', impl });
-    const perPage = [];
+    const perPage = pagesOf[impl];
     let memory;
     try {
       for (let pass = 0; pass < 3; pass++) {
@@ -200,7 +214,7 @@ if (want('runtime')) {
           await page.send('Page.navigate', { url: `${server.url}/` });
           await loaded;
           await page.evaluate(`new Promise((r) => { const t = setInterval(() => document.querySelector('#run') && (clearInterval(t), r()), 20); })`);
-          if (pass === 0) {
+          if (pass === 0 && round === 0) {
             const click = (sel, n) => page.evaluate(`(async () => { document.querySelector('${sel}').click();
               await new Promise((r) => { const t = setInterval(() => document.querySelectorAll('tbody tr').length === ${n} && (clearInterval(t), r()), 10); }); })()`);
             const m = { ready: await heapMB(page) };
@@ -223,12 +237,16 @@ if (want('runtime')) {
     } finally {
       server.close();
     }
+    if (memory) results.memory[impl] = memory;
+    console.log(`round ${round + 1}/${ROUNDS}`, impl);
+  }
+  for (const impl of IMPLS) {
+    const perPage = pagesOf[impl];
     results.runtime[impl] = Object.fromEntries(
       Object.keys(perPage[0]).map((op) => [op, Math.round(median(perPage.map((p) => p[op])) * 10) / 10])
     );
-    results.memory[impl] = memory;
     console.log(impl.padEnd(10), JSON.stringify(results.runtime[impl]));
-    console.log(''.padEnd(10), 'memory MB', JSON.stringify(memory));
+    console.log(''.padEnd(10), 'memory MB', JSON.stringify(results.memory[impl]));
   }
 }
 

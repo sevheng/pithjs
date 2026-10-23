@@ -26,7 +26,8 @@ the app too. It shows what Mini's no-build choice costs.
 
 - **Server** (`tools/server.mjs`): gzip like a real host, over both HTTP/1.1 and HTTP/2 (HTTP/2 lets many small files load in parallel, which matters for unbundled Mini).
 - **Load**: Chrome via the DevTools protocol, a fresh profile per run, Lighthouse's mobile profile (Slow 4G + 4× CPU slowdown), median of 9.
-- **Runtime**: click to DOM updated and laid out, 3 warm-up + 10 measured runs with GC in between, in 3 fresh pages, median. Every operation is checked for the right result. Each run starts right after the browser has drawn a frame, so its next frame never lands inside the timed window (before 2026-10-23 it sometimes did, which penalised Mini's remove and update by 3–7 ms).
+- **Runtime**: click to DOM updated and laid out, 3 warm-up + 10 measured runs with GC in between, in 3 fresh pages, median,
+  over 4 rounds with the implementations in a rotated order each round (whichever runs first otherwise gets a warmer, busier machine). Every operation is checked for the right result. Each run starts right after the browser has drawn a frame, so its next frame never lands inside the timed window (before 2026-10-23 it sometimes did, which penalised Mini's remove and update by 3–7 ms).
 - **Memory**: JS heap after a forced GC.
 - Mini runs with its dev warnings off, like the others' production builds.
 - **Noise**: runtime numbers vary up to ±10% between sessions. Differences smaller than that are not meaningful.
@@ -36,47 +37,35 @@ the app too. It shows what Mini's no-build choice costs.
 
 **Size and loading: Mini's strongest area, with or without a build.**
 - **JS downloaded:** Mini ships 11 KB (gzip) for the CRM, with or without Vite, against Vue's 37 KB and React's 98 KB.
-- **Mini + Vite is the fastest variant on every page**, ready 15–21% sooner than Vue and 38–43% sooner than React.
-- **Mini without a build is faster than Vue too**: ready 3–15% sooner than Vue and 26–40% sooner than React, over
-  both HTTP/1.1 and HTTP/2. On the one-page Todo app it ties Mini + Vite. On the CRM it's ~17% behind Mini + Vite,
+- **Mini + Vite is the fastest variant on every page**, ready 17–21% sooner than Vue and 36–42% sooner than React.
+- **Mini without a build is faster than Vue too**: ready 2–19% sooner than Vue and 25–42% sooner than React, over
+  both HTTP/1.1 and HTTP/2. On the one-page Todo app it ties Mini + Vite. On the CRM it's 16–21% behind Mini + Vite,
   because the app's own files load unbundled (the browser finds each lazy page's imports a round trip late).
 - **Why it changed (2026-10-23):** before, no-build Mini loaded its ten readable source files, dev-only code
   (warnings, the `--state` recording) and comments included: ~30 KB, and 7–35% slower than Vue.
   `mini.min.js` is the same framework, built once and committed, so deploying still needs no build tool.
   Development keeps the sources and their warnings. `npm run check` fails if the copy falls out of date.
 
-**Fine-grained rows: Mini's fix for "update every 10th row", opt-in.** `bench/mini-fine` is the same Mini
-app with each row's label as a signal, so an update writes 100 labels in place instead of rebuilding 100
-rows (the pattern in `framework/README.md`, Lists; Solid's benchmark entry works the same way). It's not the
-default way to write Mini, so the main tables keep plain Mini. Measured in one session, 4 rounds in rotating
-order (`results/fine-rows.json`; a busier machine, so every number is higher than in the tables below):
-
-| | Mini | Mini, fine-grained rows | React | Vue |
-|---|---:|---:|---:|---:|
-| Update every 10th row (ms) | 22.0 | **14.4** | 15.1 | 17.4 |
-| Create 1,000 rows (ms) | 56.3 | 57.3 | 51.5 | **49.5** |
-| Append 1,000 rows (ms) | 64.2 | 70.2 | **60.5** | 67.0 |
-| Memory, 10,000 rows (MB) | **9.25** | 16.06 | 15.71 | 18.28 |
-
-- Fastest of all four at updates, and faster than plain Mini in every round (React in 3 of 4).
-- The price is memory: a signal and an effect per row, about React's level instead of 40% below it.
-  Creating and appending rows cost about the same (within this session's noise).
-
-**Runtime: Mini leads or ties on most operations.** (Measured fairly since 2026-10-23: each timed run starts
-right after a frame. Before, the browser's next frame sometimes landed in the window, adding 3–7 ms to
-whichever framework's setup lined it up, mostly Mini's remove and update.)
-- **Fastest:** selecting a row (0.3 ms vs React 1.3, Vue 2.4, thanks to `selector()`), swapping rows (5 ms vs
-  Vue 7.5, React 42.4), removing a row (4.0 ms vs React 4.3, Vue 7.9) and clearing 1,000 rows.
-- **Even (within 3%):** creating and replacing 1,000 rows (Vue a hair ahead).
-- **Behind:** updating every 10th row (17.6 ms vs React's 13.0: Mini rebuilds a row whose item changed, React
-  patches its text), appending 1,000 rows and creating 10,000 (Vue fastest, 6–8% ahead).
-- **Trade-off kept:** `selector()` adds a little to clearing (each row's entry is released); Mini is still the
-  fastest at clearing.
+**Runtime: Mini leads or ties on most operations.**
+- **Fastest:** selecting a row (0.3 ms vs React 1.2, Vue 2.5, thanks to `selector()`), swapping rows (5.7 ms vs
+  Vue 8.5, React 47.8), removing a row (5.1 ms vs React 5.4, Vue 9.3), clearing 1,000 rows (6.5 vs Vue 7.6,
+  React 9.4) and creating 10,000 rows (594 ms, level with Vue's 601; React 752).
+- **Even (within 6%):** creating, replacing and appending 1,000 rows. Vue or React is a hair ahead.
+- **Behind:** updating every 10th row, 19.2 ms vs React's 16.2. Mini rebuilds a row whose item is a new object;
+  React patches its text.
+- **Fine-grained rows close that gap (opt-in):** "Mini, fine-grained rows" (`bench/mini-fine`) is the same app with
+  each row's label as a signal, so an update writes 100 labels in place. It's the fastest of all at updating
+  (14.1 ms), and even with the others elsewhere. The price is memory: a signal and an effect per row, 16.1 MB at
+  10,000 rows (React's level) instead of 9.2. It's the pattern for big, busy lists in `framework/README.md`
+  (Lists), not the default way to write Mini, so "Mini" stays the headline number. Solid's benchmark entry
+  works the same way.
+- (Measured fairly since 2026-10-23: each timed run starts right after a frame. Before, the browser's next frame
+  sometimes landed in the window, adding 3–7 ms to whichever framework's setup lined it up, mostly Mini's.)
 
 **Memory: Mini uses the least**: 9.2 MB with 10,000 rows vs React's 15.7 and Vue's 18.3 (about 40% and 50% less), and returns to baseline after create/clear cycles.
 
 **Code and setup:**
-- **CRM size:** the CRM takes about **35% less code** in Mini (256 lines vs ~400), thanks to built-in `resource()` and `form()`.
+- **CRM size:** the CRM takes about **35% less code** in Mini (257 lines vs ~400), thanks to built-in `resource()` and `form()`.
 - **Small apps:** they are about the same size in all three.
 - **Dependencies:** Mini needs **0 packages and no build**. React needs 22 packages (44 MB) and Vue 67 (53 MB). Vite builds are fast (~0.2 s), so build time isn't a real cost. The setup is.
 

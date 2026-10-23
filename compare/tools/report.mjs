@@ -13,7 +13,9 @@ const builds = read('build.json');
 const ai = read('ai.json');
 
 const IMPLS = ['mini', 'mini-vite', 'react', 'vue'];
-const NAMES = { mini: 'Mini', 'mini-vite': 'Mini + Vite', react: 'React', vue: 'Vue' };
+const NAMES = { mini: 'Mini', 'mini-vite': 'Mini + Vite', react: 'React', vue: 'Vue', 'mini-fine': 'Mini, fine-grained rows' };
+// Runtime and memory also show Mini with fine-grained rows (bench/mini-fine, an opt-in pattern), when measured.
+const BENCH_IMPLS = [...IMPLS, ...(measure.runtime?.['mini-fine'] ? ['mini-fine'] : [])];
 const out = [];
 const table = (head, rows) => {
   out.push(`| ${head.join(' | ')} |`, `|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
@@ -30,7 +32,7 @@ const boldBest = (cells) => {
 out.push('# Results', '');
 if (measure.environment) {
   const e = measure.environment;
-  out.push(`Measured ${e.date.slice(0, 10)} with ${e.chrome}, Node ${e.node}. Medians of ${e.runs} runs (load) and 10 runs × 3 pages (runtime).`, '');
+  out.push(`Measured ${e.date.slice(0, 10)} with ${e.chrome}, Node ${e.node}. Medians of ${e.runs} runs (load) and 10 runs × 3 pages × 4 rotated rounds (runtime).`, '');
 }
 
 if (measure.load) {
@@ -58,21 +60,26 @@ if (measure.runtime) {
   out.push('## Runtime (ms, lower is better)', '',
     'js-framework-benchmark-style operations on the bench app, desktop CPU. Time from click to DOM updated and laid out.', '');
   const ops = Object.keys(measure.runtime.mini ?? {});
-  table(['Operation', ...IMPLS.map((i) => NAMES[i])], ops.map((op) => [op, ...boldBest(IMPLS.map((i) => measure.runtime[i]?.[op]))]));
+  table(['Operation', ...BENCH_IMPLS.map((i) => NAMES[i])], ops.map((op) => [op, ...boldBest(BENCH_IMPLS.map((i) => measure.runtime[i]?.[op]))]));
+  if (BENCH_IMPLS.includes('mini-fine')) {
+    out.push('"Mini, fine-grained rows" is the same Mini app with each row\'s label as a signal (bench/mini-fine), an opt-in pattern for big, busy lists. "Mini" is the default way to write it.', '');
+  }
 }
 
 const ab = read('ab-runtime.json');
 if (ab) {
   out.push('### Mini before and after the optimization pass', '',
-    'Same session, old and new Mini alternated 6 times (medians), so session-to-session noise cancels out.', '');
+    'Same session, old and new Mini alternated 6 times (medians), so session-to-session noise cancels out.',
+    'Measured 2026-10-22, before runs started right after a frame: that timing penalised remove and select, so',
+    'their "after" here is worse than in the main table above. The other operations show the pass itself.', '');
   table(['Operation', 'Mini before', 'Mini after', 'change'], Object.entries(ab).map(([op, { before, after }]) =>
-    [op, before, after, `${after < before ? '' : '+'}${Math.round(((after - before) / before) * 100)}%`]));
+    [op, Math.round(before * 10) / 10, Math.round(after * 10) / 10, `${after < before ? '' : '+'}${Math.round(((after - before) / before) * 100)}%`]));
 }
 
 if (measure.memory) {
   out.push('## Memory (JS heap, MB, lower is better)', '');
   const rows = Object.keys(measure.memory.mini ?? {});
-  table(['State', ...IMPLS.map((i) => NAMES[i])], rows.map((r) => [r, ...boldBest(IMPLS.map((i) => measure.memory[i]?.[r]))]));
+  table(['State', ...BENCH_IMPLS.map((i) => NAMES[i])], rows.map((r) => [r, ...boldBest(BENCH_IMPLS.map((i) => measure.memory[i]?.[r]))]));
 }
 
 if (code) {
