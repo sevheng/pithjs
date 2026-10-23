@@ -105,12 +105,23 @@ const typesDone = !existsSync(project('jsconfig.json'))
 // ---------- 1. Node tests ----------
 const testFiles = (dir) => (existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.test.mjs')).map((f) => join(dir, f)) : []);
 const nodeFiles = [...new Set([...testFiles(frameworkTests), ...testFiles(project('tests'))])];
-const node = spawnSync(process.execPath, ['--test', ...nodeFiles], { encoding: 'utf8', cwd: projectRoot });
-const count = (label) => Number(node.stdout.match(new RegExp(`ℹ ${label} (\\d+)`))?.[1] ?? 0);
+// Always Node's own test runner, even when check itself runs under another runtime (e.g. `bun check.mjs`),
+// whose `--test` would run nothing.
+const nodeBin = process.versions.bun || process.versions.deno ? 'node' : process.execPath;
+const node = nodeFiles.length
+  ? spawnSync(nodeBin, ['--test', ...nodeFiles], { encoding: 'utf8', cwd: projectRoot })
+  : { status: 0, stdout: '', stderr: '' };
+const count = (label) => Number(node.stdout?.match(new RegExp(`ℹ ${label} (\\d+)`))?.[1] ?? 0);
+const failedTests = (node.stdout ?? '').split('\n').filter((l) => /^\s*✖/.test(l) && !/failing tests/.test(l)).map((l) => l.trim());
+// A failure without a failing test (the runner didn't start, a file didn't load), or no test run at all,
+// must not pass, or fail, silently: show what the runner said.
+const runnerSaid = () => `${node.error?.message ?? ''}${node.stderr ?? ''}${node.stdout ?? ''}`.trim().split('\n').slice(-8).join('\n');
 report.node = {
-  ok: node.status === 0,
+  ok: node.status === 0 && (count('pass') > 0 || !nodeFiles.length),
   passed: count('pass'),
-  failed: node.stdout.split('\n').filter((l) => /^\s*✖/.test(l) && !/failing tests/.test(l)).map((l) => l.trim()),
+  failed: failedTests.length ? failedTests
+    : node.status !== 0 ? [`the Node test runner failed (${nodeBin} --test):\n${runnerSaid()}`]
+    : nodeFiles.length && !count('pass') ? [`no Node tests ran (${nodeFiles.length} files):\n${runnerSaid()}`] : [],
 };
 
 // ---------- 2-4. Browser ----------
