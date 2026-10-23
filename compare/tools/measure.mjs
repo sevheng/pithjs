@@ -3,7 +3,8 @@
 //   runtime: js-framework-benchmark-style operations (median of 10, after warm-up, GC between runs)
 //   memory:  JS heap after load, with 1k / 10k rows, and after create/clear cycles (leak check)
 //
-//   node tools/measure.mjs [load] [runtime] [--runs 5] [--source]
+//   node tools/measure.mjs [load] [runtime] [--runs 5] [--source] [--impl mini,mini-fine,react,vue] [--out file.json]
+//   (mini-fine: Mini with fine-grained rows, bench only, runtime only; see README "Fine-grained rows")
 // Writes results/measure.json. Mini runs with dev warnings off (MINI_DEV=false), like the others'
 // production builds. Its load test serves it as deployed without a build: one file, mini.min.js
 // (framework/tools/release.mjs). --source loads its dev sources instead (ten files, dev code included).

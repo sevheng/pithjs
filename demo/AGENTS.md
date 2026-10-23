@@ -68,6 +68,9 @@ visited, or when the user points at a link to it. So:
 6. **Lists use `repeat()` with a stable unique key**: `${repeat(items, (i) => i.id, (i) => html`<li>${i.name}</li>`)}`.
    To mark the selected row or active tab, use `const isSelected = selector(selected)` and `isSelected(i.id)` in the row,
    not `selected.value === i.id` (that re-runs every row on each change).
+   A row replaced by a new object is rebuilt. Only for a big list whose rows change often (a live table),
+   make the changing field a signal (`{ id, label: signal('') }`, `${r.label}`) and set `r.label.value`
+   (see framework/README.md, Lists). It costs memory per row, so not by default.
 
 ## Patterns (copy these)
 

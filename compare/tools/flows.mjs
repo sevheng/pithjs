@@ -5,7 +5,8 @@
 
 import { findChrome, loadPage, parseResults } from '../../framework/tools/chrome.mjs';
 import { resolve } from 'node:path';
-import { startServer, IMPLS } from './server.mjs';
+import { existsSync } from 'node:fs';
+import { startServer, appRoot, IMPLS } from './server.mjs';
 
 const args = process.argv.slice(2);
 const apps = args.filter((a) => ['todo', 'crm', 'bench'].includes(a));
@@ -18,6 +19,7 @@ if (!chrome) throw new Error('Chrome not found (set CHROME_PATH)');
 let failures = 0;
 for (const app of apps.length ? apps : ['todo', 'crm', 'bench']) {
   for (const impl of impls.length ? impls : IMPLS) {
+    if (!existsSync(appRoot(app, impl))) continue; // mini-fine exists for bench only
     const server = await startServer({ app, impl, flows, deploy: args.includes('--deploy') });
     try {
       const { dom, consoleLines } = await loadPage(chrome, `${server.url}/__mini/flows.html`);

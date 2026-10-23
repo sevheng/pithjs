@@ -45,6 +45,23 @@ the app too. It shows what Mini's no-build choice costs.
   `mini.min.js` is the same framework, built once and committed, so deploying still needs no build tool.
   Development keeps the sources and their warnings. `npm run check` fails if the copy falls out of date.
 
+**Fine-grained rows: Mini's fix for "update every 10th row", opt-in.** `bench/mini-fine` is the same Mini
+app with each row's label as a signal, so an update writes 100 labels in place instead of rebuilding 100
+rows (the pattern in `framework/README.md`, Lists; Solid's benchmark entry works the same way). It's not the
+default way to write Mini, so the main tables keep plain Mini. Measured in one session, 4 rounds in rotating
+order (`results/fine-rows.json`; a busier machine, so every number is higher than in the tables below):
+
+| | Mini | Mini, fine-grained rows | React | Vue |
+|---|---:|---:|---:|---:|
+| Update every 10th row (ms) | 22.0 | **14.4** | 15.1 | 17.4 |
+| Create 1,000 rows (ms) | 56.3 | 57.3 | 51.5 | **49.5** |
+| Append 1,000 rows (ms) | 64.2 | 70.2 | **60.5** | 67.0 |
+| Memory, 10,000 rows (MB) | **9.25** | 16.06 | 15.71 | 18.28 |
+
+- Fastest of all four at updates, and faster than plain Mini in every round (React in 3 of 4).
+- The price is memory: a signal and an effect per row, about React's level instead of 40% below it.
+  Creating and appending rows cost about the same (within this session's noise).
+
 **Runtime: Mini leads or ties on most operations.** (Measured fairly since 2026-10-23: each timed run starts
 right after a frame. Before, the browser's next frame sometimes landed in the window, adding 3–7 ms to
 whichever framework's setup lined it up, mostly Mini's remove and update.)

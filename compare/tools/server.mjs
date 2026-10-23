@@ -21,7 +21,7 @@ import { forDeploy } from '../../framework/tools/release.mjs';
 const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
 export const APPS = ['todo', 'crm', 'bench'];
-export const IMPLS = ['mini', 'react', 'vue', 'mini-vite', 'mini-before'];
+export const IMPLS = ['mini', 'react', 'vue', 'mini-vite', 'mini-before', 'mini-fine'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -39,6 +39,7 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg']);
 export function appRoot(app, impl) {
   if (impl === 'mini' || impl === 'mini-before') return join(compare, app, 'mini');
   if (impl === 'mini-vite') return join(compare, app, 'mini', 'dist');
+  if (impl === 'mini-fine') return join(compare, app, 'mini-fine'); // bench only: fine-grained rows
   return join(compare, app, impl, 'dist');
 }
 
@@ -74,6 +75,7 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
   const exact = {
     '/styles.css': join(compare, 'shared', 'styles.css'),
     '/tests/flows.js': flows ?? join(compare, 'flows', `${app}.js`),
+    ...(impl === 'mini-fine' ? { '/app/data.js': join(compare, app, 'mini', 'app', 'data.js') } : {}),
   };
 
   async function resolve(pathname) {
