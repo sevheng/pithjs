@@ -1,7 +1,7 @@
 // Headless Chrome helpers shared by check.mjs, see.mjs and prerender.mjs.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
-import { availableParallelism, tmpdir } from 'node:os';
+import { availableParallelism, loadavg, tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 
 export function findChrome() {
@@ -15,8 +15,16 @@ export function findChrome() {
 }
 
 // Each Chrome is a dozen processes: running one per page at once overloads the machine and makes
-// timing-based checks flaky. PITH_CHROME_JOBS overrides how many run at the same time.
-const jobs = Number(process.env.PITH_CHROME_JOBS) || Math.max(2, Math.floor(availableParallelism() / 4));
+// timing-based checks flaky. So: a quarter of the cores, minus what the machine is already busy with
+// (measured: on a 16-core machine at load 35-45, 4 Chromes failed 1 check run in 5; 1 Chrome, none in 80).
+// PITH_CHROME_JOBS overrides how many run at the same time.
+/** @param {{ cores?: number, load?: number, env?: string }} [machine] */
+export function chromeJobs({ cores = availableParallelism(), load = loadavg()[0], env = process.env.PITH_CHROME_JOBS } = {}) {
+  if (Number(env) > 0) return Number(env);
+  const most = Math.max(2, Math.floor(cores / 4)); // a quiet machine: as before
+  return Math.max(1, Math.round(most * Math.max(0, 1 - load / cores)));
+}
+const jobs = chromeJobs();
 let running = 0;
 const waiting = [];
 async function slot() {

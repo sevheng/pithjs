@@ -155,6 +155,18 @@ export function createApp(frame) {
   const problems = [];
   const doc = () => frame.contentDocument;
   const win = () => frame.contentWindow;
+  // Why a page never rendered: which scripts arrived (time, HTTP status) and which preloaded ones didn't.
+  const startup = () => {
+    const w = /** @type {any} */ (win());
+    if (!w?.performance) return 'The page has no window.';
+    const scripts = w.performance.getEntriesByType('resource').filter((r) => /\.m?js(\?|$)/.test(r.name));
+    const path = (url) => new URL(url).pathname;
+    const done = scripts.map((r) => `${path(r.name)} ${Math.round(r.duration)}ms${r.responseStatus && r.responseStatus !== 200 ? ` (HTTP ${r.responseStatus})` : ''}`);
+    const preloads = [...doc().querySelectorAll('link[rel=modulepreload]')].map((l) => path(/** @type {HTMLLinkElement} */ (l).href));
+    const missing = preloads.filter((p) => !scripts.some((r) => path(r.name) === p));
+    return `Document ${doc().readyState}. Scripts loaded (${done.length}): ${done.join(', ') || 'none'}.` +
+      (missing.length ? ` Preloaded but never loaded: ${missing.join(', ')}.` : '');
+  };
   const where = () => win()?.location.pathname ?? '(not loaded)';
   const pageText = () => clean(doc()?.body?.innerText);
 
@@ -206,7 +218,7 @@ export function createApp(frame) {
       // room for a busy machine, so a flow's first step doesn't race the page's code.
       await waitFor(() => frame.contentDocument?.querySelector('h1'), {
         timeout: 10_000,
-        message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s. The page shows:\n${outline(doc())}`,
+        message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s.\n${startup()}\nThe page shows:\n${outline(doc())}`,
       });
       watch();
       await settle();
