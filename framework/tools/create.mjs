@@ -1,5 +1,5 @@
 // pith create <folder>: a new Pith project from template/, ready for npm install.
-//   index.html (import map + preloads), app/ (router, home and not-found pages, nav bar, ui.js), api/hello.mjs,
+//   index.html (import map + preloads), app/ (router, home and not-found pages, nav bar, ui.js),
 //   styles/, tests/flows.js, AGENTS.md (this framework's rules, for AI agents), CLAUDE.md, jsconfig.json.
 // package.json lists pithjs as a dev dependency: this version when Pith is installed from npm, or a link to
 // this folder (file:...) when it runs from a checkout of the Pith repo.

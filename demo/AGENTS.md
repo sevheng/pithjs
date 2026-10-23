@@ -43,7 +43,7 @@ app/store.js       shared state (signals, saved to localStorage)
 app/pages/*.js     one page per file: export default function XxxPage(params) { return html`...` }
 app/components/*.js  one component per file: define('tag-name', setup)
 styles/main.css    all CSS. Use the existing tokens (var(--accent), etc.) and classes.
-api/*.mjs          dev-only API: api/hello.mjs answers /api/hello (see "API" below)
+api/*.mjs          optional fake backend for development: api/users.mjs answers /api/users (see "API" below)
 prerender.mjs      URLs of :param pages to prerender (build only, runs in Node)
 tests/flows.js     user flows: add one for each new feature
 

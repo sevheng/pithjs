@@ -1,7 +1,7 @@
 // User flows: click, type and see, like a person. npm run check runs them. Add one for each feature.
 import { flow } from 'pith/testing';
 
-flow('home: shows the greeting from the API', async (app) => {
+flow('home: shows the welcome', async (app) => {
   await app.go('/');
   await app.see('Built with Pith');
 });

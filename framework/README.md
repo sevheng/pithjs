@@ -38,7 +38,7 @@ npm run check                        # a new project prints "All good"
 ```
 
 It writes `index.html` (import map and preloads), `app/` (router, home and not-found pages, nav bar, `ui.js`),
-`api/hello.mjs`, `styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
+`styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
 `pithjs` (from this repo, linked as `file:...`) and calls the `pith` command:
 
 ```json
