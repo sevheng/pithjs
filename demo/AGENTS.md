@@ -236,8 +236,8 @@ export async function POST({ body, query }) {
 ```
 Always validate on the server too. **Static hosting doesn't run `api/`**: production needs a real backend
 that answers the same URLs.
-`npm run build` prerenders pages with the data `api/` returned during the build; without a backend they
-show that HTML, then a load error once JS runs.
+`npm run build` prerenders pages with the data `api/` returned during the build, and the page's first
+`fetchJSON` of each URL reuses it (no "Loading…" flash on start). Later requests need a real backend.
 
 **Routes** (`app/router.js`), one line per page. Params arrive as the page function's argument:
 ```js

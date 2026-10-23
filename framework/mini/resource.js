@@ -20,6 +20,13 @@ export class HttpError extends Error {
   }
 }
 
+// A prerendered page carries the GET answers it was built with (<script type="application/json" id="mini-data">,
+// written by tools/prerender.mjs). At startup, the first fetchJSON of each of those URLs gets its answer
+// instead of a request, so the page doesn't swap its data for "Loading…". What startup didn't use is
+// dropped right after, so later requests always reach the server.
+/** @type {Record<string, unknown>} */
+let baked = {};
+
 /**
  * fetch() for JSON APIs: sends `json` as the body (POST by default), parses the reply,
  * and throws HttpError for non-2xx responses (with the server's JSON on `error.body`).
@@ -29,9 +36,21 @@ export class HttpError extends Error {
  */
 export async function fetchJSON(url, { json, headers, method, ...init } = {}) {
   const hasJson = json !== undefined;
+  method ??= hasJson ? 'POST' : 'GET';
+  const data = globalThis.document?.getElementById('mini-data');
+  if (data) {
+    data.remove();
+    baked = JSON.parse(data.textContent || '{}');
+    setTimeout(() => (baked = {}));
+  }
+  if (method === 'GET' && Object.hasOwn(baked, url)) {
+    const body = baked[url];
+    delete baked[url];
+    return body;
+  }
   const response = await fetch(url, {
     ...init,
-    method: method ?? (hasJson ? 'POST' : 'GET'),
+    method,
     headers: { Accept: 'application/json', ...(hasJson ? { 'Content-Type': 'application/json' } : {}), ...headers },
     body: hasJson ? JSON.stringify(json) : init.body,
   });

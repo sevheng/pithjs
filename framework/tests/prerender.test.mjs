@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { escapeHtml, extractPage, injectPage, landedElsewhere, routeFile } from '../tools/prerender.mjs';
+import { escapeHtml, extractData, extractPage, injectPage, landedElsewhere, recordData, routeFile } from '../tools/prerender.mjs';
 import { loadPrerenderPaths, matchRoute, prerenderTargets, readRouteTable, readRoutes } from '../tools/routes.mjs';
 
 const shell = `<!doctype html>
@@ -43,6 +43,27 @@ test('injectPage escapes the title, and keeps $ patterns in markup literal', () 
 test('injectPage adds module preloads to the head', () => {
   const out = injectPage(shell, { html: '<h1>x</h1>', title: 'x', preload: ['/assets/todos-1.js'] });
   assert.match(out, /<link rel="modulepreload" crossorigin href="\/assets\/todos-1.js">\s*<\/head>/);
+});
+
+test('injectPage writes the GET answers the page was built with as #mini-data (safe inside a <script>)', () => {
+  const data = { '/api/team?q=': [{ name: '</script><b>$&' }] };
+  const out = injectPage(shell, { html: '<h1>Team</h1>', title: 'Team', script: '', data });
+  const block = out.match(/<\/div><\/div><script type="application\/json" id="mini-data">(.*?)<\/script>\s*<\/body>/)?.[1];
+  assert.ok(block, 'no #mini-data block after #app');
+  assert.doesNotMatch(block, /</);
+  assert.deepEqual(JSON.parse(block), data);
+  assert.doesNotMatch(injectPage(shell, { html: '<h1>x</h1>', title: 'x', data: {} }), /mini-data/);
+});
+
+test('recordData adds a fetch recorder to the head; extractData reads what it recorded from the dumped DOM', () => {
+  const out = recordData(shell);
+  const script = out.match(/<head>\s*<script>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script, 'no recorder script at the start of <head>');
+  assert.doesNotThrow(() => new Function(script), 'the recorder does not parse');
+  assert.match(script, /fetch/);
+  const dom = `<html><head><script type="application/json" id="mini-prerender-data">{"/api/x":{"a":"\\u003c"}}</script></head></html>`;
+  assert.deepEqual(extractData(dom), { '/api/x': { a: '<' } });
+  assert.deepEqual(extractData('<html></html>'), {});
 });
 
 test('injectPage fails loudly when the shell has no #app', () => {

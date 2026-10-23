@@ -11,6 +11,9 @@
 // A :param route is prerendered only for the URLs prerender.mjs lists (see routes.mjs, loadPrerenderPaths):
 //   export default async function paths() { return team.map((p) => `/team/${p.id}`); }
 // The '*' not-found route isn't prerendered.
+// Each page also carries the JSON answers of the GETs it fetched while prerendering (#mini-data), so the
+// live app's first fetchJSON of those URLs uses them instead of showing "Loading…" over data already on
+// screen (see fetchJSON in mini/resource.js). They're the answers from build time, used once at startup.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -60,18 +63,55 @@ export function extractPage(dom) {
   return null;
 }
 
+// JSON that's safe inside a <script> element (no "</script>" or "<!--" can appear).
+const scriptJson = (data) => JSON.stringify(data).replace(/</g, '\\u003c');
+
+const RECORDED = 'mini-prerender-data';
+
+/**
+ * The shell served while prerendering: a script first in <head> records the JSON answer of each successful
+ * GET the page fetches, keyed by the URL as the app passed it (as fetchJSON sees it), into #mini-prerender-data.
+ * @param {string} shell the built index.html
+ */
+export function recordData(shell) {
+  const recorder = `(() => {
+  const real = fetch, data = {}, out = document.createElement('script');
+  out.type = 'application/json'; out.id = '${RECORDED}'; document.head.append(out);
+  window.fetch = async (url, init) => {
+    const res = await real(url, init);
+    if (typeof url === 'string' && (init?.method ?? 'GET') === 'GET' && res.ok) {
+      res.clone().json().then((v) => { data[url] = v; out.textContent = JSON.stringify(data).replace(/</g, '\\\\u003c'); }, () => {});
+    }
+    return res;
+  };
+})()`;
+  return shell.replace(/<head[^>]*>/, (head) => `${head}\n<script>${recorder}</script>`);
+}
+
+/**
+ * The answers recordData()'s script recorded, from a DOM dumped by Chrome ({} if none).
+ * @param {string} dom
+ * @returns {Record<string, unknown>}
+ */
+export function extractData(dom) {
+  const json = dom.match(new RegExp(`<script type="application/json" id="${RECORDED}">([\\s\\S]*?)</script>`))?.[1];
+  return json ? JSON.parse(json) : {};
+}
+
 /**
  * The built index.html with a page's markup in #app (in a data-prerendered wrapper) and its title.
  * @param {string} shell the built index.html
- * @param {{ html: string, title: string, preload?: string[], script?: string }} page preload: JS files to fetch early ·
- *   script: inline JS run right after #app, before the app's (deferred) module (default: replayScript(),
- *   which keeps clicks made before the app starts)
+ * @param {{ html: string, title: string, preload?: string[], script?: string, data?: Record<string, unknown> }} page
+ *   preload: JS files to fetch early · script: inline JS run right after #app, before the app's (deferred)
+ *   module (default: replayScript(), which keeps clicks made before the app starts) · data: the GET answers
+ *   the page was built with, for fetchJSON at startup (#mini-data)
  */
-export function injectPage(shell, { html, title, preload = [], script = replayScript() }) {
+export function injectPage(shell, { html, title, preload = [], script = replayScript(), data = {} }) {
   const app = /<div\b([^>]*\bid="app"[^>]*)>[\s\S]*?<\/div>(\s*<\/body>)/;
   if (!app.test(shell)) throw new Error('The built index.html has no <div id="app"></div> right before </body>.');
   const links = preload.map((href) => `  <link rel="modulepreload" crossorigin href="${escapeHtml(href)}">\n`).join('');
-  const inline = script ? `<script>${script.replace(/<\/script/gi, '<\\/script')}</script>` : '';
+  const inline = (Object.keys(data).length ? `<script type="application/json" id="mini-data">${scriptJson(data)}</script>` : '')
+    + (script ? `<script>${script.replace(/<\/script/gi, '<\\/script')}</script>` : '');
   return shell
     .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`)
     .replace(/(\n?)<\/head>/, (_, nl) => `${nl}${links}</head>`)
@@ -110,6 +150,8 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
   const { targets, warnings } = await prerenderTargets(root);
   if (!targets.length) return { skipped: 'no fixed routes in app/router.js (or URLs in prerender.mjs)', pages: [], warnings };
 
+  // Pages load from a shell that records their GET answers; the plain one is put back after.
+  writeFileSync(join(dist, 'index.html'), recordData(shell));
   const server = await startServer(0, { dist: true });
   const base = `http://localhost:${server.address().port}`;
   let loaded;
@@ -117,6 +159,7 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
     loaded = await Promise.all([...targets.map((t) => t.path), NOT_FOUND].map((path) => loadPage(chrome, base + path)));
   } finally {
     server.close();
+    writeFileSync(join(dist, 'index.html'), shell);
   }
 
   // The untouched shell, for the host's SPA fallback (unknown URLs, :param URLs prerender.mjs didn't list).
@@ -144,7 +187,7 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
     const target = join(dist, file);
     if (!target.startsWith(dist + sep)) throw new Error(`Can't prerender route "${path}" outside dist/.`);
     mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, injectPage(shell, { ...page, preload }));
+    writeFileSync(target, injectPage(shell, { ...page, preload, data: extractData(dom) }));
     pages.push({ route: path, file: join('dist', file) });
   });
   return { pages, redirected, warnings };

@@ -4,7 +4,7 @@ A tiny web framework built on native browser tech: **no dependencies, no build s
 Signals, `html` templates, Web Components, a lazy-loading router, a store, data loading and forms.
 
 **Size budget: 10 KB.** The whole framework (`'mini'`, every export), built and gzipped, must stay within
-10 KB (10,000 bytes); it's 9.6 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
+10 KB (10,000 bytes); it's 9.7 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
 over budget, so a new feature has to pay for itself. Apps usually ship less, since the build drops what
 they don't use. Only what most apps need, and is easy to get wrong, belongs in it; the rest (UI widgets,
 animation helpers beyond `transition()`) is app code an AI agent can write from the browser's own APIs.
@@ -102,8 +102,12 @@ within 10 s, held clicks are dropped and the page behaves natively. While a clic
 parsed, before that script runs, aren't caught.
 
 Prerendered pages show the app's starting state (no saved data, default theme toggle). Pages that load
-data from `/api` get what the dev `api/` returned *during the build* baked in; on a static host with no
-backend they show that HTML, then a load error once JS runs. Routes that redirect (a `redirect`, or the
+data from `/api` get what the dev `api/` returned *during the build* baked in: the HTML, and the JSON answers
+of the GETs the page made (a `#mini-data` script). When the app starts, the first `fetchJSON` of each of
+those URLs uses its baked answer instead of a request, so the data on screen isn't swapped for "Loading…"
+(on a slow phone that flash lasted a whole round trip). Answers are used once, and the ones startup didn't
+use are dropped, so a refetch, a search or "Load more" always asks the server. The baked data is from build
+time, so rebuild to refresh it. Routes that redirect (a `redirect`, or the
 guard sending a signed-out build visitor away) are left out on purpose (W063). A person added after the
 build has no file until the next build (the SPA fallback still serves the page). Build warnings W060–W062
 and W064–W066 name routes and URLs that couldn't be prerendered.

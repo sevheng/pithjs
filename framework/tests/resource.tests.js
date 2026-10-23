@@ -1,6 +1,6 @@
 // resource tests. Called by index.html with the shared helpers.
 
-import { resource, paginated } from '../mini/resource.js';
+import { resource, paginated, fetchJSON } from '../mini/resource.js';
 import { signal, root } from '../mini/signal.js';
 import { html } from '../mini/html.js';
 
@@ -262,5 +262,62 @@ export default async function (t) {
       root(() => { p = paginated(() => ({ data: [] })); });
       await tick();
       eq(p.hasMore.value, false);
+    }));
+
+  // Prerendered pages carry the GET answers they were built with (<script type="application/json" id="mini-data">).
+  /** @param {Record<string, unknown>} data */
+  const bake = (data) => {
+    const el = document.createElement('script');
+    el.type = 'application/json';
+    el.id = 'mini-data';
+    el.textContent = JSON.stringify(data);
+    document.head.append(el);
+  };
+  // Stubs fetch for fn(); `answer` makes each reply (a never-settling one means "the network is slow").
+  /** @param {() => Promise<any>} answer @param {(calls: string[]) => Promise<void>} fn */
+  async function withFetch(answer, fn) {
+    const real = window.fetch;
+    /** @type {string[]} */
+    const calls = [];
+    window.fetch = /** @type {any} */ ((url, init) => (calls.push(`${init?.method} ${url}`), answer()));
+    try {
+      await fn(calls);
+    } finally {
+      window.fetch = real;
+      document.getElementById('mini-data')?.remove();
+    }
+  }
+
+  await test('fetchJSON: a prerendered page\'s baked answer is used once, then the network', () =>
+    withFetch(async () => Response.json({ n: 2 }), async (calls) => {
+      bake({ '/api/x': { n: 1 } });
+      eq((await fetchJSON('/api/x')).n, 1);
+      eq(calls.length, 0);
+      eq(document.getElementById('mini-data'), null);
+      eq((await fetchJSON('/api/x')).n, 2);
+      eq(calls.join(), 'GET /api/x');
+    }));
+
+  await test('fetchJSON: only GETs use baked answers, and unused ones are dropped after startup', () =>
+    withFetch(async () => Response.json('net'), async (calls) => {
+      bake({ '/api/a': 'baked', '/api/b': 'baked' });
+      // Startup's requests all start in the same task, as a page's resources do when it renders.
+      const post = fetchJSON('/api/a', { json: { x: 1 } });
+      const get = fetchJSON('/api/b');
+      eq(await post, 'net');
+      eq(await get, 'baked');
+      await new Promise((r) => setTimeout(r));
+      eq(await fetchJSON('/api/a'), 'net');
+      eq(calls.join(), 'POST /api/a,GET /api/a');
+    }));
+
+  // Microtasks only (no timer), so no frame can be painted in between: "Loading…" is never seen.
+  await test('resource: a baked answer shows before the next frame, with no request', () =>
+    withFetch(() => new Promise(() => {}), async (calls) => {
+      bake({ '/api/team': ['Ada'] });
+      mount(html`<p id="out">${resource(() => fetchJSON('/api/team')).render((list) => list.join())}</p>`);
+      for (let i = 0; i < 5; i++) await null;
+      eq(sandbox.querySelector('#out').textContent, 'Ada');
+      eq(calls.length, 0);
     }));
 }
