@@ -19,7 +19,7 @@ test('createProject writes a working starter project, named after its folder', (
 
   const files = filesIn(dir).sort();
   for (const f of ['.gitignore', 'AGENTS.md', 'CLAUDE.md', 'README.md', 'index.html', 'jsconfig.json', 'package.json',
-    'app/main.js', 'app/router.js', 'app/ui.js', 'app/components/nav-bar.js', 'app/pages/home.js',
+    'app/main.js', 'app/router.js', 'app/ui.js', 'app/brand.js', 'app/components/nav-bar.js', 'app/pages/home.js',
     'app/pages/not-found.js', 'styles/main.css', 'tests/flows.js']) assert.ok(files.includes(f), `missing ${f}`);
   assert.ok(!files.includes('gitignore'), 'gitignore is renamed to .gitignore');
   assert.ok(!files.some((f) => f.startsWith('api/')), 'a new project has no fake backend (add api/ when you need one)');

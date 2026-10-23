@@ -12,7 +12,10 @@ flow('home: the button counts clicks', async (app) => {
   await app.see('Clicked 1 times');
 });
 
-flow('an unknown address shows the not-found page', async (app) => {
+flow('an unknown address shows the 404 page, with a way home', async (app) => {
   await app.go('/no-such-page');
   await app.see('Page not found');
+  await app.see('/no-such-page');
+  await app.click('Go home');
+  await app.expectPath('/');
 });

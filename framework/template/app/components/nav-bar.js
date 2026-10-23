@@ -1,5 +1,6 @@
 import { define, html, signal } from 'pith';
 import { router } from '../router.js';
+import { brandMark } from '../brand.js';
 
 // npm run new page <name> --nav adds a line here.
 const links = [
@@ -26,7 +27,7 @@ define('nav-bar', () => {
 
   return html`
     <header class="site-header">
-      <a class="brand" href="/">__APP_NAME__</a>
+      <a class="brand" href="/">${brandMark()} __APP_NAME__</a>
       <nav aria-label="Main">
         <ul class="nav-links">
           ${links.map(([href, label]) => html`
