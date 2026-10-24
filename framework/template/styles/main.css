@@ -145,7 +145,7 @@ nav-bar { display: block; position: sticky; top: 0; z-index: 50; background: var
 .nav-link:hover { opacity: 1; background: var(--fill); text-decoration: none; }
 .nav-link[aria-current="page"] { opacity: 1; font-weight: 600; background: var(--fill); }
 
-.page { flex: 1; width: 100%; max-width: 980px; margin: 0 auto; padding: 1rem 1rem 4rem; view-transition-name: page; }
+.page { flex: 1; width: 100%; max-width: 980px; margin: 0 auto; padding: 1rem 1rem 4rem; }
 .site-footer { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--hairline); }
 
 .hero { padding: 3.5rem 0 1rem; }
@@ -294,21 +294,24 @@ select.input { cursor: pointer; }
 
 /* ---------- Motion ---------- */
 @keyframes slide-in { from { opacity: 0; transform: translateY(-4px); } }
-::view-transition-old(page), ::view-transition-new(page) { animation-duration: 0.2s; }
-/* A page change (the router's transitions are data-transition="page"): the new page doesn't slide from where the
-   old one was scrolled to, and the old one goes at once while the new fades in, so two pages never overlap.
-   List animations (transition() with no kind) keep the plain cross-fade, which is invisible for the page. */
+/* Page changes (the router marks them data-transition="page"): the page and the header get their own layers.
+   The new page doesn't slide from where the old one was scrolled to; the old one goes at once while the new
+   one fades in, so two pages never overlap. The header stays above the page, switches at once, and is painted
+   as it looks (its tint over the page color): a layer's snapshot loses the frosted blur. */
+[data-transition="page"] .page { view-transition-name: page; }
+[data-transition="page"] nav-bar { view-transition-name: site-header; background: linear-gradient(var(--glass), var(--glass)) var(--bg);
+  backdrop-filter: none; -webkit-backdrop-filter: none; }
 ::view-transition-group(page) { animation: none; }
-[data-transition="page"]::view-transition-old(page) { display: none; }
-[data-transition="page"]::view-transition-new(page) { animation-duration: 0.15s; }
-/* During a View Transition the page is drawn as its own layer: keep the header above it, painted as it looks
-   (its tint over the page color) but without the blur, which a snapshot loses and the page would show through. */
-nav-bar { view-transition-name: site-header; }
+::view-transition-old(page) { display: none; }
+::view-transition-new(page) { animation-duration: 0.15s; }
 ::view-transition-group(site-header) { z-index: 1; }
-/* It switches at once (the current page's link), instead of showing both states blended. */
 ::view-transition-old(site-header) { display: none; }
 ::view-transition-new(site-header) { animation: none; }
-:root:active-view-transition nav-bar { background: linear-gradient(var(--glass), var(--glass)) var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* Other changes (transition() for a list): only elements with a view-transition-name (the rows) animate. The
+   rest of the page switches at once: blending its before and after would show moved text twice, and layers of
+   their own would redraw their text slightly differently for the length of the animation. */
+:root:not([data-transition])::view-transition-old(root) { display: none; }
+:root:not([data-transition])::view-transition-new(root) { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .lift:hover { transform: none; }
