@@ -308,3 +308,151 @@ flow('chat/#firehose: thousands of messages, only the newest on screen, Show old
   await app.see('1,000 messages · 200 on screen');
   app.expect(app.queryAll('.msg-row').length === 200, `200 rows after a URL change, found ${app.queryAll('.msg-row').length}`);
 });
+
+// ---------- Inbox (/inbox) ----------
+// The dev server keeps what flows change, so flows that move or delete mail work on messages they sent
+// themselves (unique subjects), and the fixtures in the Inbox are only read and starred (then unstarred).
+
+/** Send a message from the Compose dialog; it lands in Sent. */
+async function sendMail(app, subject, to = 'ann@example.com') {
+  await app.click('Compose');
+  await app.see('New message');
+  await app.type('To', to);
+  await app.type('Subject', subject);
+  await app.type('Message', 'Hello from a flow.');
+  await app.click('Send message');
+}
+
+flow('inbox: /inbox opens the Inbox with folders, counts and nothing selected', async (app) => {
+  await app.go('/inbox');
+  await app.expectPath('/inbox/inbox');
+  await app.see('Mail sent to you');
+  await app.see('No message selected');
+  app.expect(app.queryAll('.folder-link').length === 5, 'five folders');
+  app.expect(app.queryAll('.mail-row').length === 20, `the first page has 20 messages, found ${app.queryAll('.mail-row').length}`);
+  await app.click('[href="/inbox/sent"]');
+  await app.expectPath('/inbox/sent');
+  await app.see('Mail you sent');
+});
+
+flow('inbox: opening a message shows it, keeps ?m= in the URL, and marks it read', async (app) => {
+  await app.go('/inbox/inbox?q=Lisbon');
+  await app.see('Your trip to Lisbon is confirmed');
+  await app.click('.mail-open');
+  await app.see('Booking reference: SKY-7Q2LX');
+  app.expect(/[?&]m=\d+/.test(app.window.location.search), `the URL should have ?m=, not ${app.window.location.search}`);
+  app.expect(app.query('.mail-row.selected'), 'the open message is marked in the list');
+  app.expect(!app.query('.mail-row.unread'), 'an opened message is no longer bold');
+  await app.back(); // opening a message is a history step (the phone's Back goes back to the list)
+  await app.see('No message selected');
+  await app.expectPath('/inbox/inbox');
+});
+
+flow('inbox: Load more adds the next page, then says that is all', async (app) => {
+  await app.go('/inbox/inbox');
+  await app.see('Load more');
+  await app.click('Load more');
+  await app.waitFor(() => app.queryAll('.mail-row').length > 20, 'Load more should add messages');
+  await app.see('That’s all');
+});
+
+flow('inbox: search is kept in ?q=, and no results says so', async (app) => {
+  await app.go('/inbox/inbox');
+  await app.type('Search mail', 'invoice');
+  await app.see('Your invoice for October is ready');
+  await app.notSee('Coffee next week?');
+  app.expect(app.window.location.search === '?q=invoice', `the URL should have ?q=invoice, not ${app.window.location.search}`);
+  await app.type('Search mail', 'zebra crossing');
+  await app.see('No messages match "zebra crossing"');
+  await app.click('Clear search');
+  await app.see('Coffee next week?');
+});
+
+flow('inbox: a list that fails to load says so, with Try again', async (app) => {
+  await app.go('/inbox/inbox?q=/fail');
+  await app.see("Couldn't load Inbox");
+  await app.see('Try again');
+});
+
+flow('inbox: starring a message, then unstarring it', async (app) => {
+  await app.go('/inbox/inbox?q=Coffee');
+  const star = () => app.query('[aria-label="Star: Coffee next week?"]');
+  await app.waitFor(star, 'the star button');
+  const before = star().getAttribute('aria-pressed');
+  await app.click('Star: Coffee next week?');
+  app.expect(star().getAttribute('aria-pressed') !== before, 'the star should toggle at once');
+  await app.click('Star: Coffee next week?');
+  app.expect(star().getAttribute('aria-pressed') === before, 'and toggle back');
+});
+
+flow('inbox: compose checks fields here, and the server rejects @blocked.test (422)', async (app) => {
+  await app.go('/inbox/inbox');
+  await app.click('Compose');
+  await app.click('Send message');
+  await app.see('Add at least one address');
+  await app.see('Write a message');
+  await app.type('To', 'not an email');
+  await app.see('"not an email" isn\'t an email address');
+  await sendMail(app, `Blocked ${Date.now()}`, 'ann@example.com, spam@blocked.test').catch(() => {});
+  await app.see("blocked.test doesn't accept mail");
+  app.expect(app.query('dialog[open]'), 'the dialog stays open, with what was typed');
+});
+
+flow('inbox: a sent message shows in Sent', async (app) => {
+  await app.go('/inbox/inbox');
+  const subject = `Hello ${Date.now()}`;
+  await sendMail(app, subject);
+  await app.see('Sent to ann@example.com');
+  await app.click('[href="/inbox/sent"]');
+  await app.see('Mail you sent');
+  await app.see(subject);
+});
+
+flow('inbox: delete asks first, then Undo brings the message back', async (app) => {
+  const subject = `Delete me ${Date.now()}`;
+  await app.go('/inbox/sent');
+  await sendMail(app, subject);
+  await app.see('Sent to ann@example.com');
+  await app.type('Search mail', subject);
+  await app.see(subject);
+  await app.click(`Select: ${subject}`);
+  await app.see('1 selected');
+  await app.click('Delete');
+  await app.see(`Move "${subject}" to Trash?`);
+  await app.click('Cancel');
+  await app.see('1 selected');
+  await app.click('Delete');
+  await app.click('Move to Trash');
+  await app.see('Moved to Trash');
+  await app.see(`No messages match "${subject}"`);
+  await app.click('Undo');
+  await app.see('Message restored');
+  await app.see(subject);
+});
+
+flow('inbox: bulk archive moves the checked messages to Archive', async (app) => {
+  const tag = `Bulk ${Date.now()}`;
+  await app.go('/inbox/sent');
+  await sendMail(app, `${tag} one`);
+  await app.see('Sent to ann@example.com');
+  await sendMail(app, `${tag} two`);
+  await app.see(`${tag} two`);
+  await app.type('Search mail', tag);
+  await app.waitFor(() => app.queryAll('.mail-row').length === 2, 'both sent messages are listed');
+  await app.click('Select all');
+  await app.see('2 selected');
+  await app.click('Archive');
+  await app.see('Archived 2 messages');
+  await app.click('[href="/inbox/archive"]');
+  await app.expectPath('/inbox/archive');
+  await app.see('Out of the inbox');
+  await app.type('Search mail', tag);
+  await app.waitFor(() => app.queryAll('.mail-row').length === 2, 'both are in Archive');
+});
+
+flow('inbox: an unknown folder says so', async (app) => {
+  await app.go('/inbox/spam');
+  await app.see('No such folder');
+  await app.click('Go to Inbox');
+  await app.expectPath('/inbox/inbox');
+});

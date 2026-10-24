@@ -7,6 +7,9 @@ import { statusPage } from './brand.js';
 const settings = { load: () => import('./layouts/settings.js') };
 // The chat frame (rooms list + the open room) stays mounted while you switch rooms.
 const chat = { load: () => import('./layouts/chat.js') };
+// ---------- Inbox (/inbox) ---------- the folders pane stays mounted while you switch folders.
+const inbox = { load: () => import('./layouts/inbox.js') };
+// ---------- end Inbox ----------
 
 // Each page's code is downloaded only when it's first needed (or when a link to it is hovered).
 export const router = createRouter(
@@ -18,6 +21,10 @@ export const router = createRouter(
     '/benchmarks': { title: 'Benchmarks', load: () => import('./pages/benchmarks.js') },
     '/chat': { title: 'Chat', layout: chat, load: () => import('./pages/chat-home.js') },
     '/chat/:room': { title: 'Chat', layout: chat, load: () => import('./pages/chat-room.js') },
+    // ---------- Inbox (/inbox) ----------
+    '/inbox': { redirect: '/inbox/inbox' },
+    '/inbox/:folder': { title: 'Inbox', layout: inbox, load: () => import('./pages/inbox.js') },
+    // ---------- end Inbox ----------
     // The demo's first example pages, replaced by the apps at /examples.
     '/todos': { redirect: '/examples' },
     '/team': { redirect: '/examples' },
