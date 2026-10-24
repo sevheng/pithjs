@@ -1213,7 +1213,9 @@ th[aria-sort="descending"] .sort::after { content: '↓'; opacity: 1; color: var
 .doc-api th, .doc-api td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--hairline); vertical-align: top; }
 .doc-api tr:last-child td { border-bottom: 0; }
 .doc-api td:first-child { white-space: nowrap; }
-.doc-api td:first-child code { background: none; padding: 0; color: var(--accent); }
+.doc-api td:first-child code { background: none; padding: 0; color: var(--accent); overflow-wrap: normal; }
+.doc-api tr:target { background: var(--accent-soft); }
+.doc-api tr[id] { scroll-margin-top: 5rem; }
 .doc-note { display: flex; gap: 0.6rem; margin: 1.25rem 0; padding: 0.85rem 1rem; border-radius: var(--radius-sm); background: var(--accent-soft); line-height: 1.55; }
 .doc-note strong { flex: none; }
 .doc-note.warn { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); }
@@ -1238,7 +1240,14 @@ th[aria-sort="descending"] .sort::after { content: '↓'; opacity: 1; color: var
   .docs-menu summary { padding: 0.8rem 1rem; min-height: 44px; font-weight: 600; cursor: pointer; }
   .docs-menu nav { padding: 0 0.5rem 0.75rem; }
   .docs-link { padding: 0.65rem 0.75rem; }
-  .doc-api { min-width: 34rem; } /* long signatures stay whole; the table scrolls in its box */
+  /* Phones: each row stacks, the name above what it does, so nothing is cut off or scrolls. */
+  .doc-api thead { display: none; }
+  .doc-api, .doc-api tbody, .doc-api tr, .doc-api td { display: block; }
+  .doc-api tr { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--hairline); }
+  .doc-api tr:last-child { border-bottom: 0; }
+  .doc-api td { padding: 0; border: 0; }
+  .doc-api td:first-child { white-space: normal; margin-bottom: 0.25rem; }
+  .doc-api td:first-child code { overflow-wrap: anywhere; }
 }
 
 /* The bar above an example app: back to its docs */

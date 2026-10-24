@@ -353,12 +353,16 @@ framework changes show up here at once. To change the framework itself, follow `
 `../framework/CONTRIBUTING.md`, not the "don't edit" rule above. Everything above this section is
 `../framework/AGENTS.md`, the copy every new project gets (a test keeps the two in sync).
 
-Pages, each showing one part of Pith:
-- Features (`/features`, `/features/<name>`): one live example per feature, with its source. Each example is a
-  file in `app/examples/` listed in `app/examples/index.js`; after changing one, run `npm run examples` to
-  refresh `app/examples/sources.js` (the code shown on the page; a test fails while it's stale). Add a flow too.
-- Home (`/`): a counter component, `computed`.
-- Todos (`/todos`): a persisted store, `repeat()`, `transition()` animations (`app/components/todo-list.js`), `app/ui.js` confirm and toasts.
-- Team (`/team`, `/team/:id`): `paginated()` from `api/team.mjs`, search kept in `?q=`, member pages prerendered (`prerender.mjs`).
-- Contact (`/contact`): `form()` with server validation (`api/contact.mjs`).
-- About (`/about`): load-speed numbers. Settings (`/settings/*`): a shared layout and a sign-in guard.
+The site is **Home** (`/`, the landing page) and **Docs** (`/docs`, `/docs/<page>`):
+- Docs pages are listed in `app/docs/index.js` (sidebar order, title, summary, and an optional live `example`
+  or `app`). Each page's body is `app/docs/pages/<name>.js` (`export default () => html`...``, no `<h1>`: the
+  frame in `app/pages/doc.js` adds it) built with the helpers in `app/docs/ui.js` (`code`, `api`, `note`, `c`).
+  A flow opens every docs page.
+- Live examples are files in `app/examples/` listed in `app/examples/index.js`; after changing one, run
+  `npm run examples` to refresh `app/examples/sources.js` (the code shown on its page; a test fails while it's stale).
+- Example apps open full width under a "← Docs" bar, each with a docs page: Chat (`/chat/:room`, `api/chat.mjs`),
+  Inbox (`/inbox/:folder`, `api/inbox.mjs`), Kanban (`/kanban`, a persisted store), Dashboard (`/dashboard`,
+  `api/dashboard.mjs`) and Settings (`/settings/*`, a layout and a sign-in guard). `app/apps.js` lists them.
+- Benchmarks (`/docs/benchmarks`) read `app/data/benchmarks.js`, written by `npm run benchmarks` from
+  `../compare/results/measure.json`.
+- Older URLs (`/features/...`, `/examples`, `/benchmarks`, `/todos`, `/about`) redirect into the docs.

@@ -14,12 +14,13 @@ export const code = (source, { file, label } = {}) => html`
 /**
  * An API table: one row per function, option or property.
  * @param {[string, unknown][]} rows [signature, what it does]
- * @param {{ head?: [string, string] }} [options] head: the column titles
+ * @param {{ head?: [string, string], anchors?: boolean }} [options] head: the column titles ·
+ *   anchors: each row gets its first cell, lowercased, as an id (/docs/warnings#w001)
  */
-export const api = (rows, { head = ['API', 'What it does'] } = {}) => html`
+export const api = (rows, { head = ['API', 'What it does'], anchors = false } = {}) => html`
   <div class="doc-table-wrap"><table class="doc-api">
     <thead><tr><th scope="col">${head[0]}</th><th scope="col">${head[1]}</th></tr></thead>
-    <tbody>${rows.map(([sig, what]) => html`<tr><td><code>${sig}</code></td><td>${what}</td></tr>`)}</tbody>
+    <tbody>${rows.map(([sig, what]) => html`<tr id=${anchors ? sig.toLowerCase() : null}><td><code>${sig}</code></td><td>${what}</td></tr>`)}</tbody>
   </table></div>`;
 
 /**

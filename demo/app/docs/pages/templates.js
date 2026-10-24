@@ -180,6 +180,16 @@ export default () => html`
     See <a href="/docs/lists">Lists</a>.</p>
   ${code(listsEx)}
 
+  <h2 id="svg">SVG</h2>
+  <p>Markup inside one ${c('html`<svg>…</svg>`')} is SVG. A piece of an SVG built in its own template (a list
+    of labels, a crosshair) uses ${c('svg')} instead of ${c('html')}, so its ${c('<text>')}, ${c('<path>')} and
+    ${c('<g>')} are SVG elements and not unknown HTML ones. The Dashboard's charts are built this way.</p>
+  ${code(`import { html, svg } from 'pith';
+
+html\`<svg viewBox="0 0 100 50">
+  \${ticks.map((t) => svg\`<text x=\${t.x} y="48">\${t.label}</text>\`)}
+</svg>\`;`)}
+
   <h2 id="api">API</h2>
   ${api([
     ['html`…`', 'Builds DOM from the template. Returns a DocumentFragment.'],
@@ -191,5 +201,6 @@ export default () => html`
     ['@name=${fn}', 'Adds an event listener. Needs a function (W001).'],
     ['ref=${(el) => …}', 'Calls the function with the element (W010).'],
     ['repeat(items, key, row)', html`A keyed list; see <a href="/docs/lists">Lists</a>.`],
+    ['svg`…`', html`Like ${c('html')}, for a piece that goes inside an ${c('<svg>')}.`],
   ])}
 `;

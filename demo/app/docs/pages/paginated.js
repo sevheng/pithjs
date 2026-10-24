@@ -56,20 +56,20 @@ html\`\${team.render((people) => html\`
   ready: (people) => html\`
     <ol>\${repeat(people, (p) => p.id, (p) => html\`<li>\${p.name}</li>\`)}</ol>
     <div class="load-more">
-      \${() => (team.error.value
-        ? html\`<p role="alert">Couldn't load more. \${team.error.value.message}</p>\`
+      \${() => (team.moreError.value
+        ? html\`<p role="alert">Couldn't load more. \${team.moreError.value.message}</p>\`
         : null)}
       \${() => (team.hasMore.value
         ? html\`<button class="btn" type="button" ?disabled=\${team.loadingMore} @click=\${team.loadMore}>
-            \${() => (team.loadingMore.value ? 'Loading…' : team.error.value ? 'Try again' : 'Load more')}
+            \${() => (team.loadingMore.value ? 'Loading…' : team.moreError.value ? 'Try again' : 'Load more')}
           </button>\`
         : html\`<p class="muted">That's everyone.</p>\`)}
     </div>\`,
 })}\`;`)}
     <p>
       Why the button sits inside ${c('ready')}: if page 1 fails, the error view replaces the whole list, button
-      included. Inside ${c('ready')}, ${c('team.error')} can only be a failed "Load more", so it's shown next to
-      the button that retries it.
+      included. ${c('team.moreError')} holds only a failed "Load more", so it's shown next to the button that
+      retries it.
     </p>
     ${note(html`${c('loadMore()')} does nothing while a page is loading or when there are no more, so it's safe to
       call from an ${c('IntersectionObserver')} for infinite scroll. Keep a real button too, for keyboards and
@@ -106,6 +106,16 @@ const people = paginated(({ page, signal }) => {
     </p>
   </section>
 
+  <section aria-labelledby="changing-items">
+    <h2 id="changing-items">Changing loaded items</h2>
+    <p>${c('list.mutate((items) => next)')} changes the loaded items in place: star a message, mark it read,
+      take it out. Pages loaded later are added after the changed items, even if one is loading while you
+      change them. Before page 1 has loaded, ${c('mutate')} does nothing.</p>
+    ${code(`const star = (id) => inbox.mutate((items) => items.map((m) => (m.id === id ? { ...m, starred: !m.starred } : m)));`)}
+    <p>${c('list.status')} is page 1's state (${c("'loading' | 'error' | 'ready'")}): a failed "Load more" leaves it
+      ${c("'ready'")}. Show that error next to the button with ${c('list.moreError')}, which holds only it.</p>
+  </section>
+
   <section aria-labelledby="paginated-api">
     <h2 id="paginated-api">API</h2>
     ${api([
@@ -118,6 +128,9 @@ const people = paginated(({ page, signal }) => {
       ['list.loading', 'Signal: true while page 1 loads (first load, refetch, or a tracked signal changed).'],
       ['list.loadingMore', 'Signal: true while loadMore() is fetching.'],
       ['list.error', 'Signal: the page 1 error or the last loadMore() error, or null.'],
+      ['list.moreError', 'Signal: only the last loadMore() error, or null. Show it beside "Load more".'],
+      ['list.status', "Signal: page 1's 'loading' | 'error' | 'ready'."],
+      ['list.mutate((items) => next)', 'Change the loaded items locally; later pages are appended to the result.'],
       ['list.refetch()', 'Start again from page 1.'],
     ])}
   </section>
