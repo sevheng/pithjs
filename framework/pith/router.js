@@ -15,7 +15,7 @@ import { DEV, warn, error, describe, registry, recording, collect, silently } fr
  * @typedef {(page: () => unknown) => unknown} Layout  page is a reactive hole: put it in as ${page}
  * @typedef {Layout | { load: () => Promise<{ default: Layout }> }} LayoutOption
  * @typedef {{
- *   title?: string,
+ *   title?: string | ((params: Record<string, string>) => string),
  *   layout?: LayoutOption,
  *   redirect?: string | ((params: Record<string, string>) => string),
  *   [key: string]: unknown,
@@ -178,7 +178,8 @@ export function createRouter(
   if (DEV) registry.router = { path, search };
 
   effect(() => {
-    const t = match.value.route.title;
+    const { route, params } = match.value;
+    const t = typeof route.title === 'function' ? untrack(() => route.title(params)) : route.title;
     if (t) document.title = title(t);
   });
 

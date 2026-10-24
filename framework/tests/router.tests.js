@@ -123,6 +123,27 @@ export default async function (t) {
     });
   });
 
+  await test('router: a route title can be a function of the params', async () => {
+    const before = document.title;
+    const routes = {
+      [start]: { title: 'Start', view: () => 'start' },
+      '/__pith/doc/:page': { title: ({ page }) => `Doc ${page}`, view: ({ page }) => page },
+      '*': () => 'not found',
+    };
+    try {
+      await withRouter(routes, { title: (t) => `${t} · Site` }, async (router) => {
+        router.navigate('/__pith/doc/forms');
+        await until(() => text() === 'forms');
+        eq(document.title, 'Doc forms · Site');
+        router.navigate('/__pith/doc/lists');
+        await until(() => text() === 'lists');
+        eq(document.title, 'Doc lists · Site');
+      });
+    } finally {
+      document.title = before;
+    }
+  });
+
   await test('router: a redirect loop stops and warns (W020)', async () => {
     const routes = {
       [start]: () => 'start',

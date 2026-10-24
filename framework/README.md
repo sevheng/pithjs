@@ -330,6 +330,7 @@ import { createRouter, html } from 'pith';
 const router = createRouter({
   '/': { title: 'Home', load: () => import('./pages/home.js') },        // lazy: page file has `export default`
   '/user/:id': { title: 'User', load: () => import('./pages/user.js') }, // gets { id }
+  '/docs/:page': { title: ({ page }) => `Docs: ${page}`, load: () => import('./pages/doc.js') }, // title from params
   '/inline': () => html`<h1>Small page</h1>`,                           // eager: a view function
   '*': { title: 'Not found', load: () => import('./pages/not-found.js') },
 }, { title: (t) => `${t} · My site`, focus: '#main' });
