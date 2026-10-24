@@ -25,6 +25,8 @@ export const router = createRouter(
     '/inbox': { redirect: '/inbox/inbox' },
     '/inbox/:folder': { title: 'Inbox', layout: inbox, load: () => import('./pages/inbox.js') },
     // ---------- end Inbox ----------
+    // ---------- Kanban (/kanban) ----------
+    '/kanban': { title: 'Kanban', load: () => import('./pages/kanban.js') },
     // The demo's first example pages, replaced by the apps at /examples.
     '/todos': { redirect: '/examples' },
     '/team': { redirect: '/examples' },

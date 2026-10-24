@@ -20,4 +20,11 @@ export const apps = [
       'Load more with paginated(), and rows that change in place', 'Compose with form(): rules here, and 422 errors from the server'],
   },
   // ---------- end Inbox ----------
+  // ---------- Kanban (/kanban) ----------
+  {
+    name: 'Kanban', href: '/kanban', icon: 'board',
+    text: 'A project board: cards with labels, people and due dates, moved by drag and drop or the keyboard.',
+    shows: ['Drag and drop, or Move buttons and Alt+arrow keys', 'Moves animated with transition()',
+      'Filters by label and person kept in the URL', 'Saved in a store that survives reloads and syncs tabs'],
+  },
 ];

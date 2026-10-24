@@ -516,3 +516,146 @@ flow('inbox: an unknown folder says so', async (app) => {
   await app.click('Go to Inbox');
   await app.expectPath('/inbox/inbox');
 });
+
+// ---------- Kanban (/kanban) ----------
+
+// Adds a card to To do with a unique title, and returns the title.
+async function addKanbanCard(app, prefix) {
+  const title = `${prefix} ${Date.now()}`;
+  await app.go('/kanban');
+  await app.see('Dark mode for the docs site');
+  await app.click('Add a card to To do');
+  await app.type('New card in To do', title);
+  await app.click('Add card');
+  await app.waitFor(() => kanbanColumnOf(app, title) === 'todo', 'the new card should be in To do');
+  return title;
+}
+const kanbanColumnOf = (app, title) =>
+  app.queryAll('.kcard').find((el) => el.querySelector('.kcard-title')?.textContent.trim() === title)?.closest('.kcol')?.dataset.col;
+const kanbanCount = (app, column) => app.query(`[aria-labelledby="kcol-${column}"] .kcol-count`)?.textContent.trim();
+
+flow('kanban: the board shows its columns, counts, labels and overdue cards', async (app) => {
+  await app.go('/kanban');
+  await app.see('In progress');
+  await app.see('Router drops the hash on redirect');
+  await app.see('Overdue');
+  await app.see('3 overdue');
+  app.expect(kanbanCount(app, 'todo') === '5', `To do should count 5 cards, got ${kanbanCount(app, 'todo')}`);
+});
+
+flow('kanban: an empty title is refused, a new card is added to its column', async (app) => {
+  await app.go('/kanban');
+  await app.click('Add a card to Review');
+  await app.click('Add card');
+  await app.see('Give the card a title');
+  const title = `Review me ${Date.now()}`;
+  await app.type('New card in Review', title);
+  await app.click('Add card');
+  await app.waitFor(() => kanbanColumnOf(app, title) === 'review', 'the card should be in Review');
+  app.expect(kanbanCount(app, 'review') === '4', `Review should count 4 cards, got ${kanbanCount(app, 'review')}`);
+});
+
+flow('kanban: a card moves by keyboard, between and within columns', async (app) => {
+  const title = await addKanbanCard(app, 'Move me');
+  await app.click(`Move "${title}" right`);
+  await app.waitFor(() => kanbanColumnOf(app, title) === 'doing', 'the card should move to In progress');
+  await app.waitFor(() => app.document.activeElement?.getAttribute('aria-label') === `Move "${title}" right`, 'focus should stay on its Move right button');
+  await app.see(`Moved "${title}" to In progress`);
+  const titles = () => app.queryAll('[aria-labelledby="kcol-doing"] .kcard-title').map((b) => b.textContent.trim());
+  await app.click(`Move "${title}" up`);
+  await app.waitFor(() => titles().indexOf(title) === titles().length - 2, 'the card should move up one place');
+  await app.click(`Move "${title}" left`);
+  await app.waitFor(() => kanbanColumnOf(app, title) === 'todo', 'the card should move back to To do');
+});
+
+flow('kanban: edit a card in its dialog', async (app) => {
+  const title = await addKanbanCard(app, 'Edit me');
+  await app.click(title);
+  await app.see('Edit card');
+  const edited = `${title} (edited)`;
+  await app.type('Title', edited);
+  await app.type('Description', 'Now with a description.');
+  await app.select('Label', 'Bug');
+  await app.select('Assignee', 'Grace Hopper');
+  await app.select('Column', 'Review');
+  await app.click('Save changes');
+  await app.see('Card saved');
+  await app.see(edited);
+  await app.see('Now with a description.');
+  await app.waitFor(() => kanbanColumnOf(app, edited) === 'review', 'the card should be in Review');
+});
+
+flow('kanban: filter by label and person, kept in the URL, then clear', async (app) => {
+  await app.go('/kanban');
+  await app.click('Bug');
+  await app.see('Showing 3 of 14 cards');
+  await app.notSee('Dark mode for the docs site');
+  await app.click('Docs');
+  app.expect(app.window.location.search === '?label=bug&label=docs', `the URL should keep both labels, got ${app.window.location.search}`);
+  await app.go('/kanban?label=bug&label=docs');
+  await app.see('Showing 5 of 14 cards');
+  await app.click('Bug');
+  await app.click('Mia Chen');
+  app.expect(app.window.location.search === '?label=docs&who=mia', `got ${app.window.location.search}`);
+  await app.see('No cards match these filters');
+  await app.click('Clear filters');
+  await app.see('Dark mode for the docs site');
+  app.expect(app.window.location.search === '', `clearing should empty the query, got ${app.window.location.search}`);
+});
+
+flow('kanban: delete a card, after confirming', async (app) => {
+  const title = await addKanbanCard(app, 'Delete me');
+  await app.click(title);
+  await app.click('Delete card');
+  await app.see(`Delete "${title}"?`);
+  await app.click('Keep card');
+  await app.waitFor(() => app.queryAll('dialog').length === 1, 'Keep card should close only the question');
+  await app.click('Delete card');
+  await app.click('Delete');
+  await app.see('Card deleted');
+  await app.waitFor(() => !kanbanColumnOf(app, title), 'the card should be gone from the board');
+});
+
+flow('kanban: the board survives a reload', async (app) => {
+  const title = await addKanbanCard(app, 'Keep me');
+  await app.click(`Move "${title}" right`);
+  await app.waitFor(() => kanbanColumnOf(app, title) === 'doing', 'the card should move to In progress');
+  await app.go('/kanban');
+  await app.waitFor(() => !!kanbanColumnOf(app, title), 'the card should be on the board after a reload');
+  app.expect(kanbanColumnOf(app, title) === 'doing', 'after a reload the card should still be in In progress');
+});
+
+// The harness can't drive a real mouse drag, so this sends the drag events a drop makes (dragstart, dragover,
+// drop, dragend), to check the handlers: where a drop lands, the indicators, and that they clear.
+flow('kanban: drag and drop events move a card to the top of a column, or to the end of another', async (app) => {
+  await app.go('/kanban');
+  await app.see('Pricing page layout');
+  const W = /** @type {any} */ (app.window);
+  const wait = () => new Promise((r) => setTimeout(r, 50));
+  const card = app.queryAll('.kcard').find((el) => el.textContent.includes('Pricing page layout'));
+  const target = app.query('[data-col="todo"]');
+  const first = target.querySelector('.kcard');
+  const dt = new W.DataTransfer();
+  card.dispatchEvent(new W.DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+  await wait();
+  app.expect(card.classList.contains('dragging'), 'dragging class');
+  const r = first.getBoundingClientRect();
+  first.dispatchEvent(new W.DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + 5, clientY: r.top + 2 }));
+  await wait();
+  app.expect(first.classList.contains('drop-before'), 'drop-before on first card');
+  app.expect(target.hasAttribute('data-drop'), 'column highlighted');
+  first.dispatchEvent(new W.DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + 5, clientY: r.top + 2 }));
+  card.dispatchEvent(new W.DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
+  await app.waitFor(() => app.query('[data-col="todo"] .kcard-title')?.textContent.trim() === 'Pricing page layout', 'card should be first in To do');
+  app.expect(!app.query('.drop-before, [data-drop], .dragging'), 'indicators cleared');
+  const c2 = app.queryAll('.kcard').find((el) => el.textContent.includes('Dark mode for the docs site'));
+  const rev = app.query('[data-col="review"]');
+  const dt2 = new W.DataTransfer();
+  c2.dispatchEvent(new W.DragEvent('dragstart', { bubbles: true, dataTransfer: dt2 }));
+  await wait();
+  const rr = rev.getBoundingClientRect();
+  rev.dispatchEvent(new W.DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt2, clientX: rr.left + 5, clientY: rr.bottom - 5 }));
+  rev.dispatchEvent(new W.DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt2, clientX: rr.left + 5, clientY: rr.bottom - 5 }));
+  c2.dispatchEvent(new W.DragEvent('dragend', { bubbles: true, dataTransfer: dt2 }));
+  await app.waitFor(() => [...rev.querySelectorAll('.kcard-title')].pop()?.textContent.trim() === 'Dark mode for the docs site', 'card should be last in Review');
+});
