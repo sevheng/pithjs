@@ -483,7 +483,11 @@ html`${people.render((list) => html`<ul>${repeat(list, (p) => p.id, (p) => html`
   update. `update` must be pure (it may run again when newer data arrives).
 - `paginated` ends when an array page is shorter than `pageSize` (or empty) or `next` is null. Changing a tracked
   signal or calling `refetch()` starts again from page 1. A failed `loadMore()` keeps the loaded items and
-  sets `people.error`; call `loadMore()` again to retry. Also: `items`, `loading`, `loadingMore`, `hasMore`.
+  sets `people.error` and `people.moreError`; call `loadMore()` again to retry. `people.status` is page 1's
+  (`'loading'`, `'error'`, `'ready'`): a failed `loadMore()` keeps it `'ready'`. Also: `items`, `loading`,
+  `loadingMore`, `hasMore`.
+- `people.mutate((items) => next)` changes the loaded items locally (star, mark read, remove a row); pages
+  loaded later are appended to the result.
 
 ### Forms
 

@@ -263,6 +263,48 @@ export default async function (t) {
     eq(sandbox.querySelector('#out').textContent, 'ok');
   });
 
+  await test('paginated: status is page 1 only; a loadMore error stays in error (and moreError)', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    root(() => { p = paginated(fetcher, { pageSize: 1 }); });
+    eq(p.status.value, 'loading');
+    calls[0].reject(new Error('page 1'));
+    await tick();
+    eq(p.status.value, 'error');
+    eq(p.moreError.value, null);
+    p.refetch();
+    calls[1].resolve(['a']);
+    await tick();
+    eq(p.status.value, 'ready');
+    p.loadMore();
+    calls[2].reject(new Error('more'));
+    await tick();
+    eq(p.status.value, 'ready');
+    eq(p.error.value?.message, 'more');
+    eq(p.moreError.value?.message, 'more');
+  });
+
+  await test('paginated: mutate(fn) changes the loaded items, and later pages append to the result', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    root(() => {
+      p = paginated(fetcher, { pageSize: 2 });
+      mount(html`<p id="out">${p.render((items) => items.join())}</p>`);
+    });
+    calls[0].resolve(['a', 'b']);
+    await tick();
+    p.mutate((items) => items.filter((i) => i !== 'a'));
+    eq(sandbox.querySelector('#out').textContent, 'b');
+    p.loadMore();
+    p.mutate((items) => items.map((i) => i.toUpperCase())); // while page 2 is on its way
+    calls[1].resolve(['c']);
+    await tick();
+    eq(p.items.value.join(), 'B,c');
+    eq(p.hasMore.value, false);
+  });
+
   await test('paginated: removing the component aborts loadMore', async () => {
     const { calls, fetcher } = controllable();
     /** @type {any} */

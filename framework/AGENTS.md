@@ -178,10 +178,11 @@ feed), use `users.live(...)`: the same views, but `ready` is built once and gets
 import { paginated, fetchJSON, repeat } from 'pith';
 const people = paginated(({ page, signal }) => fetchJSON(`/api/team?page=${page}`, { signal }), { pageSize: 5 });
 html`${people.render((list) => html`<ul>${repeat(list, (p) => p.id, (p) => html`<li>${p.name}</li>`)}</ul>`)}
-  ${() => people.error.value && html`<p role="alert">${people.error.value.message}</p>`}
+  ${() => people.moreError.value && html`<p role="alert">${people.moreError.value.message}</p>`}
   ${() => people.hasMore.value && html`<button class="btn" ?disabled=${people.loadingMore} @click=${people.loadMore}>Load more</button>`}`;
 ```
-The fetcher returns an array or `{ items, next }` (W040). **Instant feedback on save**:
+The fetcher returns an array or `{ items, next }` (W040). `people.status` is page 1's; change loaded rows
+locally with `people.mutate((items) => next)`. **Instant feedback on save**:
 `await res.optimistic((data) => newData, () => fetchJSON(...))`. It rolls back and rethrows on failure,
 so inside a form's `onSubmit` the error shows as `submitError`.
 
