@@ -412,7 +412,8 @@ flow('inbox: /inbox opens the Inbox with folders, counts and nothing selected', 
   await app.see('Mail sent to you');
   await app.see('No message selected');
   app.expect(app.queryAll('.folder-link').length === 5, 'five folders');
-  app.expect(app.queryAll('.mail-row').length === 20, `the first page has 20 messages, found ${app.queryAll('.mail-row').length}`);
+  // The list loads after the page shows: wait for it, not just its frame (slower browsers lose that race).
+  await app.waitFor(() => app.queryAll('.mail-row').length === 20, `the first page has 20 messages, found ${app.queryAll('.mail-row').length}`);
   await app.click('[href="/inbox/sent"]');
   await app.expectPath('/inbox/sent');
   await app.see('Mail you sent');

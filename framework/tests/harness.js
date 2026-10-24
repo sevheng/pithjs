@@ -422,10 +422,12 @@ export function flow(name, fn) {
 export async function runFlows() {
   const results = [];
   const summary = document.getElementById('summary');
+  // One frame for every flow (each starts with a full page load in app.go()). With a new frame per flow, WebKit's
+  // Back went to the blank page instead of the flow's own earlier entry once an earlier flow's frame was removed.
+  const frame = createFrame();
   for (const [i, { name, fn }] of flows.entries()) {
     if (summary) summary.textContent = `Running ${i + 1}/${flows.length}: ${name}`;
     try { localStorage.clear(); sessionStorage.clear(); } catch {}
-    const frame = createFrame();
     const app = createApp(frame);
     try {
       await fn(app);
@@ -439,8 +441,8 @@ export async function runFlows() {
       if (/** @type {any} */ (frame.contentWindow)?.__pith) message += `\nState:\n${stateText(frame.contentWindow)}`;
       results.push([name, new Error(message)]);
     }
-    frame.remove();
   }
+  frame.remove();
   return results;
 }
 
