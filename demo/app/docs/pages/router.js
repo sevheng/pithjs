@@ -121,7 +121,7 @@ export default () => html`
   <h2 id="lazy">Lazy pages</h2>
   <p>A ${c('load')} route imports the page file on its first visit and calls its <strong>default
     export</strong>. Until it arrives, the current page stays on screen, so there's no blank flash. A slow
-    page can't overwrite a newer click, and a failed download shows "This page didn't load" with "Try again".</p>
+    page can't overwrite a newer click, and a failed download is tried once more before it shows "This page didn't load" with "Try again".</p>
   ${code(pageFile, { file: 'app/pages/user.js' })}
   ${note(html`The page file must ${c('export default')} its function, or it fails with ${warning('E005')}.`, 'warn')}
   ${code(exportWrong)}

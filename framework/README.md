@@ -348,7 +348,7 @@ router.preload('/checkout'); // download a page's code ahead of time
 **Lazy loading:** a `load` route downloads its page's code only on first visit. Pointing at, focusing or
 touching a link starts the download early, so the click usually feels instant. The current page stays
 on screen until the next one is ready, a slow page can't overwrite a newer click, and a failed download
-shows an error with "Try again". Options: `prefetch: false`, and `loading: () => html`...`` for the
+is tried once more, then shows an error with "Try again". Options: `prefetch: false`, and `loading: () => html`...`` for the
 first-visit placeholder.
 
 Same-origin `<a>` clicks are handled automatically. Add `data-reload` to a link for a full page load.

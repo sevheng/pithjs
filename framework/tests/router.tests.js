@@ -305,7 +305,8 @@ export default async function (t) {
           if (fail) throw new Error('page broke');
           return html`<p>page ok</p>`;
         },
-        '/__pith/err/load': { load: () => (++loads === 1 ? Promise.reject(new Error('offline')) : Promise.resolve({ default: () => html`<p>loaded now</p>` })) },
+        // Fails twice: the router's own retry fails too, so the error view shows.
+        '/__pith/err/load': { load: () => (++loads <= 2 ? Promise.reject(new Error('offline')) : Promise.resolve({ default: () => html`<p>loaded now</p>` })) },
         '*': () => 'nf',
       };
       const error = (err, retry) => html`<div class="mine" role="alert"><h1>Oops: ${err.message}</h1><button type="button" @click=${retry}>Retry</button></div>`;
@@ -320,7 +321,34 @@ export default async function (t) {
         await until(() => text().includes('Oops: offline'));
         sandbox.querySelector('#outlet .mine button').click();
         await until(() => text().includes('loaded now'));
-        eq(loads, 2);
+        eq(loads, 3);
+      });
+    } finally {
+      console.error = consoleError;
+    }
+  });
+
+  await test('router: a page or layout whose download fails once is loaded again before showing an error', async () => {
+    const consoleError = console.error;
+    const errors = [];
+    console.error = (...args) => errors.push(args.join(' '));
+    let pages = 0;
+    let layouts = 0;
+    try {
+      const routes = {
+        [start]: () => 'start',
+        '/__pith/retry': {
+          layout: { load: () => (++layouts === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ default: (page) => html`<div>${page}</div>` })) },
+          load: () => (++pages === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ default: () => html`<p>retried</p>` })),
+        },
+        '*': () => 'nf',
+      };
+      await withRouter(routes, {}, async (router) => {
+        router.navigate('/__pith/retry');
+        await until(() => text().includes('retried'));
+        eq(pages, 2);
+        eq(layouts, 2);
+        eq(errors.length, 0, 'a download that works the second time is not an error');
       });
     } finally {
       console.error = consoleError;

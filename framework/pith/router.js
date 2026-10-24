@@ -138,16 +138,16 @@ export function createRouter(
     }
     return mod.default;
   };
+  // A download that fails (a network blip, a busy server) is tried once more before the error view shows.
+  const twice = (get) => Promise.resolve().then(get).catch(get);
   function load(route) {
     if (isReady(route)) return Promise.resolve();
     if (!route.pending) {
       route.status.value = 'loading';
       route.pending = Promise.all([
-        route.view ?? Promise.resolve()
-          .then(() => route.load())
+        route.view ?? twice(() => route.load())
           .then((mod) => (route.view = defaultOf(mod, `page file for route "${route.pattern}"`))),
-        route.layoutFn !== undefined ? null : Promise.resolve()
-          .then(() => route.layout.load())
+        route.layoutFn !== undefined ? null : twice(() => route.layout.load())
           .then((mod) => (route.layoutFn = defaultOf(mod, `layout file for route "${route.pattern}"`))),
       ])
         .then(() => {
