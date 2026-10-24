@@ -34,6 +34,33 @@ function isVisible(el) {
   return el.checkVisibility ? el.checkVisibility({ visibilityProperty: true }) : true;
 }
 
+// Visually hidden for screen readers only (.sr-only, a hidden aria-live region): rendered, but clipped to a
+// pixel or less. Elements that are merely positioned (a tooltip, a badge) don't count.
+function screenReaderOnly(el) {
+  if (el.offsetWidth > 1 || el.offsetHeight > 1 || !el.checkVisibility?.()) return false;
+  const s = el.ownerDocument.defaultView.getComputedStyle(el);
+  return (s.position === 'absolute' || s.position === 'fixed') &&
+    (s.clip !== 'auto' || s.clipPath !== 'none' || /hidden|clip/.test(s.overflow));
+}
+
+/**
+ * The text a sighted person can read on the page (what see() and notSee() look in): the page's innerText
+ * without screen-reader-only text, so an announcement ("Moved X to Done") doesn't count as X being shown.
+ * @param {Document} doc
+ */
+export function visibleText(doc) {
+  let text = clean(doc?.body?.innerText);
+  /** @type {Element | null} */
+  let last = null;
+  for (const el of doc?.body?.querySelectorAll('*') ?? []) {
+    if (last?.contains(el) || !screenReaderOnly(el)) continue;
+    last = el;
+    const hidden = clean(/** @type {HTMLElement} */ (el).innerText);
+    if (hidden) text = text.replace(hidden, ' ');
+  }
+  return clean(text);
+}
+
 // The accessible name: what a screen reader would call this element.
 export function nameOf(el) {
   const doc = el.ownerDocument;
@@ -189,7 +216,29 @@ export function createApp(frame) {
       (missing.length ? ` Preloaded but never loaded: ${missing.join(', ')}.` : '');
   };
   const where = () => win()?.location.pathname ?? '(not loaded)';
-  const pageText = () => clean(doc()?.body?.innerText);
+  const pageText = () => visibleText(doc());
+
+  // A link (or button) that navigates changes the URL at once, but the router shows the new page only once
+  // its code has arrived (and a view transition ran). Wait for that, so the next step doesn't find the old
+  // page's fields. Pith in dev mode says which path it shows; without it (a built app), wait for the old
+  // page's <h1> to go, for a moment at most (a layout's heading may stay).
+  const routed = async (from, heading) => {
+    const w = /** @type {any} */ (win());
+    if (!w || w.location.pathname === from) return;
+    if (w.__pith?.router) {
+      // Read afresh each time: a link that reloads the page brings a new window (and router).
+      const shown = () => {
+        const r = /** @type {any} */ (win())?.__pith?.router;
+        return !r || r.path.peek() === where();
+      };
+      await waitFor(shown, {
+        timeout: 10_000,
+        message: () => `The URL changed to ${where()}, but the app never showed that page. The page shows:\n${outline(doc())}`,
+      });
+    } else if (heading) {
+      await waitFor(() => !heading.isConnected, { timeout: 1000 }).catch(() => {});
+    }
+  };
 
   const listControls = (selector) => {
     const names = [...doc().querySelectorAll(selector)].filter(isVisible).map(describeControl);
@@ -258,7 +307,10 @@ export function createApp(frame) {
         message: () => `click(${quote(target)}): no button, link or checkbox with that name${readAs(target)} on ${where()}. Clickable things on the page:\n${listControls(CLICKABLE)}`,
       });
       if (el.disabled) throw new Error(`click(${quote(target)}): it is disabled.`);
+      const from = where();
+      const heading = doc().querySelector('h1');
       el.click();
+      await routed(from, heading);
       await settle();
     },
 
@@ -302,10 +354,19 @@ export function createApp(frame) {
       await settle();
     },
 
-    /** Wait until the visible page text contains `text`. */
+    /** Wait until the visible page text contains `text` (not counting screen-reader-only text: use hear() for that). */
     async see(text) {
       await waitFor(() => pageText().includes(text), {
         message: () => `see(${quote(text)}): not found on ${where()}. The page shows:\n${outline(doc())}`,
+      });
+    },
+
+    /** Wait until a live region (aria-live, role=status or alert) announces `text`, even one only screen readers get. */
+    async hear(text) {
+      const said = () => [...doc().querySelectorAll('[aria-live], [role="status"], [role="alert"], output')]
+        .map((el) => clean(el.textContent)).filter(Boolean);
+      await waitFor(() => said().some((s) => s.includes(text)), {
+        message: () => `hear(${quote(text)}): no live region says that on ${where()}. They say: ${said().map(quote).join(', ') || '(nothing)'}`,
       });
     },
 

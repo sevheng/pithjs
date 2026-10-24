@@ -322,7 +322,7 @@ flow('contact: sending the form shows a thank-you', async (app) => {
   app.expect(app.query('#email').value === '', 'the form should reset');
 });
 ```
-Also available: `app.select('Status', 'Churned')` (dropdown by label, option by text), `app.pressEnter()`, `app.back()`, `app.query(sel)`, `app.queryAll(sel)`, `app.outline()`.
+Also available: `app.select('Status', 'Churned')` (dropdown by label, option by text), `app.pressEnter()`, `app.hear(text)` (a screen-reader announcement; `see()` skips `sr-only` text), `app.back()`, `app.query(sel)`, `app.queryAll(sel)`, `app.outline()`.
 A failing step prints the whole page as an outline, so you can see what is actually there.
 
 ## Accessibility (required, and it makes flows work)
