@@ -170,7 +170,8 @@ Also: `users.loading.value` (true during any request, e.g. an "Updating…" hint
 while an `optimistic` save may be pending (a value built from `users.data.value` would repeat it).
 `fetchJSON(url, { json: body })` POSTs JSON and throws `HttpError` (with the server's JSON on `err.body`).
 `render()` builds its ready view again on every data change; for a view that changes often (a chat, a live
-feed), switch on `users.status.value` and put the list in `repeat()` over a `computed` of `users.data`.
+feed), use `users.live(...)`: the same views, but `ready` is built once and gets the data as a signal, so
+`repeat(list, ...)` inside it patches instead of rebuilding. `paginated()` has `live` too.
 
 **Long lists load in pages** (don't fetch everything):
 ```js

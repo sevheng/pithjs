@@ -198,20 +198,30 @@ export function resource(fetcher) {
      * During a refetch the previous data stays on screen.
      * @param {((data: T) => unknown) | { ready: (data: T) => unknown, loading?: () => unknown, error?: (err: any, retry: () => void) => unknown }} views
      */
-    render(views) {
-      const v = typeof views === 'function' ? { ready: views } : views;
-      return () => {
-        const s = status.value;
-        if (s === 'loading') return untrack(v.loading ?? defaultLoading);
-        if (s === 'error') {
-          const err = error.value;
-          return untrack(() => (v.error ?? defaultError)(err, refetch));
-        }
-        const value = /** @type {T} */ (data.value);
-        return untrack(() => v.ready(value));
-      };
-    },
+    render: (views) => view(views),
+    /**
+     * Like render(), for a view that changes often (a chat, a live feed): `ready` is built once, when data
+     * arrives, and gets the data as a signal. Put lists in repeat() over it, so a change patches them instead
+     * of building the whole view again.
+     * @param {((data: import('./signal.js').ReadonlySignal<T>) => unknown) | { ready: (data: import('./signal.js').ReadonlySignal<T>) => unknown, loading?: () => unknown, error?: (err: any, retry: () => void) => unknown }} views
+     */
+    live: (views) => view(views, true),
   };
+
+  /** render() and live(): the view for the current status. Only live() keeps `ready` across data changes. */
+  function view(views, live) {
+    const v = typeof views === 'function' ? { ready: views } : views;
+    return () => {
+      const s = status.value;
+      if (s === 'loading') return untrack(v.loading ?? defaultLoading);
+      if (s === 'error') {
+        const err = error.value;
+        return untrack(() => (v.error ?? defaultError)(err, refetch));
+      }
+      const value = live ? data : data.value;
+      return untrack(() => v.ready(value));
+    };
+  }
 }
 
 /**
@@ -325,6 +335,14 @@ export function paginated(fetcher, { pageSize } = {}) {
     render(views) {
       const v = typeof views === 'function' ? { ready: views } : views;
       return pages.render({ ...v, ready: (page) => v.ready(page.items) });
+    },
+    /**
+     * Like resource().live, over the loaded items: built once, and loadMore() appends to the `items` signal it gets.
+     * @param {((items: import('./signal.js').ReadonlySignal<I[]>) => unknown) | { ready: (items: import('./signal.js').ReadonlySignal<I[]>) => unknown, loading?: () => unknown, error?: (err: any, retry: () => void) => unknown }} views
+     */
+    live(views) {
+      const v = typeof views === 'function' ? { ready: views } : views;
+      return pages.live({ ...v, ready: () => v.ready(items) });
     },
   };
 }

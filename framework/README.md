@@ -442,6 +442,7 @@ users.refetch();       // run again
 users.mutate(data);    // replace locally
 users.mutate((data) => data.filter((u) => u.id !== id)); // change the confirmed data (see below)
 users.status.value;    // 'loading' | 'error' | 'ready'
+users.live((list) => html`<ul>${repeat(list, (u) => u.id, (u) => html`<li>${u.name}</li>`)}</ul>`); // see below
 ```
 
 - **`mutate(fn)`** changes the *confirmed* data: pending `optimistic()` updates stay applied on top, once.
@@ -449,10 +450,13 @@ users.status.value;    // 'loading' | 'error' | 'ready'
   reaction): a value built from `users.data.value` would already contain the pending update, which is then
   applied again.
 - **`render(ready)` builds the ready view again whenever the data changes.** That's right for most views. For
-  a view that changes often (a chat, a live feed, a big list you `mutate` or `optimistic` a lot), switch on
-  `users.status` instead and keep the list in `repeat()` over a `computed` of `users.data`, so an update
-  patches the list instead of rebuilding it. (The demo chat's #firehose: 100-230 ms per update before,
-  13-21 ms after, with 200-900 rows on screen.)
+  a view that changes often (a chat, a live feed, a big list you `mutate` or `optimistic` a lot), use
+  **`live(ready)`**: the same views, but `ready` is built once and gets the data as a **signal**. Put the list
+  in `repeat()` over it (or a `computed` of it), so an update patches the list instead of rebuilding it.
+  (The demo chat's #firehose: 100-230 ms per update with `render`, 13-21 ms with `live`, 200-900 rows on screen.)
+  `paginated()` has `live` too; its `ready` gets the `items` signal, and `loadMore()` appends to it.
+- `render()` and `live()` return a function, so inside another function hole wrap them:
+  `${() => (open.value ? html`${res.live(view)}` : null)}`.
 
 - Signals the fetcher reads before its first `await` are tracked. When they change, the old request is
   **aborted** and a new one starts. A late reply from an old request is ignored.

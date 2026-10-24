@@ -220,39 +220,31 @@ export default function ChatRoomPage({ room }) {
       </div>`;
   };
 
-  // Which view the log shows. It changes only between these, so a new message never rebuilds the list:
-  // res.render(ready) would build the ready view again on every data change (each send, reaction, flood batch).
-  const phase = computed(() => {
-    const s = conv.status.value;
-    if (s !== 'ready') return s;
-    const data = conv.data.value;
-    return !data ? 'missing' : data.messages.length ? 'list' : 'empty';
+  // The log: conv.live() builds its ready view once (render() would build it again for every message,
+  // reaction and flood batch), and the list inside patches as the data changes.
+  const kind = computed(() => (!conv.data.value ? 'missing' : all.value.length ? 'list' : 'empty'));
+  const log = conv.live({
+    loading: () => html`<div class="chat-skeleton" aria-busy="true">
+      ${[1, 2, 3].map(() => html`<div class="skeleton-run"><span class="avatar skeleton"></span><span class="skeleton-lines"><span></span><span></span></span></div>`)}
+      <p class="sr-only">Loading messages…</p></div>`,
+    error: (err, retry) => html`<div class="load-error" role="alert"><p>Couldn't load the messages. ${err.message}</p>
+      <button class="btn" type="button" @click=${retry}>Try again</button></div>`,
+    ready: () => html`${() => {
+      const k = kind.value;
+      if (k === 'missing') {
+        return html`<div class="chat-empty"><p><strong>No such room.</strong></p>
+          <p class="muted">There's no room called <code>#${room}</code>.</p><a class="btn primary" href="/chat">All rooms</a></div>`;
+      }
+      if (k === 'empty') {
+        return html`<div class="chat-empty"><span class="icon-tile">${icon('chat')}</span>
+          <p><strong>No messages yet.</strong></p><p class="muted">Say hi to #${room}.</p></div>`;
+      }
+      return html`
+        <div class="older">${() => (older.value ? html`<button class="btn show-older" type="button" @click=${showOlder}>
+          Show older (${older.value.toLocaleString()} more)</button>` : null)}</div>
+        <div class="msg-list">${repeat(visible, (m) => m.id, row)}</div>`;
+    }}`,
   });
-
-  /** The log's content for one phase. */
-  const logView = (p) => {
-    if (p === 'loading') {
-      return html`<div class="chat-skeleton" aria-busy="true">
-        ${[1, 2, 3].map(() => html`<div class="skeleton-run"><span class="avatar skeleton"></span><span class="skeleton-lines"><span></span><span></span></span></div>`)}
-        <p class="sr-only">Loading messages…</p></div>`;
-    }
-    if (p === 'error') {
-      return html`<div class="load-error" role="alert"><p>Couldn't load the messages. ${conv.error.value?.message}</p>
-        <button class="btn" type="button" @click=${conv.refetch}>Try again</button></div>`;
-    }
-    if (p === 'missing') {
-      return html`<div class="chat-empty"><p><strong>No such room.</strong></p>
-        <p class="muted">There's no room called <code>#${room}</code>.</p><a class="btn primary" href="/chat">All rooms</a></div>`;
-    }
-    if (p === 'empty') {
-      return html`<div class="chat-empty"><span class="icon-tile">${icon('chat')}</span>
-        <p><strong>No messages yet.</strong></p><p class="muted">Say hi to #${room}.</p></div>`;
-    }
-    return html`
-      <div class="older">${() => (older.value ? html`<button class="btn show-older" type="button" @click=${showOlder}>
-        Show older (${older.value.toLocaleString()} more)</button>` : null)}</div>
-      <div class="msg-list">${repeat(visible, (m) => m.id, row)}</div>`;
-  };
 
   const view = html`
     <header class="chat-head">
@@ -273,10 +265,7 @@ export default function ChatRoomPage({ room }) {
     <div class="chat-log" role="log" aria-label=${`Messages in #${room}`} tabindex="0"
          ref=${(el) => (scroller = el)}
          @scroll=${(e) => { const el = e.target; atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
-      <div class="log-body">${() => {
-        const p = phase.value; // tracked: the view changes with the phase; what it builds below isn't tracked
-        return untrack(() => logView(p));
-      }}</div>
+      <div class="log-body">${log}</div>
       <div class="log-end">
         ${() => failed.value.map((f) => html`
           <div class="msg-row mine"><article class="msg-run">

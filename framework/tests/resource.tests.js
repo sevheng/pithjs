@@ -2,7 +2,7 @@
 
 import { resource, paginated, fetchJSON } from '../pith/resource.js';
 import { signal, root } from '../pith/signal.js';
-import { html } from '../pith/html.js';
+import { html, repeat } from '../pith/html.js';
 
 // A promise you settle by hand.
 /** @returns {{ promise: Promise<any>, resolve: (v?: any) => void, reject: (e?: any) => void }} */
@@ -343,4 +343,70 @@ export default async function (t) {
       eq(sandbox.querySelector('#out').textContent, 'Ada');
       eq(calls.length, 0);
     }));
+
+  // ---------- live ----------
+
+  // A chat: render() would build the whole list again for each new message; live() builds its view once.
+  await test('live(): the ready view is built once and gets the data as a signal, so a repeat() inside patches', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let r;
+    let builds = 0;
+    root(() => {
+      r = resource(fetcher);
+      mount(html`<ul id="out">${r.live({ loading: () => 'L', ready: (list) => { builds++; return html`${repeat(list, (m) => m.id, (m) => html`<li>${m.text}</li>`)}`; } })}</ul>`);
+    });
+    const out = () => sandbox.querySelector('#out');
+    eq(out().textContent, 'L');
+    calls[0].resolve([{ id: 1, text: 'a' }]);
+    await tick();
+    eq(out().textContent, 'a');
+    const first = out().querySelector('li');
+    r.mutate((list) => [...list, { id: 2, text: 'b' }]);
+    await tick();
+    eq(out().textContent, 'ab');
+    eq(builds, 1, 'not built again for a data change');
+    eq(out().querySelector('li'), first, 'the existing row is kept');
+  });
+
+  await test('live(): an error shows the error view, and the ready view is built again once data is back', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let r;
+    let builds = 0;
+    root(() => {
+      r = resource(fetcher);
+      mount(html`<p id="out">${r.live({ error: (e, retry) => html`<button @click=${retry}>${e.message}</button>`, ready: (d) => { builds++; return html`${() => d.value.join()}`; } })}</p>`);
+    });
+    const out = () => sandbox.querySelector('#out');
+    calls[0].reject(new Error('down'));
+    await tick();
+    eq(out().textContent, 'down');
+    out().querySelector('button').click();
+    calls[1].resolve(['x', 'y']);
+    await tick();
+    eq(out().textContent, 'x,y');
+    eq(builds, 1);
+  });
+
+  await test('paginated live(): loadMore appends rows without building the view again', async () => {
+    const { calls, fetcher } = controllable();
+    /** @type {any} */
+    let p;
+    let builds = 0;
+    root(() => {
+      p = paginated(fetcher, { pageSize: 2 });
+      mount(html`<ul id="out">${p.live((items) => { builds++; return html`${repeat(items, (i) => i, (i) => html`<li>${i}</li>`)}`; })}</ul>`);
+    });
+    const out = () => sandbox.querySelector('#out');
+    calls[0].resolve(['a', 'b']);
+    await tick();
+    const first = out().querySelector('li');
+    p.loadMore();
+    calls[1].resolve(['c']);
+    await tick();
+    eq(out().textContent, 'abc');
+    eq(builds, 1);
+    eq(out().querySelector('li'), first);
+  });
 }
