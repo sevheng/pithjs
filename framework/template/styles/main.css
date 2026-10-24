@@ -473,3 +473,22 @@ settings-context, name-preview, info-card, risky-widget { display: block; }
 .status-page .row { justify-content: center; }
 .status-mark { width: 3.5rem; height: 3.5rem; color: var(--accent); }
 .status-code { font: 700 clamp(3.5rem, 12vw, 6rem)/1 var(--font); letter-spacing: -0.04em; color: var(--accent); margin: 0.5rem 0 0.25rem; }
+
+/* ---------- Recipes (from the pith-design skill) used by the starter pages ---------- */
+.badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  background: var(--accent); color: var(--accent-text); }
+.badge.soft { background: var(--accent-soft); color: var(--text); }
+.hero.tinted { padding: 3rem 1.5rem; margin-top: 1rem; border-radius: calc(var(--radius) * 1.5); text-align: center;
+  background: radial-gradient(ellipse 48% 60% at 50% 40%, var(--accent-soft), transparent); }
+.hero.tinted .lead { margin-inline: auto; }
+.hero.tinted .row { justify-content: center; }
+.hero.tinted .badge { margin-bottom: 1rem; }
+.hero.tinted .badge.soft { background: var(--surface); border: 1px solid var(--border); }  /* readable on the tint */
+@media (min-width: 700px) { .step-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow), 0 8px 24px rgb(0 0 0 / 0.08); }
+@media (prefers-reduced-motion: reduce) { .lift { transition: none; } .lift:hover { transform: none; } }
+.icon-tile { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; margin-bottom: 0.75rem;
+  border-radius: 0.75rem; background: var(--accent-soft); color: var(--accent); }
+.icon-tile svg { width: 1.35rem; height: 1.35rem; }
+.status-page { background: radial-gradient(ellipse 48% 50% at 50% 35%, var(--accent-soft), transparent); border-radius: calc(var(--radius) * 1.5); padding-bottom: 2rem; }

@@ -156,8 +156,9 @@ html`<ul class="check-list">${items.map((t) => html`<li>${check()}<span>${t}</sp
 **Accent hero** (the top of a landing, pricing or empty page; one tint per page):
 ```css
 .hero.tinted { padding: 3rem 1.5rem; margin-top: 1rem; border-radius: calc(var(--radius) * 1.5); text-align: center;
-  background: radial-gradient(ellipse at top, var(--accent-soft), transparent 70%); }
+  background: radial-gradient(ellipse 48% 60% at 50% 40%, var(--accent-soft), transparent); }  /* fades out before its edges */
 .hero.tinted .lead { margin-inline: auto; }
+.hero.tinted .badge.soft { background: var(--surface); border: 1px solid var(--border); }  /* soft on soft disappears */
 ```
 
 **Hover lift** (cards that are clickable or compared side by side):
