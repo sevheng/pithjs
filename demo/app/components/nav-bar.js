@@ -5,11 +5,8 @@ import { brandMark } from '../brand.js';
 const links = [
   ['/', 'Home'],
   ['/features', 'Features'],
-  ['/todos', 'Todos'],
-  ['/team', 'Team'],
-  ['/contact', 'Contact'],
-  ['/about', 'About'],
-  ['/settings', 'Settings'],
+  ['/examples', 'Examples'],
+  ['/benchmarks', 'Benchmarks'],
 ];
 
 // A section link (e.g. /settings) is current on its sub-pages too (/settings/profile).

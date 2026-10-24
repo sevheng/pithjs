@@ -69,7 +69,7 @@ export default function HomePage() {
       <ul class="number-strip">
         ${numbers.map(([value, label]) => html`<li class="card stat"><span class="stat-value">${value}</span><span class="stat-label">${label}</span></li>`)}
       </ul>
-      <p class="muted note">Measured against the same apps in React and Vue: <a href="/about">how fast is it here?</a></p>
+      <p class="muted note">Measured against the same apps in React and Vue: <a href="/benchmarks">see the benchmarks</a></p>
     </section>
 
     <section class="section" aria-labelledby="agents">

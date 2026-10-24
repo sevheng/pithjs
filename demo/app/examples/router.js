@@ -16,7 +16,7 @@ export default function RouterExample() {
     </div>
     <p>Showing tab <strong>${tab}</strong>. Reload: it stays.</p>
     <p class="row">
-      <a href="/team/2">A :param route (/team/2)</a>
+      <a href="/features/forms">A :param route (/features/forms)</a>
       <a href="/settings/account">A guarded route (needs sign-in)</a>
     </p>
   `;
