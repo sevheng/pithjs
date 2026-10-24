@@ -45,6 +45,27 @@ export function nameOf(el) {
   return clean(el.getAttribute('placeholder') || el.getAttribute('alt') || el.getAttribute('title') || el.textContent);
 }
 
+const looksLikeSelector = (target) => /^[#.[]/.test(target);
+
+/**
+ * What app.click/type/select act on: a visible element matching `selector` whose accessible name is `target`
+ * (exactly, then ignoring case). A target starting with #, . or [ is first tried as a CSS selector; if it isn't
+ * one ('# design') or matches nothing visible ('.env'), it's read as a name.
+ * @param {Document} doc @param {string} selector @param {string} target
+ * @returns {any}
+ */
+export function findTarget(doc, selector, target) {
+  if (looksLikeSelector(target)) {
+    let el = null;
+    try {
+      el = doc.querySelector(target);
+    } catch {}
+    if (el && isVisible(el)) return el;
+  }
+  const all = [...doc.querySelectorAll(selector)].filter(isVisible);
+  return all.find((el) => nameOf(el) === target) ?? all.find((el) => nameOf(el).toLowerCase() === target.toLowerCase()) ?? null;
+}
+
 function describeControl(el) {
   const flags = [];
   if (el.getAttribute('aria-current')) flags.push('current');
@@ -175,14 +196,9 @@ export function createApp(frame) {
     return names.length ? names.map((n) => `  ${n}`).join('\n') : '  (none)';
   };
 
-  const find = (selector, target) => {
-    if (/^[#.[]/.test(target)) {
-      const el = doc().querySelector(target);
-      return el && isVisible(el) ? el : null;
-    }
-    const all = [...doc().querySelectorAll(selector)].filter(isVisible);
-    return all.find((el) => nameOf(el) === target) ?? all.find((el) => nameOf(el).toLowerCase() === target.toLowerCase()) ?? null;
-  };
+  const find = (selector, target) => findTarget(doc(), selector, target);
+  // Added to a "not found" message when the target could have been either a CSS selector or a name.
+  const readAs = (target) => (looksLikeSelector(target) ? ' (tried as a CSS selector, then as a name)' : '');
 
   const watch = () => {
     const w = /** @type {any} */ (win());
@@ -236,10 +252,10 @@ export function createApp(frame) {
       await settle();
     },
 
-    /** Click a button, link or checkbox by its visible name or aria-label, or by CSS selector (#id, .class, [attr]). */
+    /** Click a button, link or checkbox by its visible name or aria-label, or by CSS selector (#id, .class, [attr]; see findTarget). */
     async click(target) {
       const el = await waitFor(() => find(CLICKABLE, target), {
-        message: () => `click(${quote(target)}): no button, link or checkbox with that name on ${where()}. Clickable things on the page:\n${listControls(CLICKABLE)}`,
+        message: () => `click(${quote(target)}): no button, link or checkbox with that name${readAs(target)} on ${where()}. Clickable things on the page:\n${listControls(CLICKABLE)}`,
       });
       if (el.disabled) throw new Error(`click(${quote(target)}): it is disabled.`);
       el.click();
@@ -249,7 +265,7 @@ export function createApp(frame) {
     /** Replace the text of an input or textarea, found by its label, placeholder, aria-label or CSS selector. */
     async type(target, text) {
       const el = await waitFor(() => find(TYPEABLE, target), {
-        message: () => `type(${quote(target)}): no text field with that label on ${where()}. Text fields on the page:\n${listControls(TYPEABLE)}`,
+        message: () => `type(${quote(target)}): no text field with that label${readAs(target)} on ${where()}. Text fields on the page:\n${listControls(TYPEABLE)}`,
       });
       el.focus();
       // Use the native value setter, like real typing does. Plain `el.value = text` skips the
@@ -265,7 +281,7 @@ export function createApp(frame) {
     /** Choose an option (by its visible text or value) in a dropdown found by its label. */
     async select(target, option) {
       const el = /** @type {HTMLSelectElement} */ (await waitFor(() => find('select', target), {
-        message: () => `select(${quote(target)}): no dropdown with that label on ${where()}. Dropdowns on the page:\n${listControls('select')}`,
+        message: () => `select(${quote(target)}): no dropdown with that label${readAs(target)} on ${where()}. Dropdowns on the page:\n${listControls('select')}`,
       }));
       const opt = [...el.options].find((o) => clean(o.textContent) === option || o.value === option);
       if (!opt) {

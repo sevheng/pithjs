@@ -14,6 +14,7 @@ Requires Node 24+ and Chrome/Chromium for checks.
    Add `-- --state` to also print what the route, stores, page and each component hold (by variable name).
    A failing flow prints that state too, under the page outline: read it before changing code.
    `-- --mobile`, `--dark` and `--full` (the whole page) take the other screenshots a design review needs.
+   It uses your running `npm run dev` server when there is one, so it shows the same data you see (`--fresh` for a new server).
 4. Done only when `npm run check` prints **All good**. Never claim something works without that.
 
 **UI work** (pages, components, forms, anything a person sees): follow the two skills in `.claude/skills/`:

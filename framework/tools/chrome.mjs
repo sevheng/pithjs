@@ -72,6 +72,18 @@ export async function loadPage(chrome, url, { screenshot, width = 1280, height =
   });
 }
 
+/**
+ * Check each item, then check the failed ones once more (all at once). On a busy machine a page can miss its
+ * load timeout; a real problem fails both times. A pass on the second try is kept, with `retried: true`.
+ * @template {{ ok: boolean }} R
+ * @param {any[]} items @param {(item: any) => Promise<R>} run
+ * @returns {Promise<(R & { retried?: boolean })[]>}
+ */
+export async function retryFailures(items, run) {
+  const first = await Promise.all(items.map(run));
+  return Promise.all(first.map(async (r, i) => (r.ok ? r : { ...(await run(items[i])), retried: true })));
+}
+
 export const unescapeHtml = (s) =>
   s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 

@@ -5,6 +5,9 @@
 //   --full     screenshot the whole page, not just the first screen
 //   --state    also print what the pages, stores and components hold (dev mode; see tests/state.js)
 //   --no-shot  skip the screenshot
+//   --fresh    start a fresh server instead of using this project's running dev server
+// It uses the running dev server (npm run dev, on PORT or 8000) when there is one, so the page shows the
+// same data you see in your browser (messages you posted, records you added).
 
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -22,11 +25,29 @@ export function seeOptions(args) {
   const [width, height] = mobile ? [390, 844] : [1280, 900];
   const name = (path === '/' ? 'home' : path.slice(1).replace(/[^\w-]+/g, '_')) +
     (mobile ? '-mobile' : '') + (dark ? '-dark' : '') + (full ? '-full' : '');
-  return { path, width, height, mobile, dark, full, state: args.includes('--state'), shot: !args.includes('--no-shot'), name };
+  return { path, width, height, mobile, dark, full, state: args.includes('--state'), shot: !args.includes('--no-shot'), fresh: args.includes('--fresh'), name };
+}
+
+/**
+ * The URL of this project's dev server, if one is running on one of `ports` (not a preview of dist/).
+ * @param {number[]} ports
+ * @param {{ root?: string }} [options]
+ * @returns {Promise<string | null>}
+ */
+export async function runningServer(ports, { root = projectRoot } = {}) {
+  for (const port of ports) {
+    const base = `http://localhost:${port}`;
+    try {
+      const res = await fetch(`${base}/__pith/project`, { signal: AbortSignal.timeout(500) });
+      const info = res.ok ? await res.json() : null;
+      if (info?.root === root && !info.dist) return base;
+    } catch {}
+  }
+  return null;
 }
 
 if (import.meta.main) {
-  const { path, width, height, dark, full, state, shot, name } = seeOptions(process.argv.slice(2));
+  const { path, width, height, dark, full, state, shot, fresh, name } = seeOptions(process.argv.slice(2));
   const chrome = findChrome();
   if (!chrome) {
     console.error('Chrome not found. Install Chrome/Chromium or set CHROME_PATH=/path/to/chrome');
@@ -35,8 +56,9 @@ if (import.meta.main) {
   const shotDir = join(projectRoot, '.pith', 'screenshots');
   const shotFile = join(shotDir, `${name}.png`);
 
-  const server = await startServer(0);
-  const base = `http://localhost:${server.address().port}`;
+  const running = fresh ? null : await runningServer([...new Set([Number(process.env.PORT) || 8000, 8000])]);
+  const server = running ? null : await startServer(0);
+  const base = running ?? `http://localhost:${server.address().port}`;
   try {
     const query = new URLSearchParams({ path, width: String(width), height: String(height) });
     if (state) query.set('state', '1');
@@ -59,8 +81,9 @@ if (import.meta.main) {
     const a11y = pick(dom, 'a11y');
     if (a11y) console.log(`\nAccessibility${dark ? ' (dark theme: contrast)' : ''}:\n${a11y}`);
     if (shot) console.log(`\nScreenshot: ${shotFile}`);
+    if (running) console.log(`Served by your running dev server (${running}); --fresh for a fresh one.`);
   } finally {
-    server.close();
+    server?.close();
   }
 }
 

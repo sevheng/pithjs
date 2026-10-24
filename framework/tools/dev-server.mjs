@@ -78,6 +78,9 @@ async function readBody(req) {
   }
 }
 
+/** /__pith/project: which project a dev server serves, so `see` can use the one already running. */
+export const handleProject = (res, dist = false) => sendJson(res, 200, { root: projectRoot, dist });
+
 export async function handleApi(req, res, url) {
   const name = url.pathname.slice('/api/'.length).replace(/\/+$/, '');
   if (!/^[\w-]+$/.test(name)) return sendJson(res, 404, { message: `No API at ${url.pathname}` });
@@ -118,6 +121,7 @@ async function handle(req, res) {
     return;
   }
   if (pathname === '/api' || pathname.startsWith('/api/')) return handleApi(req, res, url);
+  if (pathname === '/__pith/project') return handleProject(res, siteRoot !== projectRoot);
   const file = await resolveFile(pathname);
   try {
     if (!file) throw new Error('not found');

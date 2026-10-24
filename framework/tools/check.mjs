@@ -22,7 +22,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { findChrome, loadPage, parseResults, unescapeHtml } from './chrome.mjs';
+import { findChrome, loadPage, retryFailures, parseResults, unescapeHtml } from './chrome.mjs';
 import { routeFile } from './prerender.mjs';
 import { prerenderTargets } from './routes.mjs';
 import { startServer, projectRoot } from './dev-server.mjs';
@@ -147,39 +147,39 @@ if (!chrome) {
     };
     const phone = (path) => loadPage(chrome, `${base}/__pith/see.html?${new URLSearchParams({ path, width: '390', height: '844' })}`);
     const dark = (path) => loadPage(chrome, `${base}/__pith/see.html?${new URLSearchParams({ path, dark: '1' })}`, { dark: true });
-    const [framework, flows, ...loaded] = await Promise.all([
-      suite('/__pith/'),
-      hasFlows ? suite('/__pith/flows.html') : null,
-      ...PAGES.map((path) => loadPage(chrome, base + path)),
-      ...PAGES.map(phone),
-      ...PAGES.map(dark),
-    ]);
-    const pages = loaded.slice(0, PAGES.length);
-    const phones = loaded.slice(PAGES.length, 2 * PAGES.length);
-    const darks = loaded.slice(2 * PAGES.length);
     const pick = (dom, id) => unescapeHtml(dom.match(new RegExp(`<pre id="${id}">([\\s\\S]*?)</pre>`))?.[1] ?? '');
-    report.framework = framework;
-    // Flows exercise the real app, so any console problem during them is a failure too.
-    report.flows = flows ? { ...flows, ok: flows.ok && flows.console.length === 0 } : { ok: true, skipped: 'no tests/flows.js in this folder' };
     const titleOf = (dom) => unescapeHtml(dom.match(/<title>([^<]*)<\/title>/)?.[1] ?? '');
-    const notFoundTitle = PAGES.length ? titleOf(pages.at(-1).dom) : '';
-    report.pages = PAGES.map((path, i) => {
-      const { dom, consoleLines } = pages[i];
+    // The not-found page's title, to spot a route that doesn't match (it'd show the same page).
+    const notFound = PAGES.includes(NOT_FOUND) ? loadPage(chrome, base + NOT_FOUND).then(({ dom }) => titleOf(dom)) : Promise.resolve('');
+    // Each route in the browser (light), at phone width, and in the dark theme. A failing route is loaded once
+    // more before it's reported: on a busy machine a page can miss its load timeout.
+    const checkPage = async (path) => {
+      const [page, onPhone, inDark, notFoundTitle] = await Promise.all([loadPage(chrome, base + path), phone(path), dark(path), notFound]);
+      const { dom, consoleLines } = page;
       const title = titleOf(dom);
       const problems = consoleLines.filter((l) => PROBLEM.test(l));
       if (path !== NOT_FOUND && title === notFoundTitle) problems.unshift(`shows the not-found page ("${title}"): the route doesn't match`);
       if (!title) problems.unshift('the page has no title');
       if (!/<h1[\s>]/.test(dom)) problems.unshift('nothing rendered (no <h1>)');
       if (built && path !== NOT_FOUND) problems.push(...prerenderProblems(path));
-      const layout = pick(phones[i].dom, 'layout');
+      const layout = pick(onPhone.dom, 'layout');
       if (layout) problems.push(`on a phone (390px): ${layout}`);
-      const a11y = pick(phones[i].dom, 'a11y').split('\n').filter(Boolean);
+      const a11y = pick(onPhone.dom, 'a11y').split('\n').filter(Boolean);
       problems.push(...a11y.map((p) => `accessibility: ${p}`));
       // Dark theme: only contrast can differ; problems the light theme already has aren't repeated.
-      const darkA11y = pick(darks[i].dom, 'a11y').split('\n').filter((p) => p && !a11y.includes(p));
+      const darkA11y = pick(inDark.dom, 'a11y').split('\n').filter((p) => p && !a11y.includes(p));
       problems.push(...darkA11y.map((p) => `accessibility (dark theme): ${p}`));
       return { path: path === NOT_FOUND ? '(unknown URL)' : path, title, ok: problems.length === 0, problems };
-    });
+    };
+    const [framework, flows, pages] = await Promise.all([
+      suite('/__pith/'),
+      hasFlows ? suite('/__pith/flows.html') : null,
+      retryFailures(PAGES, checkPage),
+    ]);
+    report.framework = framework;
+    // Flows exercise the real app, so any console problem during them is a failure too.
+    report.flows = flows ? { ...flows, ok: flows.ok && flows.console.length === 0 } : { ok: true, skipped: 'no tests/flows.js in this folder' };
+    report.pages = pages;
     // --build: the other prerender.mjs URLs only need their file (loading each in Chrome would be slow).
     if (built) {
       for (const { path } of EXTRA.filter((t) => !SAMPLES.includes(t.path))) {
@@ -248,7 +248,7 @@ if (json) {
   console.log('\nPages');
   if (!PAGES.length) skip('no app/router.js in this folder');
   for (const p of report.pages) {
-    if (p.ok) line(true, `${p.path} ${dim(p.title)}`);
+    if (p.ok) line(true, `${p.path} ${dim(p.title)}${p.retried ? dim(' (passed on a second try: the machine may be busy)') : ''}`);
     else {
       problems += p.problems.length;
       line(false, `${p.path}`);

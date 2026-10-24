@@ -6,7 +6,7 @@
 
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
-import { handleApi, types } from './dev-server.mjs';
+import { handleApi, handleProject, types } from './dev-server.mjs';
 
 const framework = join(import.meta.dirname, '..');
 
@@ -61,6 +61,7 @@ export function pith({ projectRoot }) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return handleApi(req, res, url);
+        if (url.pathname === '/__pith/project') return handleProject(res);
         if (await serveRaw(decodeURIComponent(url.pathname), res)) return;
         next();
       });
