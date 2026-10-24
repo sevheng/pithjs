@@ -162,6 +162,9 @@ todos.value.push(newTodo);                            // ✗ the same array: not
   <p>Each write runs its effects straight away. When you change several signals at once, wrap the writes in
     ${c('batch(fn)')} so effects that read more than one of them run once, with all the new values.</p>
   ${code(batchEx)}
+  <p>Either way, the updates run in order: a computed or effect runs after everything it reads has, once per change,
+    so it never sees half an update, and a chain of computeds can be any length. The
+    <a href="/docs/spreadsheet">Spreadsheet</a> example leans on this: a chain of running totals 1,000 cells deep.</p>
 
   <h2 id="untrack">Reading without subscribing</h2>
   <p>${c('untrack(fn)')} reads signals without making the current effect depend on them. For one signal,

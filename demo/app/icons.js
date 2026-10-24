@@ -38,6 +38,11 @@ const PATHS = {
   'trend-flat': 'M4 12h16M15 7l5 5-5 5',
   // Trading (/trade): two candlesticks
   trade: 'M7 3v4M7 17v4M5 7h4v10H5zM17 5v3M17 15v4M15 8h4v7h-4z',
+  // ---------- Spreadsheet (/sheet) ----------
+  sheet: 'M4 4h16v16H4zM4 9h16M4 14h16M9 4v16',
+  undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
+  // ---------- end Spreadsheet ----------
 };
 
 /** @param {string} name one of the names above @param {string} [className] */

@@ -50,4 +50,13 @@ export const apps = [
     uses: [['lists', 'signal per row'], ['signals', 'batch()'], ['selector', 'selector()'], ['resource', 'optimistic()'], ['forms', 'form()'], ['router', 'layouts']],
   },
   // ---------- end Trading ----------
+  // ---------- Spreadsheet (/sheet) ----------
+  {
+    name: 'Spreadsheet', href: '/sheet', icon: 'sheet',
+    text: 'A 1,000-row spreadsheet with formulas: the stress test for signals, with a chain of values 1,000 cells deep.',
+    shows: ['Each cell a signal, each formula a computed of the cells it reads', 'An edit recomputes only what depends on it, each cell once',
+      'Circular references show #CYCLE!, and nothing hangs', '26,000 cells drawn windowed, with keyboard, undo and paste'],
+    uses: [['signals', 'computed()'], ['signals', 'batch()'], ['lists', 'repeat()'], ['selector', 'selector()'], ['store', 'createStore()']],
+  },
+  // ---------- end Spreadsheet ----------
 ];

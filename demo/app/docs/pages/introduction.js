@@ -34,7 +34,7 @@ const sectionsList = [
   ['/docs/deploying', 'Building and deploying', 'a Vite build with prerendered pages, or the files as they are.'],
   ['/docs/signals', 'Core', 'signals, templates, lists, components, routing, shared state, data, forms and animation, one page each, with a live example.'],
   ['/docs/testing', 'Tools', 'npm run check, user flows, npm run see, and every warning code with its fix.'],
-  ['/docs/examples', 'Examples', 'whole apps (chat, inbox, kanban, dashboard, trading, settings) and how they are built.'],
+  ['/docs/examples', 'Examples', 'whole apps (chat, inbox, kanban, dashboard, trading, spreadsheet, settings) and how they are built.'],
   ['/docs/benchmarks', 'Performance', 'Pith, React and Vue measured on a slow phone.'],
 ];
 

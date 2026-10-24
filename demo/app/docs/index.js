@@ -80,6 +80,10 @@ export const sections = [
         load: () => import('./pages/dashboard.js') },
       { name: 'trading', title: 'Trading', app: 'Trading', summary: 'Live prices that tick in place, candlesticks, an order book and an order ticket.',
         load: () => import('./pages/trading.js') },
+      // ---------- Spreadsheet (/sheet) ----------
+      { name: 'spreadsheet', title: 'Spreadsheet', app: 'Spreadsheet', summary: 'A 1,000-row sheet of formulas: the stress test for signals, timed in the page.',
+        load: () => import('./pages/spreadsheet.js') },
+      // ---------- end Spreadsheet ----------
       { name: 'settings', title: 'Settings', app: 'Settings', summary: 'Pages that share a layout, and one that needs sign-in.',
         load: () => import('./pages/settings.js') },
     ],

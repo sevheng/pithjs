@@ -922,3 +922,154 @@ flow('trading: searching the watchlist, starring a symbol, and an unknown symbol
   await app.click('Go to NWX');
   await app.expectPath('/trade/NWX');
 });
+
+// ---------- Spreadsheet (/sheet) ----------
+// Cells are found by their ids (cell-B2), which is also how the grid tells a screen reader the active cell.
+// Keys go to the grid as keydown events, and a click on a cell is a pointerdown (what the grid listens to).
+
+const cellText = (app, id) => app.query(`#cell-${id}`)?.textContent.trim() ?? null;
+const activeName = (app) => app.query('.sheet-name')?.textContent.trim();
+const sheetGrid = (app) => app.query('[role="grid"]');
+/** A key, to the cell editor when it's open, else to the grid. */
+const press = (app, key, options = {}) => {
+  const target = app.query('.sheet-editor') ?? sheetGrid(app);
+  target.dispatchEvent(new app.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...options }));
+};
+/** Scroll the grid to a row (and say so: a headless browser that doesn't draw may not send the scroll event). */
+const scrollTo = (app, row) => {
+  const box = app.query('.sheet-scroll');
+  box.scrollTop = row * 32;
+  box.dispatchEvent(new Event('scroll'));
+};
+const pick = (app, id) => app.query(`#cell-${id}`).dispatchEvent(new app.window.PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 }));
+/** Click a cell, type into the formula bar, and press Enter. */
+const enter = async (app, id, text) => {
+  pick(app, id);
+  await app.waitFor(() => activeName(app) === id, `${id} should be the active cell`);
+  await app.type('Cell contents', text);
+  await app.pressEnter();
+};
+
+flow('sheet: typing a number and a formula, and the formula follows', async (app) => {
+  await app.go('/sheet');
+  await app.see('The sheet is empty.');
+  await enter(app, 'A1', '5');
+  await app.waitFor(() => activeName(app) === 'A2', 'Enter moves down to A2');
+  await enter(app, 'B1', '=A1*2');
+  await app.waitFor(() => cellText(app, 'B1') === '10', 'B1 = A1 × 2 = 10');
+  await enter(app, 'A1', '7');
+  await app.waitFor(() => cellText(app, 'B1') === '14', 'B1 follows A1: 14');
+  await enter(app, 'A2', '3');
+  await enter(app, 'C1', '=SUM(A1:A2)+ROUND(2.5)');
+  await app.waitFor(() => cellText(app, 'C1') === '13', 'C1 = 7 + 3 + 3');
+  await enter(app, 'D1', 'Rent');
+  await app.waitFor(() => cellText(app, 'D1') === 'Rent', 'text shows as typed');
+  await app.notSee('The sheet is empty.');
+  pick(app, 'B1');
+  await app.waitFor(() => app.query('#sheet-input').value === '=A1*2', 'the formula bar shows what is typed in B1');
+  await new Promise((r) => setTimeout(r, 500)); // saved a moment after the last edit
+  await app.go('/sheet');
+  await app.waitFor(() => cellText(app, 'B1') === '14', 'the sheet is saved: B1 is still 14 after a reload');
+});
+
+flow('sheet: circular references show #CYCLE! and recover; #DIV/0!, #REF! and #NAME?', async (app) => {
+  await app.go('/sheet');
+  await enter(app, 'A1', '=B1+1');
+  await enter(app, 'B1', '=A1');
+  await app.waitFor(() => cellText(app, 'A1') === '#CYCLE!' && cellText(app, 'B1') === '#CYCLE!', 'both cells on the circle show #CYCLE!');
+  await enter(app, 'C1', '=A1*2');
+  await app.waitFor(() => cellText(app, 'C1') === '#CYCLE!', 'a cell that reads the circle shows the error too');
+  await enter(app, 'B1', '4');
+  await app.waitFor(() => cellText(app, 'A1') === '5' && cellText(app, 'C1') === '10', 'breaking the circle gives A1 and C1 values again');
+  await enter(app, 'D1', '=1/0');
+  await enter(app, 'D2', '=A1001');
+  await enter(app, 'D3', '=FOO(1)');
+  await enter(app, 'D4', '=1+');
+  await app.waitFor(() => cellText(app, 'D1') === '#DIV/0!', '#DIV/0!');
+  app.expect(cellText(app, 'D2') === '#REF!', 'a cell past row 1,000 is #REF!');
+  app.expect(cellText(app, 'D3') === '#NAME?', 'an unknown function is #NAME?');
+  app.expect(cellText(app, 'D4') === '#ERROR!', 'a formula that cannot be read is #ERROR!');
+});
+
+flow('sheet: the keyboard moves, edits and cancels; undo and redo', async (app) => {
+  await app.go('/sheet');
+  pick(app, 'A1');
+  await app.waitFor(() => activeName(app) === 'A1', 'A1 is active');
+  press(app, 'ArrowRight');
+  press(app, 'ArrowDown');
+  await app.waitFor(() => activeName(app) === 'B2', 'Right, then Down: B2');
+  app.expect(sheetGrid(app).getAttribute('aria-activedescendant') === 'cell-B2', 'the grid names the active cell for screen readers');
+  press(app, '4'); // typing starts an edit with that key
+  await app.waitFor(() => app.query('[aria-label="Edit B2"]')?.value === '4', 'the cell editor opens with the key typed');
+  press(app, 'Enter');
+  await app.waitFor(() => cellText(app, 'B2') === '4' && activeName(app) === 'B3', 'Enter saves and moves down');
+  press(app, 'x');
+  await app.waitFor(() => app.query('[aria-label="Edit B3"]'), 'the editor opens on B3');
+  press(app, 'Escape');
+  await app.waitFor(() => !app.query('.sheet-editor'), 'Escape closes it');
+  app.expect(cellText(app, 'B3') === '', 'Escape keeps B3 empty');
+  press(app, 'ArrowUp');
+  press(app, 'F2');
+  await app.waitFor(() => app.query('[aria-label="Edit B2"]')?.value === '4', 'F2 edits with what is there');
+  press(app, 'Tab');
+  await app.waitFor(() => activeName(app) === 'C2', 'Tab saves and moves right');
+  await app.click('Undo');
+  await app.waitFor(() => cellText(app, 'B2') === '', 'Undo takes the 4 out of B2');
+  await app.click('Redo');
+  await app.waitFor(() => cellText(app, 'B2') === '4', 'Redo puts it back');
+  press(app, 'z', { ctrlKey: true });
+  await app.waitFor(() => cellText(app, 'B2') === '', 'Ctrl+Z undoes too');
+});
+
+flow('sheet: scrolling to row 900 draws it (and not row 1), and editing there works', async (app) => {
+  await app.go('/sheet');
+  app.expect(sheetGrid(app).getAttribute('aria-rowcount') === '1001', 'the grid says it has 1,000 rows and a header');
+  const drawn = app.queryAll('.sheet-body [role="row"]').length;
+  app.expect(drawn > 10 && drawn < 80, `only the rows in view are drawn, got ${drawn}`);
+  scrollTo(app, 899);
+  await app.waitFor(() => app.query('#cell-A900'), 'row 900 is drawn after scrolling to it');
+  await app.waitFor(() => !app.query('#cell-A1'), 'row 1 is no longer drawn');
+  await enter(app, 'A900', '42');
+  await enter(app, 'B900', '=A900/2');
+  await app.waitFor(() => cellText(app, 'B900') === '21', 'B900 = 21');
+  pick(app, 'B900');
+  press(app, 'ArrowUp', { ctrlKey: true });
+  await app.waitFor(() => activeName(app) === 'B1' && app.query('#cell-B1'), 'Ctrl+Up goes to the top and scrolls there');
+});
+
+flow('sheet: Fill demo data, then Edit A1 updates the whole 1,000-deep chain once each', async (app) => {
+  await app.go('/sheet');
+  await app.click('Fill demo data');
+  await app.waitFor(() => /^-?\d/.test(cellText(app, 'G4') ?? ''), 'the final balance (G4 = D1000) has a value');
+  const final = Number(cellText(app, 'G4'));
+  await app.click('Edit A1');
+  await app.see('Edit A1: 2,003 cells recomputed in');
+  await app.waitFor(() => Number(cellText(app, 'G4')) === final + 100, `the final balance moves by 100: ${final} → ${cellText(app, 'G4')}`);
+  app.expect(cellText(app, 'A1') === '2600', 'A1 went up by 100');
+  scrollTo(app, 999);
+  await app.waitFor(() => cellText(app, 'D1000') === String(final + 100), 'D1000, at the end of the chain, has the new balance');
+  await app.click('100/s');
+  await app.waitFor(() => /edits\/s/.test(app.query('.sheet-readout')?.textContent ?? ''), 'Random edits reports edits a second');
+  await app.click('Off');
+  await app.click('Fill demo data');
+  await app.see('Replace the sheet with the demo budget?');
+  await app.click('Cancel');
+});
+
+flow('sheet: pasting tab-separated text fills a range, as one step of undo', async (app) => {
+  await app.go('/sheet');
+  pick(app, 'B2');
+  await app.waitFor(() => activeName(app) === 'B2', 'B2 is active');
+  const paste = new Event('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(paste, 'clipboardData', { value: { getData: () => '1\t2\n3\t=B2+C2+B3' } });
+  sheetGrid(app).dispatchEvent(paste);
+  await app.waitFor(() => cellText(app, 'C3') === '6', 'the pasted formula in C3 adds the pasted numbers');
+  await app.see('Pasted 2 × 2 cells');
+  await app.click('Clear');
+  await app.see('Clear every cell?');
+  await app.click('Keep cells');
+  app.expect(cellText(app, 'B2') === '1', 'Keep cells keeps them');
+  await app.click('Undo');
+  await app.waitFor(() => ['B2', 'C2', 'B3', 'C3'].every((id) => cellText(app, id) === ''), 'one Undo takes the whole paste out');
+});
+// ---------- end Spreadsheet ----------

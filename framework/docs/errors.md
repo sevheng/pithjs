@@ -239,8 +239,8 @@ html`<textarea .value=${text}></textarea>` // ✓
 For the page title, set it in the route (`{ title: 'Todos', view }`) or with `document.title = ...`.
 
 ## E003
-**Effects kept re-running each other** (more than 1000 rounds), usually because an effect writes
-a signal that it also reads:
+**Effects kept re-running each other** (in one update, effects that had already run were sent back to
+run again more than 1000 times), usually because an effect writes a signal that it also reads:
 
 ```js
 effect(() => { count.value = count.value + 1; });   // ✗ infinite loop

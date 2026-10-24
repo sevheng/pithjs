@@ -365,6 +365,10 @@ The site is **Home** (`/`, the landing page) and **Docs** (`/docs`, `/docs/<page
 - Example apps open full width under a "← Docs" bar, each with a docs page: Chat (`/chat/:room`, `api/chat.mjs`),
   Inbox (`/inbox/:folder`, `api/inbox.mjs`), Kanban (`/kanban`, a persisted store), Dashboard (`/dashboard`,
   `api/dashboard.mjs`), Trading (`/trade/:symbol`, `api/trade.mjs` + a feed simulated in `app/trade/feed.js`) and Settings (`/settings/*`, a layout and a sign-in guard). `app/apps.js` lists them.
+<!-- ---------- Spreadsheet (/sheet) ---------- -->
+- Spreadsheet (`/sheet`), the stress test for signals: formulas in `app/sheet/formula.js` (pure, Node tests in
+  `tests/sheet.test.mjs`), cells as signals and computeds in `app/sheet/model.js`, the windowed grid in `app/sheet/grid.js`.
+<!-- ---------- end Spreadsheet ---------- -->
 - Benchmarks (`/docs/benchmarks`) read `app/data/benchmarks.js`, written by `npm run benchmarks` from
   `../compare/results/measure.json`.
 - Older URLs (`/features/...`, `/examples`, `/benchmarks`, `/todos`, `/about`) redirect into the docs.

@@ -36,6 +36,9 @@ export const router = createRouter(
     '/trade': { redirect: '/trade/NWX' },
     '/trade/:symbol': { title: ({ symbol }) => `${symbol} · Trading`, layout: trade, load: () => import('./pages/trade.js') },
     // ---------- end Trading ----------
+    // ---------- Spreadsheet (/sheet) ----------
+    '/sheet': { title: 'Spreadsheet', load: () => import('./pages/sheet.js') },
+    // ---------- end Spreadsheet ----------
     // Older URLs of this demo: the feature pages, the examples hub and the benchmarks moved into the docs.
     '/features': { redirect: '/docs' },
     '/features/:name': { redirect: ({ name }) => `/docs/${name}` },

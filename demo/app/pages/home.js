@@ -78,6 +78,11 @@ const core = [
 // The order of the showcase tiles: Chat is the big one; the others fill a 3-column grid.
 const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading', 'Settings'];
 
+// ---------- Spreadsheet (/sheet) ----------
+SHOWCASE.push('Spreadsheet');
+// ---------- end Spreadsheet ----------
+const COUNT = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+
 export default function HomePage() {
   const copied = signal(false);
   const commands = 'npx pithjs create my-app\ncd my-app\nnpm install\nnpm run dev';
@@ -128,7 +133,7 @@ export default function HomePage() {
     <section class="section" aria-labelledby="apps-title">
       <div class="section-head">
         <h2 id="apps-title">Real apps, not snippets.</h2>
-        <p class="lead">Six complete apps in this demo, each with every state handled, on phones and in dark mode. Open one.</p>
+        <p class="lead">${COUNT[SHOWCASE.length] ?? SHOWCASE.length} complete apps in this demo, each with every state handled, on phones and in dark mode. Open one.</p>
       </div>
       <ul class="bento">
         ${SHOWCASE.map((name) => apps.find((a) => a.name === name)).map((a) => html`
