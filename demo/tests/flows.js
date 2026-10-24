@@ -275,3 +275,17 @@ flow('chat: an unknown room says so', async (app) => {
   await app.go('/chat/nope');
   await app.see('No such room.');
 });
+
+flow('chat: after switching rooms there is one composer, and sending works', async (app) => {
+  await app.go('/chat/general');
+  await app.see('Selecting a row now re-runs 2 rows');
+  await app.click('[href="/chat/design"]');
+  await app.see('Love it.');
+  await app.click('[href="/chat/general"]');
+  await app.see('Selecting a row now re-runs 2 rows');
+  app.expect(app.queryAll('form.composer').length === 1, `one composer, found ${app.queryAll('form.composer').length}`);
+  const text = `after switching ${Date.now()}`;
+  await app.type('Message #general', text);
+  await app.pressEnter();
+  await app.see(text);
+});

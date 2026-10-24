@@ -357,9 +357,10 @@ export async function runFlows() {
     } catch (err) {
       // Every failure also says what the app holds: pages, stores, components. Only when the app records
       // it (Pith in dev mode); for anything else the block would just be noise.
-      const error = typeof err?.message === 'string' ? err : new Error(String(err)); // may be from the app's realm
-      if (/** @type {any} */ (frame.contentWindow)?.__pith) error.message += `\nState:\n${stateText(frame.contentWindow)}`;
-      results.push([name, error]);
+      // A new Error, not the thrown one: it may be from the app's realm, or a DOMException whose message can't be set.
+      let message = typeof err?.message === 'string' ? err.message : String(err);
+      if (/** @type {any} */ (frame.contentWindow)?.__pith) message += `\nState:\n${stateText(frame.contentWindow)}`;
+      results.push([name, new Error(message)]);
     }
     frame.remove();
   }

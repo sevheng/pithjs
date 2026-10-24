@@ -220,20 +220,24 @@ function bindChild(anchor, value) {
     return;
   }
   let nodes = [];
-  effect(() => { nodes = swap(anchor, nodes, read(value)); });
-}
-
-// Replace the nodes before `anchor`; a plain text update just edits the existing text node.
-function swap(anchor, old, value) {
-  if (old.length === 1 && old[0].nodeType === Node.TEXT_NODE && isText(value)) {
-    const text = String(value);
-    if (old[0].data !== text) old[0].data = text;
-    return old;
-  }
-  const next = toNodes(value);
-  for (const n of old) n.remove();
-  for (const n of next) anchor.parentNode.insertBefore(n, anchor);
-  return next;
+  // Once the hole holds more than text, an empty text node marks where its content starts, and the content
+  // is everything up to `anchor`: a template's own top-level holes add nodes next to the ones it was made
+  // of, and those must leave with it too (a page's late content, when the router swaps the page).
+  /** @type {Text | null} */
+  let start = null;
+  effect(() => {
+    const next = read(value);
+    if (nodes.length === 1 && nodes[0].nodeType === Node.TEXT_NODE && isText(next)) {
+      const text = String(next);
+      if (nodes[0].data !== text) nodes[0].data = text;
+      return;
+    }
+    if (start) while (start.nextSibling !== anchor) start.nextSibling.remove();
+    else for (const n of nodes) n.remove();
+    nodes = toNodes(next);
+    if (!start && nodes.some((n) => n.nodeType !== Node.TEXT_NODE)) anchor.before((start = new Text('')));
+    anchor.before(...nodes);
+  });
 }
 
 function bindRepeat(anchor, { items, key, render }) {
