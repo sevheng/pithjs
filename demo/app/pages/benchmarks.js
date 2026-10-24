@@ -173,14 +173,45 @@ export default function BenchmarksPage() {
   const views = { load: () => LoadView(protocol), runtime: RuntimeView, memory: MemoryView, size: SizeView };
   const gaps = behind();
 
+  // The four numbers people ask about, read from the measurements.
+  const crm = field(data.load.h1.crm, 'ready');
+  const mem = data.memory['10,000 rows'];
+  const js = field(data.load.h1.crm, 'jsKB');
+  const ops = Object.values(data.runtime);
+  const close = ops.filter((v) => v.pith <= Math.min(v.react, v.vue) * 1.1).length;
+  const score = [
+    { value: percent(crm.pith, crm.react), unit: '%', label: 'sooner on screen than React', pith: crm.pith, rival: crm.react,
+      note: `CRM start page on a slow phone: ${num(Math.round(crm.pith))} ms vs ${num(Math.round(crm.react))} ms` },
+    { value: percent(mem.pith, Math.min(mem.react, mem.vue)), unit: '%', label: 'less memory at 10,000 rows', pith: mem.pith, rival: Math.min(mem.react, mem.vue),
+      note: `${num(mem.pith)} MB vs ${num(mem.react)} MB (React) and ${num(mem.vue)} MB (Vue)` },
+    { value: num(js.pith), unit: ' KB', label: 'of JavaScript for the CRM, no build', pith: js.pith, rival: Math.min(js.react, js.vue),
+      note: `Vue ${num(js.vue)} KB, React ${num(js.react)} KB` },
+    { value: `${close}/${ops.length}`, unit: '', label: 'list operations fastest or within 10%', pith: close, rival: ops.length, bars: false,
+      note: 'Create, update, swap, select, remove, append and clear rows' },
+  ];
+
   const stat = (value, label) => html`<li class="card stat"><span class="value">${value}</span><span class="stat-label">${label}</span></li>`;
   return html`
-    <section class="hero tinted">
+    <div class="bench-page">
+    <header class="bench-head">
       <span class="badge soft">Measured, not claimed</span>
       <h1>Benchmarks</h1>
       <p class="lead">The same apps in Pith, React and Vue, loaded and clicked the same way.</p>
-      <p class="muted note">Measured ${data.measured} in ${data.browser} · medians of many runs · <a href="#method">how</a></p>
-    </section>
+      <p class="muted note">Measured ${data.measured} in ${data.browser} · medians of many runs · <a href="#method">how it was measured</a></p>
+    </header>
+
+    <ul class="scoreboard" aria-label="The headline numbers">
+      ${score.map((s) => html`
+        <li class="score">
+          <span class="score-value">${s.value}<small>${s.unit}</small></span>
+          <span class="score-label">${s.label}</span>
+          ${s.bars === false ? null : html`<span class="score-bars" aria-hidden="true">
+            <span class="score-bar pith" style=${`--w: ${s.pith / Math.max(s.pith, s.rival)}`}></span>
+            <span class="score-bar" style=${`--w: ${s.rival / Math.max(s.pith, s.rival)}`}></span>
+          </span>`}
+          <span class="score-note muted">${s.note}</span>
+        </li>`)}
+    </ul>
 
     <div class="bench-switch">
       <div class="segmented bench-seg" role="group" aria-label="Benchmark">
@@ -192,7 +223,8 @@ export default function BenchmarksPage() {
 
     ${() => views[view.value]()}
 
-    <section class="section narrow" aria-labelledby="behind">
+    <div class="bench-pair-sections">
+    <section class="section" aria-labelledby="behind">
       <h2 id="behind">Where Pith is behind</h2>
       <p class="muted">Not every number is a win. Differences under 10% are within the noise between sessions.</p>
       <ul class="card bench-behind">
@@ -213,7 +245,7 @@ export default function BenchmarksPage() {
       <p class="note">Not measured at all: server rendering, the ecosystem, hiring and years of maintenance, where React and Vue are far ahead.</p>
     </section>
 
-    <section class="section narrow" aria-labelledby="method">
+    <section class="section" aria-labelledby="method">
       <h2 id="method">How it was measured</h2>
       <ul class="check-list bench-method">
         <li>${check()}<span><strong>Same apps, same flows.</strong> A Todo app, a 6-route CRM and a benchmark table, each written in Pith,
@@ -235,17 +267,19 @@ export default function BenchmarksPage() {
           and add dependencies.</li>
       </ul>
     </section>
+    </div>
 
     <section class="section" aria-labelledby="now">
       <h2 id="now">This page, right now</h2>
       <p class="muted">What your browser downloaded and when it first painted, for this visit.</p>
       ${() => (now.value
-        ? html`<ul class="number-strip">
+        ? html`<ul class="now-strip">
             ${stat(now.value.kb, 'KB of JavaScript, as sent')}
             ${stat(now.value.files, 'JavaScript files')}
             ${stat(now.value.fcp == null ? '–' : `${now.value.fcp} ms`, 'until first paint')}
           </ul>`
         : html`<p class="loading">Measuring…</p>`)}
     </section>
+    </div>
   `;
 }

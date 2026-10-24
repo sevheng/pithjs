@@ -1,0 +1,17 @@
+import { html } from 'pith';
+
+// Small drawings of each app for the showcase tiles (decorative: the tile's text says what it is).
+const previews = {
+  Chat: () => html`<div class="mini mini-chat" aria-hidden="true">
+    <i class="b them w70"></i><i class="b them w45"></i><i class="b me w60"></i><i class="b them w55"></i><i class="b me w35"></i></div>`,
+  Inbox: () => html`<div class="mini mini-inbox" aria-hidden="true">
+    ${[1, 2, 3, 4].map((n) => html`<i class=${n === 2 ? 'row on' : 'row'}><b></b><s></s></i>`)}</div>`,
+  Kanban: () => html`<div class="mini mini-kanban" aria-hidden="true">
+    ${[3, 2, 2, 1].map((n) => html`<i class="col">${Array.from({ length: n }, () => html`<b></b>`)}</i>`)}</div>`,
+  Dashboard: () => html`<div class="mini mini-dash" aria-hidden="true">
+    ${[40, 65, 50, 80, 60, 95, 75].map((h) => html`<i style=${`--h: ${h}%`}></i>`)}</div>`,
+  Settings: () => html`<div class="mini mini-settings" aria-hidden="true"><i class="side"></i><i class="pane"><b></b><b></b><s></s></i></div>`,
+};
+
+/** The drawing for an app in app/apps.js, by name. */
+export const preview = (name) => (previews[name] ?? previews.Settings)();

@@ -5,9 +5,9 @@
 
 /**
  * @typedef {{ name: string, title: string, summary: string, load: () => Promise<{ default: () => unknown }>,
- *   example?: string, app?: string, own?: true }} DocPage
+ *   example?: string, app?: string, own?: true, wide?: true }} DocPage
  *   example: the live example from app/examples/<example>.js · app: the name of an app in app/apps.js ·
- *   own: the page renders its own heading and layout (Benchmarks)
+ *   own: the page renders its own heading and layout (Benchmarks) · wide: the full width, no "On this page" list
  */
 
 /** @type {{ title: string, pages: DocPage[] }[]} */
@@ -68,7 +68,7 @@ export const sections = [
   {
     title: 'Examples',
     pages: [
-      { name: 'examples', title: 'All examples', summary: 'Real apps, not snippets: every state handled, on phones and in dark mode.',
+      { name: 'examples', title: 'All examples', wide: true, summary: 'Real apps, not snippets: every state handled, on phones and in dark mode.',
         load: () => import('./pages/examples.js') },
       { name: 'chat', title: 'Chat', app: 'Chat', summary: 'Rooms with rich messages, sent at once, with a bot, and 100,000 messages in #firehose.',
         load: () => import('./pages/chat.js') },

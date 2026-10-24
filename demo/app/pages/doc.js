@@ -1,4 +1,4 @@
-import { html, resource } from 'pith';
+import { html, resource, signal, onCleanup } from 'pith';
 import { docs, docByName, docHref } from '../docs/index.js';
 import { exampleByName } from '../examples/index.js';
 import sources from '../examples/sources.js';
@@ -17,12 +17,32 @@ export default function DocPage({ page = 'introduction' }) {
         <a class="btn primary" href="/docs">Docs home</a>
       </article>`;
   }
+  // "On this page": the page's sections, read from its <h2 id> once its body is in, and the one in view.
+  const toc = signal(/** @type {{ id: string, text: string }[]} */ ([]));
+  const inView = signal('');
+  let article = /** @type {HTMLElement | null} */ (null);
+  let watcher = /** @type {IntersectionObserver | null} */ (null);
+  const readSections = () => {
+    if (!article) return;
+    const headings = [...article.querySelectorAll('h2[id]')];
+    toc.value = headings.map((h) => ({ id: h.id, text: h.textContent?.trim() ?? '' }));
+    watcher?.disconnect();
+    watcher = new IntersectionObserver((seen) => {
+      for (const e of seen) if (e.isIntersecting) inView.value = e.target.id;
+    }, { rootMargin: '-10% 0px -75% 0px' });
+    for (const h of headings) watcher.observe(h);
+  };
+  onCleanup(() => watcher?.disconnect());
+
   const body = resource(() => doc.load());
   const view = body.render({
     loading: () => html`<div class="doc-skeleton" aria-busy="true"><span></span><span></span><span></span><p class="sr-only">Loading…</p></div>`,
     error: (err, retry) => html`<div class="load-error" role="alert"><p>This page didn't load. ${err.message}</p>
       <button class="btn" type="button" @click=${retry}>Try again</button></div>`,
-    ready: (mod) => mod.default(),
+    ready: (mod) => {
+      setTimeout(readSections); // after this view is in the page
+      return mod.default();
+    },
   });
   if (doc.own) return html`${view}`;
 
@@ -32,7 +52,8 @@ export default function DocPage({ page = 'introduction' }) {
   const app = doc.app ? apps.find((a) => a.name === doc.app) : null;
 
   return html`
-    <article class="doc">
+    <div class=${doc.wide ? 'doc-wrap wide' : 'doc-wrap'}>
+    <article class="doc" ref=${(el) => (article = el)}>
       <header class="doc-head">
         <h1>${doc.title}</h1>
         <p class="lead">${doc.summary}</p>
@@ -62,5 +83,12 @@ export default function DocPage({ page = 'introduction' }) {
         ${next ? html`<a class="pager-link next" href=${docHref(next.name)} aria-label=${`Next: ${next.title}`}><span class="muted small">Next</span>${next.title}</a>` : null}
       </nav>
     </article>
+    ${doc.wide ? null : html`
+      <aside class="doc-toc" aria-label="On this page">${() => (toc.value.length > 1 ? html`
+        <p class="doc-toc-title" aria-hidden="true">On this page</p>
+        <ul>${toc.value.map((t) => html`<li><a href=${`#${t.id}`}
+          aria-current=${() => (inView.value === t.id ? 'location' : null)}>${t.text}</a></li>`)}</ul>` : null)}
+      </aside>`}
+    </div>
   `;
 }
