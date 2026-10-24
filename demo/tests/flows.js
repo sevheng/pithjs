@@ -302,4 +302,9 @@ flow('chat/#firehose: thousands of messages, only the newest on screen, Show old
   await app.click('10,000');
   await app.see('10,000 messages · 200 on screen');
   app.expect(app.window.location.search === '', 'the default size has no ?count=');
+  // The size changed through the URL (like Back): still only the newest 200 on screen, not every message.
+  app.window.history.pushState(null, '', '/chat/firehose?count=1000');
+  app.window.dispatchEvent(new PopStateEvent('popstate'));
+  await app.see('1,000 messages · 200 on screen');
+  app.expect(app.queryAll('.msg-row').length === 200, `200 rows after a URL change, found ${app.queryAll('.msg-row').length}`);
 });

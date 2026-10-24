@@ -16,11 +16,12 @@ export default function ChatRoomPage({ room }) {
   const huge = room === 'firehose';
   const count = computed(() => Number(router.query.value.count) || 10_000); // #firehose size, kept in ?count=
   let received = 0; // when the last response arrived, to time putting it on screen
+  let fresh = false; // a new load arrived (not a local change): put its newest messages on screen again
 
   // null when the room doesn't exist (404); other errors show the error view with Try again.
   const conv = resource(({ signal }) =>
     fetchJSON(`/api/chat?room=${encodeURIComponent(room)}${huge ? `&count=${count.value}` : ''}`, { signal })
-      .then((data) => ((roomsVersion.value += 1), (received = performance.now()), data))
+      .then((data) => ((roomsVersion.value += 1), (received = performance.now()), (fresh = true), data))
       .catch((err) => {
         if (err.status === 404) return null;
         throw err;
@@ -37,9 +38,14 @@ export default function ChatRoomPage({ room }) {
   // The start stays put while new messages arrive: they're added at the end and nothing above them moves.
   const start = signal(/** @type {number | null} */ (null));
   const all = computed(() => conv.data.value?.messages ?? []);
+  // Every new load (a size change through the URL or Back included) starts at its newest messages again;
+  // local changes (sends, reactions, the flood) keep the window where it is.
   effect(() => {
     const n = all.value.length;
-    if (conv.data.value && untrack(() => start.value) === null) start.value = Math.max(0, n - FIRST_SCREEN);
+    if (conv.data.value && (fresh || untrack(() => start.value) === null)) {
+      fresh = false;
+      start.value = Math.max(0, n - FIRST_SCREEN);
+    }
   });
   const meta = new WeakMap(); // message → { newDay, head }, worked out once per message
   const visible = computed(() => {
