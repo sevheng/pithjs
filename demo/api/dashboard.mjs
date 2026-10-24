@@ -27,7 +27,8 @@ function random(seed) {
 export const CHANNELS = ['Online store', 'Instagram', 'Google Ads', 'Email', 'Marketplace'];
 const CHANNEL_WEIGHTS = [0.42, 0.21, 0.16, 0.13, 0.08];
 export const STATUSES = ['paid', 'shipped', 'pending', 'refunded'];
-const PRODUCTS = [
+// Also the first ten products of the Shop (api/shop.mjs): the Dashboard is the back office of that storefront.
+export const PRODUCTS = [
   ['Linen tote', 38], ['Ceramic mug', 24], ['Beeswax candle', 18], ['Wool throw', 120], ['Olive wood board', 46],
   ['Notebook set', 16], ['Terracotta pot', 32], ['Tea sampler', 22], ['Cotton apron', 34], ['Brass bookends', 68],
 ];

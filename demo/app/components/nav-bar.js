@@ -1,5 +1,6 @@
-import { define, html, signal } from 'pith';
+import { define, html } from 'pith';
 import { router } from '../router.js';
+import { theme, setTheme } from '../store.js';
 import { brandMark } from '../brand.js';
 
 const links = [
@@ -7,23 +8,15 @@ const links = [
   ['/docs', 'Docs'],
 ];
 
-// A section link (e.g. /settings) is current on its sub-pages too (/settings/profile).
+// A section link (e.g. /docs) is current on its sub-pages too (/docs/forms).
 const isCurrent = (path, href) => path === href || (href !== '/' && path.startsWith(`${href}/`));
 
 const systemDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
 
 define('nav-bar', () => {
-  const theme = signal(document.documentElement.dataset.theme || (systemDark() ? 'dark' : 'light'));
-
-  const toggleTheme = () => {
-    theme.value = theme.value === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = theme.value;
-    try {
-      localStorage.setItem('pith-theme', theme.value);
-    } catch {
-      // storage blocked: theme still applies for this visit
-    }
-  };
+  // The theme is shared with the Shop's Appearance page (app/store.js); 'system' follows the device.
+  const dark = () => (theme.value === 'system' ? systemDark() : theme.value === 'dark');
+  const toggleTheme = () => setTheme(dark() ? 'light' : 'dark');
 
   return html`
     <header class="site-header">
@@ -39,8 +32,8 @@ define('nav-bar', () => {
         </ul>
       </nav>
       <button class="icon-btn" type="button" @click=${toggleTheme}
-              aria-label=${() => `Switch to ${theme.value === 'dark' ? 'light' : 'dark'} theme`}>
-        ${() => (theme.value === 'dark' ? '☀' : '☾')}
+              aria-label=${() => `Switch to ${dark() ? 'light' : 'dark'} theme`}>
+        ${() => (dark() ? '☀' : '☾')}
       </button>
     </header>
   `;

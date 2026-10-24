@@ -76,7 +76,9 @@ const core = [
 ];
 
 // The order of the showcase tiles: Chat is the big one; the others fill a 3-column grid.
-const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading', 'Settings'];
+const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading',
+  'Shop', // Shop (/shop)
+];
 
 export default function HomePage() {
   const copied = signal(false);

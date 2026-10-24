@@ -4,7 +4,9 @@ import { icon } from '../../icons.js';
 import { preview } from '../../previews.js';
 
 // Chat first and biggest; the others follow in a grid.
-const ORDER = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading', 'Settings'];
+const ORDER = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading',
+  'Shop', // Shop (/shop)
+];
 
 export default () => html`
   <p>Each example is a complete app in this demo: its own pages, a fake backend in <code>api/</code>, and user

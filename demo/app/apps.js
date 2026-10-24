@@ -9,12 +9,6 @@ export const apps = [
       'A layout that stays mounted while you switch rooms', 'Each room prerendered with its messages'],
     uses: [['resource', 'live()'], ['resource', 'optimistic()'], ['lists', 'repeat()'], ['selector', 'selector()'], ['router', 'layouts'], ['deploying', 'prerendered']],
   },
-  {
-    name: 'Settings', href: '/settings', icon: 'settings',
-    text: 'A settings area: pages that share a side nav, and one that needs sign-in.',
-    shows: ['Layouts that stay mounted between pages', 'A guard that redirects with a notice', 'provide / inject instead of passing props down'],
-    uses: [['router', 'layouts'], ['router', 'guard'], ['components', 'provide / inject'], ['store', 'createStore()']],
-  },
   // ---------- Inbox (/inbox) ----------
   {
     name: 'Inbox', href: '/inbox', icon: 'inbox',
@@ -50,4 +44,13 @@ export const apps = [
     uses: [['lists', 'signal per row'], ['signals', 'batch()'], ['selector', 'selector()'], ['resource', 'optimistic()'], ['forms', 'form()'], ['router', 'layouts']],
   },
   // ---------- end Trading ----------
+  // ---------- Shop (/shop) ----------
+  {
+    name: 'Shop', href: '/shop', icon: 'bag',
+    text: 'The storefront of Fern & Field, the shop behind the Dashboard: products, a cart, a three-step checkout and an account.',
+    shows: ['Every product page prerendered, its data handed over', 'A cart saved across reloads and tabs, with Undo',
+      'Checkout in three steps, with server errors and a declined card', 'An account area: a layout, a sign-in guard, provide / inject'],
+    uses: [['deploying', 'prerendered'], ['store', 'createStore()'], ['forms', 'form()'], ['router', 'guard'], ['components', 'provide / inject'], ['animation', 'transition()']],
+  },
+  // ---------- end Shop ----------
 ];

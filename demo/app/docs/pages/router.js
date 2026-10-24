@@ -143,6 +143,8 @@ export default () => html`
     text in a search box) survives. A layout is a function ${c('(page) => html`…${page}…`')}, or
     ${c('{ load }')} to download it with the page (default export, ${warning('E005')}).</p>
   ${code(layouts)}
+  <p>In this demo: the <a href="/docs/shop">Shop</a>'s account (${c('/shop/account/*')}) shares a layout with a side nav and a
+    display name that survive moving between its pages, and its checkout keeps the steps and the order summary mounted.</p>
 
   <h2 id="redirects">Redirects and guards</h2>
   <p>${c('redirect')} sends a route elsewhere: a path, or a function of the params. Redirects replace the
@@ -153,6 +155,8 @@ export default () => html`
     like ${c('auth')}. Return ${c('true')} to allow the page or a path to go there instead. Guards are
     synchronous, so if the server decides who's signed in, ask it once at the top of ${c('app/router.js')}:</p>
   ${code(guard, { file: 'app/router.js' })}
+  <p>The <a href="/docs/shop">Shop</a> uses one guard for two things: ${c('/shop/account/orders')} (${c('auth: true')}) sends a
+    signed-out visitor to Sign in and back, and the checkout steps (a ${c('step')} field) need a cart and the steps before them.</p>
   ${note(html`Return ${c('true')} or a path. ${c('false')} or nothing doesn't block the page
     (${warning('W022')}). Don't guard the page you redirect to, or the two bounce until Pith stops them
     (${warning('W020')}).`, 'warn')}

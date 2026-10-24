@@ -12,8 +12,10 @@ const previews = {
     ${[40, 65, 50, 80, 60, 95, 75].map((h) => html`<i style=${`--h: ${h}%`}></i>`)}</div>`,
   Trading: () => html`<div class="mini mini-trade" aria-hidden="true">
     ${[[18, 30, 1], [30, 24, 0], [22, 36, 1], [40, 22, 1], [34, 30, 0], [50, 26, 1], [44, 20, 0], [56, 32, 1]].map(([b, h, up]) => html`<i class=${up ? 'up' : 'down'} style=${`--b: ${b}%; --h: ${h}%`}></i>`)}</div>`,
-  Settings: () => html`<div class="mini mini-settings" aria-hidden="true"><i class="side"></i><i class="pane"><b></b><b></b><s></s></i></div>`,
+  // ---------- Shop (/shop) ----------
+  Shop: () => html`<div class="mini mini-shop" aria-hidden="true">${[0, 1, 2].map(() => html`<i><b></b><s></s></i>`)}</div>`,
+  // ---------- end Shop ----------
 };
 
 /** The drawing for an app in app/apps.js, by name. */
-export const preview = (name) => (previews[name] ?? previews.Settings)();
+export const preview = (name) => (previews[name] ?? previews.Chat)();

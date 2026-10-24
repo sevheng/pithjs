@@ -47,7 +47,7 @@ flow('docs: the sidebar moves between pages, keeps its place, and each page has 
 
 flow('examples: the docs list each app with what it shows, and an app links back to its docs', async (app) => {
   await app.go('/docs/examples');
-  await app.see('Layouts that stay mounted');
+  await app.see('Every product page prerendered');
   await app.click('Open Kanban');
   await app.expectPath('/kanban');
   await app.see('Reset board'); // the board, not the examples page it came from
@@ -90,43 +90,16 @@ flow('lazy loading: pointing at a link starts downloading its page', async (app)
   await app.expectPath('/'); // prefetch must not navigate
 });
 
-flow('settings: /settings opens Profile, and the layout keeps its state across pages', async (app) => {
-  await app.go('/docs/examples');
-  await app.click('Open Settings');
-  await app.expectPath('/settings/profile');
-  await app.see('Type a display name');
-  app.expect(app.document.title === 'Profile · Pith', `title should be "Profile · Pith", got "${app.document.title}"`);
-  await app.type('Display name', 'Ann');
-  await app.see('Hello, Ann!'); // the page reads the layout's value via inject()
-  await app.click('Appearance');
-  await app.expectPath('/settings/appearance');
-  await app.see('Switch between light and dark');
-  app.expect(app.query('#display-name').value === 'Ann', 'the layout should stay mounted, keeping the typed name');
-  await app.see('Hello, Ann!');
-  await app.click('Profile');
-  await app.see('Type a display name');
-  app.expect(app.query('#display-name').value === 'Ann', 'the name should survive going back to Profile');
-});
-
-flow('settings: Account needs sign-in; the guard sends you to Profile with a notice', async (app) => {
-  await app.go('/settings/account');
-  await app.expectPath('/settings/profile');
-  app.expect(app.window.location.search === '?denied=1', `the URL should have ?denied=1, got "${app.window.location.search}"`);
-  await app.see('Sign in to open Account.');
-  await app.click('Sign in');
-  await app.notSee('Sign in to open Account.');
-  await app.click('Account');
-  await app.expectPath('/settings/account');
-  await app.see('Only signed-in visitors get here.');
-});
-
 // Every docs page opens with its title and no warnings (npm run check samples only one /docs/:page URL).
-import { docs, docHref } from '../app/docs/index.js';
+// The list comes from the sidebar (app/docs/index.js draws it): flows can't import app/ files, because a build
+// (npm run check -- --build) serves only dist/, where they're bundled.
 flow('docs: every page opens, with its title in the heading', async (app) => {
-  for (const d of docs) {
-    await app.go(docHref(d.name));
-    await app.waitFor(() => app.query('h1')?.textContent.trim() === d.title && !app.query('.doc-skeleton'),
-      `${docHref(d.name)} should show "${d.title}"`);
+  await app.go('/docs');
+  const pages = app.queryAll('.docs-side .docs-link').map((a) => [a.getAttribute('href'), a.textContent.trim()]);
+  app.expect(pages.length > 20, `the sidebar should list every docs page, got ${pages.length}`);
+  for (const [href, title] of pages) {
+    await app.go(href);
+    await app.waitFor(() => app.query('h1')?.textContent.trim() === title && !app.query('.doc-skeleton'), `${href} should show "${title}"`);
   }
 });
 
@@ -333,7 +306,9 @@ flow('chat/#firehose: thousands of messages, only the newest on screen, Show old
 });
 
 // ---------- Benchmarks (/benchmarks) ----------
-import bench from '../app/data/benchmarks.js';
+// The measurements, to compare with what the page shows. Only in development: a build doesn't serve app/ as
+// source files (they're bundled into dist/), so there the comparisons are skipped and the rest still runs.
+const bench = await import('../app/data/benchmarks.js').then((m) => m.default, () => null);
 
 // The chart whose caption starts with `title`, and its row for one framework (e.g. 'react').
 const benchRow = (app, title, impl) => {
@@ -373,12 +348,14 @@ flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
   await app.click('HTTP/2');
   app.expect(app.window.location.search === '?protocol=h2', `the URL should have ?protocol=h2, got "${app.window.location.search}"`);
   await app.go('/docs/benchmarks?protocol=h2');
+  if (!bench) return;
   const want = `React ${bench.load.h2.todo.react.ready.toLocaleString('en-US')} ms`;
   await app.waitFor(() => benchText(benchRow(app, 'Ready', 'react')) === want, `after a reload the first Ready chart should read "${want}" (HTTP/2)`);
 });
 
 flow('benchmarks: the numbers shown match the measurements, and the best is marked', async (app) => {
   await app.go('/docs/benchmarks?view=runtime');
+  if (!bench) return;
   const update = bench.runtime['update every 10th row'];
   await app.waitFor(() => benchRow(app, 'Update every 10th row', 'react'), 'the update chart should be shown');
   const react = benchRow(app, 'Update every 10th row', 'react');
@@ -922,3 +899,196 @@ flow('trading: searching the watchlist, starring a symbol, and an unknown symbol
   await app.click('Go to NWX');
   await app.expectPath('/trade/NWX');
 });
+
+// ---------- Shop (/shop) ----------
+const shopCards = (app) => app.queryAll('.product-grid[aria-label="Products"] .product-card h2').map((h) => h.textContent.trim());
+const cartButton = (app) => app.query('.cart-btn')?.getAttribute('aria-label');
+// The cart is saved in localStorage, which flows share: start from an empty one.
+async function emptyCart(app) {
+  await app.go('/shop');
+  app.window.localStorage.removeItem('pith-shop-cart');
+}
+
+flow('shop: /shop lists the products; category, sort and search are kept in the URL', async (app) => {
+  await app.go('/docs/examples');
+  await app.click('Open Shop');
+  await app.expectPath('/shop');
+  await app.see('Good things for home and garden.');
+  await app.waitFor(() => shopCards(app).length === 24, 'the shop should list 24 products');
+  await app.click('Garden');
+  await app.waitFor(() => shopCards(app).length === 6, 'Garden should have 6 products');
+  app.expect(app.window.location.search === '?category=garden', `the category should be in the URL, got "${app.window.location.search}"`);
+  await app.see('6 products in Garden');
+  await app.select('Sort', 'Price, low to high');
+  await app.waitFor(() => shopCards(app)[0] === 'Seed collection', 'the cheapest garden product should come first');
+  await app.type('Search the shop', 'zzz');
+  await app.see('Nothing matches “zzz” in Garden');
+  await app.click('Clear filters');
+  await app.waitFor(() => shopCards(app).length === 24, 'Clear filters should show every product again');
+  await app.go('/shop?category=desk&sort=price-asc');
+  await app.waitFor(() => shopCards(app).join() === 'Postcard set,Pencil set,Recipe cards,Notebook set,Desk calendar', `a reload keeps the filter and the sort, got ${shopCards(app).join()}`);
+});
+
+flow('shop: a product page has its colours and sizes, and Add to cart counts in the header', async (app) => {
+  await emptyCart(app);
+  await app.go('/shop');
+  await app.click('Ceramic mug');
+  await app.expectPath('/shop/p/ceramic-mug');
+  await app.waitFor(() => app.document.title === 'Ceramic mug · Shop · Pith', `title should be "Ceramic mug · Shop · Pith", got "${app.document.title}"`);
+  await app.see('You may also like');
+  app.expect(cartButton(app) === 'Cart, empty', `the cart should start empty, got "${cartButton(app)}"`);
+  await app.click('Charcoal');
+  app.expect(app.window.location.search === '?colour=charcoal', 'the colour should be in the URL');
+  await app.click('One more');
+  await app.click('Add to cart');
+  await app.see('Added Ceramic mug (Charcoal)');
+  await app.waitFor(() => cartButton(app) === 'Cart, 2 items', `the header should count 2, got "${cartButton(app)}"`);
+  await app.go('/shop/p/olive-wood-board');
+  await app.click('Large');
+  await app.click('Add to cart');
+  await app.waitFor(() => cartButton(app) === 'Cart, 3 items', 'a second product adds to the count');
+  await app.go('/shop/p/woven-basket');
+  await app.see('More are being made'); // loaded: the heading shows while it loads too
+  app.expect(app.queryAll('button').find((b) => b.textContent.trim() === 'Sold out')?.disabled, 'a sold-out product cannot be added');
+});
+
+flow('shop: the cart changes quantities, removes with Undo, and survives a reload', async (app) => {
+  await emptyCart(app);
+  await app.go('/shop/p/linen-tote');
+  await app.click('Add to cart');
+  await app.click('Cart, 1 item');
+  await app.see('Your cart');
+  await app.see('Add $37 more for free standard delivery.');
+  await app.click('One more Linen tote');
+  await app.waitFor(() => cartButton(app) === 'Cart, 2 items', 'the + button adds one');
+  await app.see('Free standard delivery on this order.');
+  await app.go('/shop');
+  await app.waitFor(() => cartButton(app) === 'Cart, 2 items', 'the cart should survive a reload');
+  await app.click('Cart, 2 items');
+  await app.click('Remove Linen tote');
+  await app.see('Your cart is empty.');
+  await app.click('Undo');
+  await app.waitFor(() => app.query('.cart-line-name')?.textContent.trim() === 'Linen tote', 'Undo should put the tote back');
+  app.expect(cartButton(app) === 'Cart, 2 items', 'with its quantity');
+  await app.click('Close cart');
+  await app.notSee('Your cart');
+});
+
+flow('shop: checkout in three steps, with a server error and a declined card, then the order', async (app) => {
+  await emptyCart(app);
+  await app.go('/shop/p/ceramic-mug');
+  await app.click('Add to cart');
+  await app.click('Cart, 1 item');
+  await app.click('Check out');
+  await app.expectPath('/shop/checkout/shipping');
+  await app.click('Continue to delivery');
+  await app.see('Enter the name to deliver to');
+  await app.type('Full name', 'Ann Adams');
+  await app.type('Email', 'ann@example.com');
+  await app.type('Street address', '12 Alder Street');
+  await app.type('Town or city', 'Portland, OR');
+  await app.type('Postcode', '00000');
+  await app.click('Continue to delivery');
+  await app.see("We can't deliver to 00000"); // the server's 422, under the field
+  await app.expectPath('/shop/checkout/shipping');
+  await app.type('Postcode', '97214');
+  await app.click('Continue to delivery');
+  await app.expectPath('/shop/checkout/delivery');
+  await app.see('To Ann Adams, 12 Alder Street');
+  await app.click('[value="express"]');
+  await app.see('Delivery (Express)'); // the summary follows the choice at once
+  await app.click('Continue to payment');
+  await app.expectPath('/shop/checkout/payment');
+  await app.see('This is a demo shop.');
+  await app.type('Card number', '1234 5678 9012 3456');
+  await app.type('Expiry (MM/YY)', '12/30');
+  await app.type('Security code', '123');
+  await app.click('Pay $38');
+  await app.see('This demo takes test numbers only'); // a 422 under the card number
+  await app.click("Use a card that's declined");
+  await app.click('Pay $38');
+  await app.see('Your card was declined.'); // a 402, in the form, with what was typed kept
+  app.expect(app.query('input[name="cardName"]').value === 'Ann Adams', 'the form keeps what was typed');
+  await app.click('Use the test card');
+  await app.click('Pay $38');
+  await app.see('Thank you, Ann.');
+  app.expect(/^\/shop\/order\/FF-\d+$/.test(app.window.location.pathname), `the order page should open, got ${app.window.location.pathname}`);
+  await app.see('1–2 working days');
+  app.expect(cartButton(app) === 'Cart, empty', 'the cart is empty after the order');
+});
+
+flow('shop: checkout steps need a cart, and the steps before them', async (app) => {
+  await emptyCart(app);
+  await app.go('/shop/checkout/payment');
+  await app.expectPath('/shop');
+  await app.see("Your cart is empty, so there's nothing to check out yet.");
+  await app.go('/shop/p/pencil-set');
+  await app.click('Add to cart');
+  await app.go('/shop/checkout/payment');
+  await app.expectPath('/shop/checkout/shipping'); // no address yet
+});
+
+flow('shop: an unknown product and a shop that fails to load say so', async (app) => {
+  await app.go('/shop/p/no-such-thing');
+  await app.see('No such product');
+  await app.click('Browse the shop');
+  await app.expectPath('/shop');
+  await app.go('/shop?fail');
+  await app.see("Couldn't load the shop.");
+  await app.see('Try again');
+});
+
+// The account took over what the old Settings example showed: a layout kept mounted, a guard, provide / inject.
+flow('shop account: the layout keeps the display name across its pages (provide / inject)', async (app) => {
+  await app.go('/shop');
+  await app.click('Account');
+  await app.expectPath('/shop/account/profile');
+  await app.see('Hello, there');
+  await app.type('Display name', 'Ann');
+  await app.type('Email', 'ann@example.com');
+  await app.click('Save changes');
+  await app.see('Hello, Ann'); // the layout's value, read with inject() in the greeting
+  await app.click('Appearance');
+  await app.expectPath('/shop/account/appearance');
+  await app.see('Pick how the whole site looks');
+  await app.see('Hello, Ann');
+  await app.click('Profile');
+  await app.waitFor(() => app.query('input[name="displayName"]')?.value === 'Ann', 'the name should survive going back to Profile');
+});
+
+flow('shop account: Orders needs sign-in; the guard sends you to Sign in with a notice, then back', async (app) => {
+  await app.go('/shop/account/orders');
+  await app.expectPath('/shop/account/sign-in');
+  await app.see('Sign in to see your orders.');
+  await app.click('Sign in');
+  await app.see('Enter your email address');
+  await app.type('Email', 'ann@example.com');
+  await app.type('Password', 'secret1');
+  await app.click('Sign in');
+  await app.expectPath('/shop/account/orders');
+  await app.see('Order FF-1043');
+  await app.see('On its way');
+  await app.click('Order FF-1043');
+  await app.expectPath('/shop/order/FF-1043');
+  await app.see('Placed Oct 19, 2026');
+});
+
+flow('shop account: Appearance sets the theme for the whole site', async (app) => {
+  await app.go('/shop/account/appearance');
+  await app.click('[value="dark"]');
+  app.expect(app.document.documentElement.dataset.theme === 'dark', 'Dark should set the theme');
+  app.expect(app.query('nav-bar .icon-btn')?.getAttribute('aria-label') === 'Switch to light theme', 'the header button should follow');
+  await app.click('[value="system"]');
+  app.expect(!app.document.documentElement.dataset.theme, 'Match the device should clear it');
+  app.expect(app.window.localStorage.getItem('pith-theme') === null, 'and forget the saved choice');
+});
+
+flow('shop: the old /settings URLs open the account', async (app) => {
+  await app.go('/settings');
+  await app.expectPath('/shop/account/profile');
+  await app.go('/settings/appearance');
+  await app.expectPath('/shop/account/appearance');
+  await app.go('/settings/account');
+  await app.expectPath('/shop/account/sign-in'); // Orders, behind the guard
+});
+// ---------- end Shop ----------

@@ -159,6 +159,8 @@ export default () => html`
     (${warning('W030')}); ${c('inject')} in a handler, ${c('onMount')} or a hole returns the fallback
     (${warning('W031')}). For app-wide values, export a signal from ${c('app/store.js')} instead.`, 'warn')}
   ${code(injectWrong)}
+  <p>In this demo: the <a href="/docs/shop">Shop</a>'s account layout provides the display name, and the greeting and the
+    Profile form inject it (${c('app/components/account-context.js')}).</p>
 
   <h2 id="options">Shadow DOM and styles</h2>
   <p>By default a component renders into itself, so the page's CSS applies as usual. That's what most app

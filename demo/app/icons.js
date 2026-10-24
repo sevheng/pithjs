@@ -38,6 +38,14 @@ const PATHS = {
   'trend-flat': 'M4 12h16M15 7l5 5-5 5',
   // Trading (/trade): two candlesticks
   trade: 'M7 3v4M7 17v4M5 7h4v10H5zM17 5v3M17 15v4M15 8h4v7h-4z',
+  // ---------- Shop (/shop) ----------
+  bag: 'M5 8h14l-1.2 12H6.2L5 8zM9 8V7a3 3 0 0 1 6 0v1',
+  minus: 'M5 12h14',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
+  lock: 'M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  truck: 'M3 6h11v10H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  leaf: 'M5 19C5 10 10 5 20 4c-1 10-6 15-15 15zM5 19l8-8',
+  // ---------- end Shop ----------
 };
 
 /** @param {string} name one of the names above @param {string} [className] */

@@ -79,6 +79,10 @@ createStore({ tags: ['a'] }, { persist: 'app' });                          // âœ
       There is no loop between tabs: the browser only tells the <em>other</em> tabs about a save, and a save
       that changes nothing tells no one.
     </p>
+    <p>
+      In this demo: the <a href="/docs/shop">Shop</a>'s cart is a persisted store. Add something in one tab, and the cart
+      count in another follows.
+    </p>
   </section>
 
   <section aria-labelledby="which">
