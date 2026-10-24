@@ -81,6 +81,8 @@ Everything lives in `styles/main.css`. Reuse before you add.
 - Use `transition()` for items appearing, moving and leaving, and CSS for small hovers (under 200ms).
 - Animate opacity and transform, not size or position properties.
 - Respect `@media (prefers-reduced-motion: reduce)`: turn movement off there.
+- A sticky or fixed bar (toolbar, bottom bar) needs its own layer during `transition()`, or animated rows are
+  drawn over it: copy the `nav-bar` rules from the shared block (dev warning W050 names the bar).
 
 ## Polish that's easy to miss
 

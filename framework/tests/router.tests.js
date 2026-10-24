@@ -7,7 +7,7 @@ import { root, signal } from '../pith/signal.js';
 
 /** @param {any} t */
 export default async function (t) {
-  const { test, eq, mount, waitUntil, expectWarning, sandbox } = t;
+  const { test, eq, mount, waitUntil, expectWarning, sandbox, warnings } = t;
   const until = (check) => waitUntil(check, 2000);
   const start = location.pathname;
   const startUrl = location.pathname + location.search + location.hash;
@@ -510,4 +510,30 @@ export default async function (t) {
       }
     });
   });
+
+  // Animated elements (with a view-transition-name) are drawn above the rest of the page while they move, so a
+  // sticky or fixed bar without a layer of its own gets covered when a row passes under it (W050).
+  await test('transition: warns about a sticky bar that animated rows would be drawn over (W050), not a named one or one beside them', () =>
+    withViewTransitions((update) => (update(), fakeTransition), false, async () => {
+      const box = document.createElement('div'); // laid out (the sandbox is display: none), off to the side
+      box.style.cssText = 'position: absolute; left: -2000px; top: 0; width: 600px';
+      box.innerHTML = `
+        <div id="w50-bar" style="position: sticky; top: 0; height: 30px; width: 100%"></div>
+        <div style="display: flex">
+          <aside id="w50-side" style="position: sticky; top: 0; width: 100px; height: 60px; flex: none"></aside>
+          <ul style="flex: 1; margin: 0"><li style="view-transition-name: w50-row; height: 20px">row</li></ul>
+        </div>`;
+      document.body.append(box);
+      try {
+        await expectWarning(/W050.*w50-bar/, () => transition(() => {}));
+        const bar = /** @type {HTMLElement} */ (box.querySelector('#w50-bar'));
+        bar.style.viewTransitionName = 'w50-bar-layer';
+        const before = warnings.length;
+        transition(() => {});
+        const got = warnings.slice(before);
+        eq(got.filter((w) => w.includes('W050')).length, 0, `no warning once the bar has a layer, or for the bar beside the rows: ${got.join(' / ')}`);
+      } finally {
+        box.remove();
+      }
+    }));
 }

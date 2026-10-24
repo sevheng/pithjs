@@ -1,6 +1,8 @@
 // Animate a DOM change with the browser's View Transitions: removed items fade out, moved items slide.
 // Used by the router for page changes, and by apps for list changes (transition(() => todos.value = ...)).
 
+import { DEV, warn } from './dev.js';
+
 let current = null;
 
 /**
@@ -24,9 +26,38 @@ export function transition(update, kind) {
   if (kind) set.transition = kind;
   else delete set.transition;
   const t = (current = document.startViewTransition(run));
+  if (DEV) coveredBars(); // after the start: styles for :active-view-transition apply now
   const clear = () => current === t && delete set.transition; // a newer transition keeps its own kind
   t.finished?.then(clear, clear);
   // A newer transition skips this one, which rejects these promises: that's expected.
   for (const p of [t.ready, t.finished, t.updateCallbackDone]) p?.catch(() => {});
   setTimeout(run, 300);
 }
+
+// W050: while they animate, elements with a view-transition-name are drawn above everything else. A sticky or
+// fixed bar without a layer of its own (a header, a toolbar) is covered when one passes under it. Bars beside the
+// animated elements (a sidebar column) can't be, so only bars sharing their columns are reported.
+function coveredBars() {
+  const named = [];
+  const bars = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    const style = getComputedStyle(el);
+    const stuck = style.position === 'sticky' || style.position === 'fixed';
+    const layer = style.viewTransitionName && style.viewTransitionName !== 'none';
+    if (layer && !stuck) named.push(el); // a bar with its own layer isn't something that moves under the others
+    else if (stuck && !layer && el.getClientRects().length) bars.push(el);
+  }
+  for (const bar of bars) {
+    const b = bar.getBoundingClientRect();
+    const under = named.find((n) => {
+      if (n.contains(bar) || bar.contains(n)) return false; // in the same layer
+      const r = n.getBoundingClientRect();
+      return r.left < b.right && r.right > b.left;
+    });
+    if (under) {
+      const name = (el) => `<${el.localName}${el.id ? `#${el.id}` : ''}${el.classList.length ? `.${[...el.classList].join('.')}` : ''}>`;
+      warn('W050', `${name(bar)} is ${getComputedStyle(bar).position} without a view-transition-name, so during transition() animated elements such as ${name(under)} are drawn over it when they pass under it. Give it a layer while transitions run: :root:active-view-transition ${bar.localName}${bar.id ? `#${bar.id}` : ''} { view-transition-name: my-bar; } and ::view-transition-group(my-bar) { z-index: 1; }.`);
+    }
+  }
+}
+

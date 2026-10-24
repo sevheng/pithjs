@@ -160,6 +160,21 @@ paginated(({ page, signal }) => fetchJSON(`/api/team?page=${page}`, { signal }))
 paginated(async ({ page, signal }) => (await fetchJSON(`/api/team?page=${page}`, { signal })).data) // ✓
 ```
 
+## W050
+**A sticky or fixed bar would be covered during `transition()`.** While they animate, elements with a
+`view-transition-name` (the rows you gave one) are drawn above the whole page, so one that passes under a sticky
+header or a fixed toolbar is drawn over it. Give the bar its own layer while transitions run, above the rest:
+
+```css
+:root:active-view-transition .toolbar { view-transition-name: toolbar; }
+::view-transition-group(toolbar) { z-index: 1; }
+::view-transition-old(toolbar) { display: none; }   /* it doesn't change: show it as it is */
+::view-transition-new(toolbar) { animation: none; }
+```
+
+The starter styles already do this for `nav-bar`. Only bars that share a column with the animated elements are
+reported: a sidebar beside a list can't be covered by it.
+
 ## W060
 **A route showed the not-found page while prerendering**, so it wasn't prerendered (printed by `npm run build`).
 The route key in `app/router.js` doesn't match its path. Fix the route pattern.

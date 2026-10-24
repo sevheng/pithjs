@@ -561,6 +561,10 @@ kind of change. The router's page changes are `'page'`; the starter styles use i
 and the new one fades in, while list animations keep a plain cross-fade:
 `[data-transition="page"]::view-transition-old(page) { display: none; }`.
 
+Animated elements are drawn above the whole page while they move, so a sticky or fixed bar needs its own layer
+during transitions or a row passing under it covers it. The starter styles do this for the header, toasts and
+an open dialog; in dev mode, `transition()` warns (W050) about any other bar that animated elements could cover.
+
 `transition(update)` uses View Transitions when the browser has them and the user hasn't asked for
 reduced motion; otherwise it just runs `update`. `update` always runs exactly once, within 300 ms even if
 the browser holds the transition back (it may in a background tab), so an animation never stops a change.

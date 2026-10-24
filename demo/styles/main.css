@@ -309,6 +309,12 @@ select.input { cursor: pointer; }
 ::view-transition-group(site-header) { z-index: 1; }
 ::view-transition-old(site-header) { display: none; }
 ::view-transition-new(site-header) { animation: none; }
+/* Toasts and an open dialog too: they stay on top of whatever animates under them. */
+:root:active-view-transition .pith-toasts { view-transition-name: pith-toasts; }
+:root:active-view-transition .pith-dialog[open] { view-transition-name: pith-dialog; }
+::view-transition-group(pith-toasts), ::view-transition-group(pith-dialog) { z-index: 2; }
+::view-transition-old(pith-toasts), ::view-transition-old(pith-dialog) { display: none; }
+::view-transition-new(pith-toasts), ::view-transition-new(pith-dialog) { animation: none; }
 /* Other changes (transition() for a list): only elements with a view-transition-name (the rows) animate. The
    rest of the page switches at once: blending its before and after would show moved text twice, and layers of
    their own would redraw their text slightly differently for the length of the animation. */

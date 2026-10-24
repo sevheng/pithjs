@@ -47,6 +47,7 @@ const groups = [
     ['E003', html`Effects kept re-running each other, usually an effect writing a signal it reads. Derive with ${c('computed()')} instead.`],
     ['W014', html`A persisted store holds a value JSON can't save (${c('Date')}, ${c('Map')}, ${c('Set')}, functions). Store plain data, like an ISO date string.`],
     ['W040', html`${c('paginated()')}'s fetcher returned neither an array nor ${c('{ items, next }')}. Return the list itself, e.g. ${c('(await fetchJSON(url)).data')}.`],
+    ['W050', html`A sticky or fixed bar has no ${c('view-transition-name')}, so rows animated by ${c('transition()')} are drawn over it. Give it a layer while transitions run (the starter styles do for ${c('nav-bar')}).`],
     ['W015', html`${c('form()')} has a ${c('validate')} rule for a field that isn't in ${c('initial')}, so it never runs. Add the field or fix the name.`],
     ['W016', html`A field helper names a field that isn't in ${c('initial')}, so it renders nothing. Add it to ${c('initial')}.`],
   ]],
