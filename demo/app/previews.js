@@ -10,6 +10,8 @@ const previews = {
     ${[3, 2, 2, 1].map((n) => html`<i class="col">${Array.from({ length: n }, () => html`<b></b>`)}</i>`)}</div>`,
   Dashboard: () => html`<div class="mini mini-dash" aria-hidden="true">
     ${[40, 65, 50, 80, 60, 95, 75].map((h) => html`<i style=${`--h: ${h}%`}></i>`)}</div>`,
+  Trading: () => html`<div class="mini mini-trade" aria-hidden="true">
+    ${[[18, 30, 1], [30, 24, 0], [22, 36, 1], [40, 22, 1], [34, 30, 0], [50, 26, 1], [44, 20, 0], [56, 32, 1]].map(([b, h, up]) => html`<i class=${up ? 'up' : 'down'} style=${`--b: ${b}%; --h: ${h}%`}></i>`)}</div>`,
   Settings: () => html`<div class="mini mini-settings" aria-hidden="true"><i class="side"></i><i class="pane"><b></b><b></b><s></s></i></div>`,
 };
 

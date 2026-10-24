@@ -14,6 +14,8 @@ const chat = { load: () => import('./layouts/chat.js') };
 // ---------- Inbox (/inbox) ---------- the folders pane stays mounted while you switch folders.
 const inbox = { load: () => import('./layouts/inbox.js') };
 // ---------- end Inbox ----------
+// Trading (/trade): the watchlist, the feed and the account bar stay mounted while you switch symbols.
+const trade = { load: () => import('./layouts/trade.js') };
 
 // Each page's code is downloaded only when it's first needed (or when a link to it is hovered).
 export const router = createRouter(
@@ -30,6 +32,10 @@ export const router = createRouter(
     // ---------- Kanban (/kanban) ----------
     '/kanban': { title: 'Kanban', load: () => import('./pages/kanban.js') },
     '/dashboard': { title: 'Dashboard', load: () => import('./pages/dashboard.js') }, // Dashboard (/dashboard)
+    // ---------- Trading (/trade) ----------
+    '/trade': { redirect: '/trade/NWX' },
+    '/trade/:symbol': { title: ({ symbol }) => `${symbol} · Trading`, layout: trade, load: () => import('./pages/trade.js') },
+    // ---------- end Trading ----------
     // Older URLs of this demo: the feature pages, the examples hub and the benchmarks moved into the docs.
     '/features': { redirect: '/docs' },
     '/features/:name': { redirect: ({ name }) => `/docs/${name}` },

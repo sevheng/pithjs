@@ -1,0 +1,19 @@
+import { signal, createStore } from 'pith';
+
+// Shared by the trade layout (the watchlist, the feed, the account bar) and the symbol page (chart, book,
+// ticket, positions). The layout makes the feed and the account resource and puts them here; the page reads
+// them, so switching symbols keeps the same live prices and doesn't load the account again.
+
+export const market = signal(/** @type {import('./feed.js').Feed | null} */ (null));
+
+/**
+ * The account resource ({ cash, buyingPower, positions, orders }), made by the layout.
+ * @type {{ current: any }}
+ */
+export const account = { current: null };
+
+// Starred symbols go to the top of the watchlist. Saved, so they survive a reload (and follow other tabs).
+export const watch = createStore({ stars: ['NWX', 'QUIL', 'AURX'] }, { persist: 'pith-trade' });
+
+export const DEFAULT_SYMBOL = 'NWX';
+export const TIMEFRAMES = /** @type {const} */ (['1D', '1W', '1M', '1Y']);

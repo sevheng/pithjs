@@ -363,7 +363,7 @@ The site is **Home** (`/`, the landing page) and **Docs** (`/docs`, `/docs/<page
   `npm run examples` to refresh `app/examples/sources.js` (the code shown on its page; a test fails while it's stale).
 - Example apps open full width under a "← Docs" bar, each with a docs page: Chat (`/chat/:room`, `api/chat.mjs`),
   Inbox (`/inbox/:folder`, `api/inbox.mjs`), Kanban (`/kanban`, a persisted store), Dashboard (`/dashboard`,
-  `api/dashboard.mjs`) and Settings (`/settings/*`, a layout and a sign-in guard). `app/apps.js` lists them.
+  `api/dashboard.mjs`), Trading (`/trade/:symbol`, `api/trade.mjs` + a feed simulated in `app/trade/feed.js`) and Settings (`/settings/*`, a layout and a sign-in guard). `app/apps.js` lists them.
 - Benchmarks (`/docs/benchmarks`) read `app/data/benchmarks.js`, written by `npm run benchmarks` from
   `../compare/results/measure.json`.
 - Older URLs (`/features/...`, `/examples`, `/benchmarks`, `/todos`, `/about`) redirect into the docs.

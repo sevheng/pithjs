@@ -10,5 +10,6 @@ const docPages = docs.filter((d) => d.name !== 'introduction').map((d) => `/docs
 export default async function paths() {
   // Not #firehose: its thousands of messages would be baked into the page.
   return [...rooms.filter((r) => !r.huge).map((r) => `/chat/${r.id}`), ...docPages,
-    ...folders.map((f) => `/inbox/${f}`)]; // Inbox (/inbox)
+    ...folders.map((f) => `/inbox/${f}`), // Inbox (/inbox)
+    '/trade/NWX']; // Trading (/trade): one symbol, so every check also runs on it
 }

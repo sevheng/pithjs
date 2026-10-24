@@ -75,8 +75,8 @@ const core = [
   ['animation', 'Animation', 'View Transitions that can\'t stall.'],
 ];
 
-// The order of the showcase tiles: Chat is the big one, Dashboard spans two columns.
-const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Settings'];
+// The order of the showcase tiles: Chat is the big one; the others fill a 3-column grid.
+const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading', 'Settings'];
 
 export default function HomePage() {
   const copied = signal(false);
@@ -128,7 +128,7 @@ export default function HomePage() {
     <section class="section" aria-labelledby="apps-title">
       <div class="section-head">
         <h2 id="apps-title">Real apps, not snippets.</h2>
-        <p class="lead">Five complete apps in this demo, each with every state handled, on phones and in dark mode. Open one.</p>
+        <p class="lead">Six complete apps in this demo, each with every state handled, on phones and in dark mode. Open one.</p>
       </div>
       <ul class="bento">
         ${SHOWCASE.map((name) => apps.find((a) => a.name === name)).map((a) => html`

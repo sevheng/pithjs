@@ -36,6 +36,8 @@ const PATHS = {
   'trend-up': 'M4 17l6-6 4 4 6-7M14 8h6v6',
   'trend-down': 'M4 7l6 6 4-4 6 7M14 16h6v-6',
   'trend-flat': 'M4 12h16M15 7l5 5-5 5',
+  // Trading (/trade): two candlesticks
+  trade: 'M7 3v4M7 17v4M5 7h4v10H5zM17 5v3M17 15v4M15 8h4v7h-4z',
 };
 
 /** @param {string} name one of the names above @param {string} [className] */

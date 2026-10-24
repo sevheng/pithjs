@@ -13,7 +13,7 @@ import { money, compactMoney, count, day, weekday, niceTicks } from './format.js
 const FALLBACK = 480;
 
 /** A signal with the box's width in pixels, updated when it resizes. Use as ref=${measure}. */
-function measured() {
+export function measured() {
   const width = signal(0);
   /** @type {ResizeObserver | undefined} */
   let observer;
@@ -28,7 +28,7 @@ function measured() {
 }
 
 /** Arrow keys move through `n` items; returns the new index, or undefined for other keys. */
-function step(/** @type {KeyboardEvent} */ e, /** @type {number | null} */ i, /** @type {number} */ n) {
+export function step(/** @type {KeyboardEvent} */ e, /** @type {number | null} */ i, /** @type {number} */ n) {
   const at = i ?? n - 1;
   const next = { ArrowRight: at + 1, ArrowDown: at + 1, ArrowLeft: at - 1, ArrowUp: at - 1, Home: 0, End: n - 1 }[e.key];
   if (next === undefined) return undefined;

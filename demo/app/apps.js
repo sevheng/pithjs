@@ -41,4 +41,13 @@ export const apps = [
     uses: [['resource', 'resource()'], ['resource', 'live()'], ['templates', 'svg``'], ['selector', 'selector()'], ['router', 'router.query']],
   },
   // ---------- end Dashboard ----------
+  // ---------- Trading (/trade) ----------
+  {
+    name: 'Trading', href: '/trade', icon: 'trade',
+    text: 'A live trading screen for a made-up exchange: a ticking watchlist, candlesticks, an order book and an order ticket.',
+    shows: ['Prices that tick in place, over 2,000 updates a second', 'A candlestick chart whose last candle grows live',
+      'An order ticket with live cost, Pending then Filled, and server errors', 'Pause, speed, and a lost connection with Retry'],
+    uses: [['lists', 'signal per row'], ['signals', 'batch()'], ['selector', 'selector()'], ['resource', 'optimistic()'], ['forms', 'form()'], ['router', 'layouts']],
+  },
+  // ---------- end Trading ----------
 ];

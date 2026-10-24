@@ -78,6 +78,8 @@ export const sections = [
         load: () => import('./pages/kanban.js') },
       { name: 'dashboard', title: 'Dashboard', app: 'Dashboard', summary: 'KPIs, SVG charts and a sortable, paged orders table, all kept in the URL.',
         load: () => import('./pages/dashboard.js') },
+      { name: 'trading', title: 'Trading', app: 'Trading', summary: 'Live prices that tick in place, candlesticks, an order book and an order ticket.',
+        load: () => import('./pages/trading.js') },
       { name: 'settings', title: 'Settings', app: 'Settings', summary: 'Pages that share a layout, and one that needs sign-in.',
         load: () => import('./pages/settings.js') },
     ],

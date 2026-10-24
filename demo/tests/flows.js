@@ -772,3 +772,153 @@ flow('dashboard: when the API fails, each part says so and offers a way out', as
   await app.see('$86,962');
   await app.see('Showing 1–10 of 1,022');
 });
+
+// ---------- Trading (/trade) ----------
+// The candles and the account come from api/trade.mjs (a fixed seed and a fixed day); the ticks after that
+// from a seeded feed in the browser. Ticks still arrive on a timer, so these flows wait for a change instead
+// of naming prices, and the account is shared by every run of the dev server, so they compare before and after.
+
+const quotePrice = (app) => app.query('.quote-price')?.textContent.replace(/[^\d.,]/g, '');
+const chartLabel = (app) => app.query('.candle-svg')?.getAttribute('aria-label') ?? '';
+const sleepFor = (ms) => new Promise((r) => setTimeout(r, ms));
+
+flow('trading: /trade opens NWX with live prices, the chart, the book and the account', async (app) => {
+  await app.go('/trade');
+  await app.expectPath('/trade/NWX');
+  await app.see('Northwind Exchange Group');
+  await app.see('Watchlist');
+  await app.see('Order book');
+  await app.see('Your account');
+  await app.waitFor(() => chartLabel(app).startsWith('NWX, 5 min candles'), 'the chart should have a text summary for NWX');
+  app.expect(app.queryAll('.wl-row').length === 40, `the watchlist should list 40 symbols, got ${app.queryAll('.wl-row').length}`);
+  app.expect(app.queryAll('.book-row').length === 20, 'the book shows 10 asks and 10 bids');
+  await app.waitFor(() => app.queryAll('.tape-row').length > 0, 'trades should arrive');
+  await app.hear('NWX 1'); // the price, said politely (at most every 5 s)
+});
+
+flow('trading: picking a symbol in the watchlist changes the URL, the chart and the selected row', async (app) => {
+  await app.go('/trade/NWX');
+  await app.see('Northwind Exchange Group');
+  await app.click('[href="/trade/HLXB"]');
+  await app.expectPath('/trade/HLXB');
+  await app.waitFor(() => app.query('h1')?.textContent.includes('Helix Biosystems'), 'the heading should name Helix Biosystems');
+  await app.waitFor(() => chartLabel(app).startsWith('HLXB,'), 'the chart should be HLXB’s');
+  await app.see('Trade HLXB');
+  app.expect(app.queryAll('.wl-row.selected').length === 1, 'exactly one watchlist row is selected');
+  app.expect(app.query('.wl-row.selected .wl-sym')?.textContent === 'HLXB', 'the selected row is HLXB');
+});
+
+flow('trading: the timeframe is kept in ?tf, also when switching symbols', async (app) => {
+  await app.go('/trade/NWX');
+  await app.waitFor(() => chartLabel(app).startsWith('NWX, 5 min'), 'the day’s chart first');
+  await app.click('1W');
+  await app.waitFor(() => chartLabel(app).startsWith('NWX, 1 hour'), 'a week of hourly candles');
+  app.expect(app.window.location.search === '?tf=1W', `the URL should have ?tf=1W, got "${app.window.location.search}"`);
+  await app.click('[href="/trade/QUIL?tf=1W"]');
+  await app.expectPath('/trade/QUIL');
+  await app.waitFor(() => chartLabel(app).startsWith('QUIL, 1 hour'), 'QUIL’s week');
+  await app.click('1D');
+  await app.waitFor(() => app.window.location.search === '', 'the default timeframe has no ?tf=');
+});
+
+flow('trading: prices tick; Pause stops them, Resume and Stress start them again', async (app) => {
+  await app.go('/trade/NWX');
+  await app.see('Live');
+  const first = quotePrice(app);
+  await app.waitFor(() => quotePrice(app) !== first, 'the price should tick');
+  await app.click('Pause');
+  await app.see('Prices are paused');
+  await app.see('Paused');
+  const paused = quotePrice(app);
+  await sleepFor(1200);
+  app.expect(quotePrice(app) === paused, 'a paused feed keeps the price still');
+  await app.click('Resume');
+  await app.waitFor(() => quotePrice(app) !== paused, 'the price should tick again');
+  await app.click('Stress');
+  const perSec = () => Number(app.query('.feed-readout')?.textContent.match(/^([\d,]+) updates/)?.[1].replace(/,/g, '') ?? 0);
+  await app.waitFor(() => perSec() > 400, `Stress should apply hundreds of updates a second, got ${perSec()}`);
+  await app.click('1×');
+});
+
+flow('trading: a limit order at or above the price shows Pending, then Filled, and the position appears', async (app) => {
+  await app.go('/trade/HLXB');
+  await app.see('Trade HLXB');
+  await app.click('Limit');
+  await app.type('Shares', '1');
+  await app.type('Limit price ($)', '90');
+  await app.waitFor(() => app.query('.ticket-sum .total dd')?.textContent === '$90.00', 'the cost follows the limit: 1 × $90.00');
+  // The order shows as Pending before the server answers: check it right after the click, before any await
+  // (a test browser's clock may answer the dev API's delay at once).
+  /** @type {HTMLButtonElement} */ (app.queryAll('button').find((b) => b.textContent.trim() === 'Buy 1 HLXB')).click();
+  app.expect(app.query('.ticket-status')?.textContent.includes('Pending'), 'the order should show as Pending at once');
+  await app.see('Filled');
+  await app.see('Bought 1 HLXB at $');
+  await app.waitFor(() => app.queryAll('.trade-account tbody th').some((th) => th.textContent.trim() === 'HLXB'), 'HLXB should be in the positions');
+});
+
+flow('trading: the ticket checks the shares, and the server refuses an order over the buying power', async (app) => {
+  await app.go('/trade/NWX');
+  await app.see('Trade NWX');
+  await app.type('Shares', '0');
+  await app.click('Buy NWX');
+  await app.see('Whole shares, at least 1');
+  await app.type('Shares', '100000');
+  await app.see('More than your buying power');
+  await app.click('Buy 100,000 NWX');
+  await app.see('Not enough buying power: this order needs');
+  app.expect(app.query('[name="qty"]')?.value === '100000', 'the shares typed stay in the form');
+});
+
+flow('trading: an open order can be cancelled, after confirming', async (app) => {
+  await app.go('/trade/NWX');
+  await app.see('Trade NWX');
+  await app.click('Limit');
+  await app.type('Shares', '1');
+  await app.type('Limit price ($)', '1');
+  await app.click('Buy 1 NWX');
+  await app.see('Order placed: Buy 1 NWX at $1.00');
+  await app.click('[data-tab="orders"]');
+  const name = 'Cancel order: Buy 1 NWX at $1.00';
+  const open = () => app.queryAll('.trade-account button').filter((b) => b.getAttribute('aria-label') === name).length;
+  await app.waitFor(() => open() > 0, 'the open order is listed with Cancel');
+  const before = open();
+  await app.click(name);
+  await app.see('Cancel the order to buy 1 NWX at $1.00?');
+  await app.click('Keep order');
+  app.expect(open() === before, 'Keep order leaves it open');
+  await app.click(name);
+  await app.click('Cancel order');
+  await app.see('Order cancelled');
+  await app.waitFor(() => open() === before - 1, 'the order is no longer open');
+});
+
+flow('trading: a lost feed says so, counts down, and Retry reconnects', async (app) => {
+  await app.go('/trade/NWX?feed=down');
+  await app.see('Disconnected from the price feed.');
+  await app.see('Reconnecting in');
+  app.expect(app.query('.feed-tools .btn')?.disabled, 'Pause is disabled while disconnected');
+  await app.click('Retry now');
+  await app.waitFor(() => app.query('.feed-state')?.textContent.trim() === 'Live', 'the feed should be live again');
+  await app.notSee('Disconnected from the price feed.');
+  app.expect(app.window.location.search === '', `Retry takes ?feed=down out of the URL, got "${app.window.location.search}"`);
+});
+
+flow('trading: searching the watchlist, starring a symbol, and an unknown symbol', async (app) => {
+  await app.go('/trade/NWX');
+  await app.see('Watchlist');
+  await app.type('Search symbols', 'zzzz');
+  await app.see('No symbols match “zzzz”');
+  await app.click('Clear search');
+  await app.waitFor(() => app.queryAll('.wl-row').length === 40, 'all 40 again');
+  await app.type('Search symbols', 'harbor');
+  await app.waitFor(() => app.queryAll('.wl-row').length === 1, 'one match for "harbor"');
+  app.expect(app.window.location.search === '?q=harbor', `the search is kept in the URL, got "${app.window.location.search}"`);
+  await app.click('Star HRBR');
+  await app.waitFor(() => app.query('[aria-label="Star HRBR"]')?.getAttribute('aria-pressed') === 'true', 'HRBR is starred');
+  await app.click('Star HRBR');
+  await app.waitFor(() => app.query('[aria-label="Star HRBR"]')?.getAttribute('aria-pressed') === 'false', 'and unstarred again');
+  await app.go('/trade/ZZZZ');
+  await app.see('No such symbol');
+  await app.click('Go to NWX');
+  await app.expectPath('/trade/NWX');
+});
