@@ -9,5 +9,6 @@ const features = readdirSync(new URL('./app/examples/', import.meta.url))
   .map((f) => `/features/${f.replace(/\.js$/, '')}`);
 
 export default async function paths() {
-  return [...rooms.map((r) => `/chat/${r.id}`), ...features];
+  // Not #firehose: its thousands of messages would be baked into the page.
+  return [...rooms.filter((r) => !r.huge).map((r) => `/chat/${r.id}`), ...features];
 }

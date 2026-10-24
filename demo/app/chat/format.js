@@ -16,22 +16,26 @@ export const size = (bytes) => (bytes < 1_000_000 ? `${Math.round(bytes / 1000)}
 
 export const initials = (name) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
+// The calendar day of a time, as a number, cheap enough to compare for 100,000 messages.
+const OFFSET = new Date().getTimezoneOffset() * 60_000;
+export const dayKey = (iso) => Math.floor((Date.parse(iso) - OFFSET) / 86_400_000);
+
 /**
- * Messages → days → runs by one sender (within 5 minutes), so the avatar and name show once per run.
+ * For each message (once, kept in a WeakMap): does it start a new day, and does it start a run of messages
+ * by one sender (within 5 minutes)? Then the day line, avatar and name show only there.
  * @param {any[]} messages
+ * @param {WeakMap<object, { newDay: boolean, head: boolean }>} meta
  */
-export function groupMessages(messages) {
-  const days = [];
+export function annotate(messages, meta) {
+  let prev = null;
   for (const m of messages) {
-    const label = day(m.at);
-    let d = days.at(-1);
-    if (!d || d.label !== label) days.push((d = { label, runs: [] }));
-    const run = d.runs.at(-1);
-    const last = run?.messages.at(-1);
-    if (run && run.author === m.author && !m.replyTo && new Date(m.at).getTime() - new Date(last.at).getTime() < 5 * 60_000) run.messages.push(m);
-    else d.runs.push({ author: m.author, messages: [m] });
+    if (!meta.has(m)) {
+      const newDay = !prev || dayKey(prev.at) !== dayKey(m.at);
+      const head = newDay || !!m.replyTo || prev.author !== m.author || Date.parse(m.at) - Date.parse(prev.at) >= 5 * 60_000;
+      meta.set(m, { newDay, head });
+    }
+    prev = m;
   }
-  return days;
 }
 
 // Text with web addresses turned into links. Only http(s): user text never becomes another kind of URL.

@@ -289,3 +289,17 @@ flow('chat: after switching rooms there is one composer, and sending works', asy
   await app.pressEnter();
   await app.see(text);
 });
+
+flow('chat/#firehose: thousands of messages, only the newest on screen, Show older and Flood', async (app) => {
+  await app.go('/chat/firehose?count=1000');
+  await app.see('1,000 messages · 200 on screen');
+  app.expect(app.queryAll('.msg-row').length === 200, `200 rows on screen, found ${app.queryAll('.msg-row').length}`);
+  await app.click('Show older (800 more)');
+  await app.see('700 on screen');
+  await app.click('Flood · 100/s');
+  await app.waitFor(() => app.queryAll('.msg-row').length > 700, 'the flood should add messages');
+  await app.click('Stop flood');
+  await app.click('10,000');
+  await app.see('10,000 messages · 200 on screen');
+  app.expect(app.window.location.search === '', 'the default size has no ?count=');
+});

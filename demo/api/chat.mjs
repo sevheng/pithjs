@@ -1,5 +1,6 @@
 // GET  /api/chat              → the rooms, with unread counts and the last message
 // GET  /api/chat?room=general → { room, messages } (marks the room read); 404 for an unknown room
+// GET  /api/chat?room=firehose&count=10000 → that many generated messages (up to 100,000), for trying huge data
 // POST /api/chat?room=general { text, replyTo? } → the new message. A text containing "/fail" answers 500,
 //      so the "Failed · Retry" state can be tried. In #help a bot answers: its reply arrives with the next GET
 //      (the page waits a moment first, showing "Pith bot is typing").
@@ -30,7 +31,23 @@ export const rooms = [
   { id: 'design', name: 'design', topic: 'Screens, colors, and the new mark', unread: 1 },
   { id: 'help', name: 'help', topic: 'Ask the bot about Pith', unread: 0 },
   { id: 'random', name: 'random', topic: 'Off topic', unread: 0 },
+  { id: 'firehose', name: 'firehose', topic: 'Huge data: thousands of messages, and a flood', unread: 0, huge: true },
 ];
+
+// #firehose: `count` messages from a few people, made on the fly (same text for the same count).
+const PHRASES = ['The build is green again.', 'Shipping the list fix today.', 'Can someone review my PR?', 'Looks good to me!',
+  'Deploy finished, all checks passed.', 'Lunch at noon?', 'The new mark looks great on a phone.', 'Found the bug: a stale cache.',
+  'Rerunning the benchmark now.', 'Docs are updated.', 'Who is on call this week?', 'That page loads in under a second now.'];
+const SENDERS = ['ada', 'grace', 'linus', 'mia'];
+export function firehose(count) {
+  const start = Date.now() - count * 20_000;
+  const out = new Array(count);
+  for (let i = 0; i < count; i++) {
+    out[i] = { id: `f${i}`, author: SENDERS[(i * 3 + (i >> 2)) % SENDERS.length], at: new Date(start + i * 20_000).toISOString(),
+      parts: [{ type: 'text', text: `${PHRASES[(i * 7) % PHRASES.length]} (#${i + 1})` }], reactions: [] };
+  }
+  return out;
+}
 
 const messages = {
   general: [
@@ -75,13 +92,17 @@ export async function GET({ query }) {
   for (const p of pending.splice(0)) messages[p.room].push({ ...p.message, at: new Date().toISOString() });
   if (query.room == null) {
     return rooms.map((r) => {
-      const last = messages[r.id].at(-1);
+      const last = r.huge ? null : messages[r.id].at(-1);
       return { ...r, last: last ? { ...last, authorName: people[last.author].name } : null };
     });
   }
   const room = rooms.find((r) => r.id === query.room);
   if (!room) return Response.json({ message: 'No such room' }, { status: 404 });
   room.unread = 0;
+  if (room.huge) {
+    const count = Math.min(100_000, Math.max(1, Number.parseInt(query.count, 10) || 10_000));
+    return { room, messages: firehose(count), people };
+  }
   return { room, messages: messages[room.id], people };
 }
 
@@ -89,6 +110,7 @@ export async function POST({ query, body }) {
   await delay(350);
   const room = rooms.find((r) => r.id === query.room);
   if (!room) return Response.json({ message: 'No such room' }, { status: 404 });
+  if (room.huge) return Response.json({ message: '#firehose is generated: try Flood instead' }, { status: 422 });
   const text = String(body?.text ?? '').trim();
   if (!text) return Response.json({ message: 'A message needs some text' }, { status: 422 });
   if (text.includes('/fail')) return Response.json({ message: 'The server failed on purpose ("/fail")' }, { status: 500 });

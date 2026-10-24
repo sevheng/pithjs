@@ -1,17 +1,26 @@
-import { html, signal, computed, resource, fetchJSON, effect, onCleanup } from 'pith';
+import { html, signal, computed, resource, fetchJSON, effect, onCleanup, repeat, selector, untrack } from 'pith';
+import { router } from '../router.js';
 import { toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { roomsVersion } from '../chat/state.js';
-import { time, size, initials, groupMessages, linkParts } from '../chat/format.js';
+import { time, day, size, initials, annotate, linkParts } from '../chat/format.js';
 
 const EMOJIS = ['👍', '🎉', '🚀', '😍', '👀', '🙏'];
+const FIRST_SCREEN = 200; // messages put on screen when a room opens; "Show older" adds OLDER_STEP more
+const OLDER_STEP = 500;
+const COUNTS = [1_000, 10_000, 100_000]; // #firehose sizes
+const FLOOD_PHRASES = ['Incoming!', 'Another one.', 'Still fast?', 'Keep them coming.', 'Message number', 'Scrolling fine here.'];
 
 /** @param {{ room: string }} params */
 export default function ChatRoomPage({ room }) {
+  const huge = room === 'firehose';
+  const count = computed(() => Number(router.query.value.count) || 10_000); // #firehose size, kept in ?count=
+  let received = 0; // when the last response arrived, to time putting it on screen
+
   // null when the room doesn't exist (404); other errors show the error view with Try again.
   const conv = resource(({ signal }) =>
-    fetchJSON(`/api/chat?room=${encodeURIComponent(room)}`, { signal })
-      .then((data) => ((roomsVersion.value += 1), data))
+    fetchJSON(`/api/chat?room=${encodeURIComponent(room)}${huge ? `&count=${count.value}` : ''}`, { signal })
+      .then((data) => ((roomsVersion.value += 1), (received = performance.now()), data))
       .catch((err) => {
         if (err.status === 404) return null;
         throw err;
@@ -23,25 +32,44 @@ export default function ChatRoomPage({ room }) {
   const typing = signal(/** @type {string | null} */ (null));
   const atBottom = signal(true);
   const hasRoom = computed(() => !!conv.data.value); // the composer appears once, not on every new message
+
+  // Only the newest messages go on screen, so huge rooms stay fast; "Show older" moves the start back.
+  // The start stays put while new messages arrive: they're added at the end and nothing above them moves.
+  const start = signal(/** @type {number | null} */ (null));
+  const all = computed(() => conv.data.value?.messages ?? []);
+  effect(() => {
+    const n = all.value.length;
+    if (conv.data.value && untrack(() => start.value) === null) start.value = Math.max(0, n - FIRST_SCREEN);
+  });
+  const meta = new WeakMap(); // message → { newDay, head }, worked out once per message
+  const visible = computed(() => {
+    const from = start.value;
+    if (from === null) return []; // not decided yet (a new load): never "everything", which could be 100,000 rows
+    annotate(all.value.slice(Math.max(0, from - 1)), meta);
+    return all.value.slice(from);
+  });
+  const isFirst = selector(() => visible.value[0]?.id); // the first message on screen always shows its day and sender
+  const older = computed(() => start.value ?? 0);
+
+  const stats = signal(/** @type {{ ms: number, what: string } | null} */ (null));
+  const flooding = signal(false);
   /** @type {HTMLElement | undefined} */
   let scroller;
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let botTimer;
-  onCleanup(() => clearTimeout(botTimer));
+  /** @type {ReturnType<typeof setInterval> | undefined} */
+  let floodTimer;
+  onCleanup(() => { clearTimeout(botTimer); clearInterval(floodTimer); });
 
   const person = (id) => conv.data.peek()?.people[id] ?? { name: id, color: '#666' };
   const scrollToEnd = (smooth = false) => scroller?.scrollTo({ top: scroller.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  // Local changes are functions of the confirmed messages, so a message still on its way (optimistic) isn't
+  // copied into them and then added again on top.
+  const change = (fn) => conv.mutate((data) => ({ ...data, messages: fn(data.messages) }));
 
-  // New messages: stay at the latest one if the reader was there; otherwise "Jump to latest" appears.
-  effect(() => {
-    conv.data.value;
-    failed.value;
-    typing.value;
-    if (atBottom.peek()) requestAnimationFrame(() => scrollToEnd());
-  });
-
+  let sent = 0; // temporary ids for messages on their way (not time-based: two can start in one millisecond)
   async function send(text, reply) {
-    const temp = { id: `temp-${Date.now()}`, author: 'you', at: new Date().toISOString(), parts: [{ type: 'text', text }], reactions: [], replyTo: reply ?? undefined, sending: true };
+    const temp = { id: `temp-${++sent}`, author: 'you', at: new Date().toISOString(), parts: [{ type: 'text', text }], reactions: [], replyTo: reply ?? undefined, sending: true };
     let saved;
     atBottom.value = true;
     try {
@@ -50,8 +78,7 @@ export default function ChatRoomPage({ room }) {
         (data) => ({ ...data, messages: [...data.messages, temp] }),
         async () => { saved = await fetchJSON(`/api/chat?room=${encodeURIComponent(room)}`, { json: { text, replyTo: reply } }); }
       );
-      const data = conv.data.peek();
-      conv.mutate({ ...data, messages: data.messages.map((m) => (m.id === temp.id ? saved : m)) });
+      change((messages) => messages.map((m) => (m.id === temp.id ? saved : m)));
       if (room === 'help') {
         typing.value = 'Pith bot';
         botTimer = setTimeout(() => { conv.refetch(); typing.value = null; }, 1700);
@@ -82,16 +109,13 @@ export default function ChatRoomPage({ room }) {
   };
 
   // Reactions are kept in this page only (the dev API doesn't store them).
-  const react = (message, emoji) => {
-    const data = conv.data.peek();
-    conv.mutate({ ...data, messages: data.messages.map((m) => {
-      if (m.id !== message.id) return m;
-      const has = m.reactions.find((r) => r.emoji === emoji);
-      const reactions = !has ? [...m.reactions, { emoji, count: 1, mine: true }]
-        : m.reactions.map((r) => (r.emoji !== emoji ? r : { ...r, mine: !r.mine, count: r.count + (r.mine ? -1 : 1) })).filter((r) => r.count > 0);
-      return { ...m, reactions };
-    }) });
-  };
+  const react = (message, emoji) => change((messages) => messages.map((m) => {
+    if (m.id !== message.id) return m;
+    const has = m.reactions.find((r) => r.emoji === emoji);
+    const reactions = !has ? [...m.reactions, { emoji, count: 1, mine: true }]
+      : m.reactions.map((r) => (r.emoji !== emoji ? r : { ...r, mine: !r.mine, count: r.count + (r.mine ? -1 : 1) })).filter((r) => r.count > 0);
+    return { ...m, reactions };
+  }));
 
   const copy = async (code) => {
     try {
@@ -100,6 +124,33 @@ export default function ChatRoomPage({ room }) {
     } catch {
       toast("Couldn't copy: the browser blocked it", { type: 'error' });
     }
+  };
+
+  // "Show older": earlier messages go in above, and what's on screen stays where it is.
+  const showOlder = () => {
+    const fromBottom = scroller ? scroller.scrollHeight - scroller.scrollTop : 0;
+    const t = performance.now();
+    start.value = Math.max(0, (start.value ?? 0) - OLDER_STEP);
+    if (scroller) scroller.scrollTop = scroller.scrollHeight - fromBottom;
+    requestAnimationFrame(() => (stats.value = { ms: performance.now() - t, what: `added ${OLDER_STEP} older messages` }));
+  };
+
+  // #firehose Flood: 20 new messages every 200 ms (about 100 a second), each update timed.
+  let live = 0;
+  const stopFlood = () => { flooding.value = false; clearInterval(floodTimer); };
+  const flood = () => {
+    if (flooding.value) return stopFlood();
+    flooding.value = true;
+    floodTimer = setInterval(() => {
+      const batch = Array.from({ length: 20 }, () => {
+        live++;
+        return { id: `live-${live}`, author: ['ada', 'grace', 'linus', 'mia'][live % 4], at: new Date().toISOString(),
+          parts: [{ type: 'text', text: `${FLOOD_PHRASES[live % FLOOD_PHRASES.length]} ${live}` }], reactions: [] };
+      });
+      const t = performance.now();
+      change((messages) => [...messages, ...batch]);
+      requestAnimationFrame(() => (stats.value = { ms: performance.now() - t, what: 'added 20 messages' }));
+    }, 200);
   };
 
   const part = (p) => {
@@ -142,53 +193,97 @@ export default function ChatRoomPage({ room }) {
       </div>`}
     </div>`;
 
-  const thread = (data) => {
-    if (!data.messages.length) {
-      return html`<div class="chat-empty"><span class="icon-tile">${icon('chat')}</span>
-        <p><strong>No messages yet.</strong></p><p class="muted">Say hi to #${data.room.name}.</p></div>`;
-    }
-    return groupMessages(data.messages).map((d) => html`
-      <div class="day" role="separator" aria-label=${d.label}><span>${d.label}</span></div>
-      ${d.runs.map((run) => html`
-        <article class="msg-run">
-          <span class="avatar" style=${`--avatar: ${person(run.author).color}`} aria-hidden="true">${initials(person(run.author).name)}</span>
+  // One message per row, inside one wrapper element: a repeat() row must not start with a hole that fills in later.
+  const row = (m) => {
+    const head = () => meta.get(m)?.head || isFirst(m.id);
+    const author = person(m.author);
+    return html`
+      <div class="msg-row">
+        ${() => (meta.get(m)?.newDay || isFirst(m.id) ? html`<div class="day" role="separator" aria-label=${day(m.at)}><span>${day(m.at)}</span></div>` : null)}
+        <article class=${() => (head() ? 'msg-run' : 'msg-run cont')}>
+          ${() => (head()
+            ? html`<span class="avatar" style=${`--avatar: ${author.color}`} aria-hidden="true">${initials(author.name)}</span>`
+            : html`<span class="avatar-gap"></span>`)}
           <div class="msg-body">
-            <header class="msg-head"><strong>${person(run.author).name}</strong> <time datetime=${run.messages[0].at}>${time(run.messages[0].at)}</time></header>
-            ${run.messages.map(message)}
+            ${() => (head() ? html`<header class="msg-head"><strong>${author.name}</strong> <time datetime=${m.at}>${time(m.at)}</time></header>` : null)}
+            ${message(m)}
           </div>
-        </article>`)}`);
+        </article>
+      </div>`;
   };
 
-  return html`
+  // Which view the log shows. It changes only between these, so a new message never rebuilds the list:
+  // res.render(ready) would build the ready view again on every data change (each send, reaction, flood batch).
+  const phase = computed(() => {
+    const s = conv.status.value;
+    if (s !== 'ready') return s;
+    const data = conv.data.value;
+    return !data ? 'missing' : data.messages.length ? 'list' : 'empty';
+  });
+
+  /** The log's content for one phase. */
+  const logView = (p) => {
+    if (p === 'loading') {
+      return html`<div class="chat-skeleton" aria-busy="true">
+        ${[1, 2, 3].map(() => html`<div class="skeleton-run"><span class="avatar skeleton"></span><span class="skeleton-lines"><span></span><span></span></span></div>`)}
+        <p class="sr-only">Loading messages…</p></div>`;
+    }
+    if (p === 'error') {
+      return html`<div class="load-error" role="alert"><p>Couldn't load the messages. ${conv.error.value?.message}</p>
+        <button class="btn" type="button" @click=${conv.refetch}>Try again</button></div>`;
+    }
+    if (p === 'missing') {
+      return html`<div class="chat-empty"><p><strong>No such room.</strong></p>
+        <p class="muted">There's no room called <code>#${room}</code>.</p><a class="btn primary" href="/chat">All rooms</a></div>`;
+    }
+    if (p === 'empty') {
+      return html`<div class="chat-empty"><span class="icon-tile">${icon('chat')}</span>
+        <p><strong>No messages yet.</strong></p><p class="muted">Say hi to #${room}.</p></div>`;
+    }
+    return html`
+      <div class="older">${() => (older.value ? html`<button class="btn show-older" type="button" @click=${showOlder}>
+        Show older (${older.value.toLocaleString()} more)</button>` : null)}</div>
+      <div class="msg-list">${repeat(visible, (m) => m.id, row)}</div>`;
+  };
+
+  const view = html`
     <header class="chat-head">
       <a class="chat-back icon-btn" href="/chat" aria-label="All rooms">${icon('back')}</a>
       <div><h1># ${room}</h1><p class="muted note">${() => conv.data.value?.room.topic ?? ''}</p></div>
     </header>
+    ${huge ? html`
+      <div class="firehose-bar">
+        <div class="segmented" role="group" aria-label="How many messages">
+          ${COUNTS.map((n) => html`<button type="button" aria-pressed=${() => String(count.value === n)}
+            @click=${() => { stopFlood(); start.value = null; router.setQuery({ count: n === 10_000 ? null : n }); }}>${n.toLocaleString()}</button>`)}
+        </div>
+        <button class="btn" type="button" aria-pressed=${() => String(flooding.value)} @click=${flood}>
+          ${() => (flooding.value ? 'Stop flood' : 'Flood · 100/s')}</button>
+        <p class="muted note firehose-stats" aria-live="polite">${() => (conv.loading.value ? 'Loading…'
+          : `${all.value.length.toLocaleString()} messages · ${visible.value.length.toLocaleString()} on screen${stats.value ? ` · ${stats.value.what} in ${stats.value.ms.toFixed(1)} ms` : ''}`)}</p>
+      </div>` : null}
     <div class="chat-log" role="log" aria-label=${`Messages in #${room}`} tabindex="0"
          ref=${(el) => (scroller = el)}
          @scroll=${(e) => { const el = e.target; atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
-      ${conv.render({
-        loading: () => html`<div class="chat-skeleton" aria-busy="true">
-          ${[1, 2, 3].map(() => html`<div class="skeleton-run"><span class="avatar skeleton"></span><span class="skeleton-lines"><span></span><span></span></span></div>`)}
-          <p class="sr-only">Loading messages…</p></div>`,
-        error: (err, retry) => html`<div class="load-error" role="alert"><p>Couldn't load the messages. ${err.message}</p>
-          <button class="btn" type="button" @click=${retry}>Try again</button></div>`,
-        ready: (data) => (data ? thread(data) : html`<div class="chat-empty"><p><strong>No such room.</strong></p>
-          <p class="muted">There's no room called <code>#${room}</code>.</p><a class="btn primary" href="/chat">All rooms</a></div>`),
-      })}
-      ${() => failed.value.map((f) => html`
-        <div class="msg-run mine">
-          <div class="msg-body"><div class="msg failed">
-            <p class="msg-text">${f.text}</p>
-            <p class="form-error" role="alert">Not sent: ${f.error}</p>
-            <div class="row"><button class="btn" type="button" @click=${() => retry(f)}>${icon('refresh')} Retry</button>
-            <button class="btn ghost" type="button" @click=${() => (failed.value = failed.value.filter((x) => x !== f))}>Delete</button></div>
-          </div></div>
-        </div>`)}
-      ${() => (typing.value ? html`<p class="typing" aria-live="polite">${typing.value} is typing<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>` : null)}
+      <div class="log-body">${() => {
+        const p = phase.value; // tracked: the view changes with the phase; what it builds below isn't tracked
+        return untrack(() => logView(p));
+      }}</div>
+      <div class="log-end">
+        ${() => failed.value.map((f) => html`
+          <div class="msg-run mine">
+            <div class="msg-body"><div class="msg failed">
+              <p class="msg-text">${f.text}</p>
+              <p class="form-error" role="alert">Not sent: ${f.error}</p>
+              <div class="row"><button class="btn" type="button" @click=${() => retry(f)}>${icon('refresh')} Retry</button>
+              <button class="btn ghost" type="button" @click=${() => (failed.value = failed.value.filter((x) => x !== f))}>Delete</button></div>
+            </div></div>
+          </div>`)}
+        ${() => (typing.value ? html`<p class="typing" aria-live="polite">${typing.value} is typing<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>` : null)}
+      </div>
     </div>
-    ${() => (atBottom.value ? null : html`<button class="btn jump" type="button" @click=${() => scrollToEnd(true)}>${icon('down')} Jump to latest</button>`)}
-    ${() => (hasRoom.value ? html`
+    <div class="jump-slot">${() => (atBottom.value ? null : html`<button class="btn jump" type="button" @click=${() => { atBottom.value = true; scrollToEnd(true); }}>${icon('down')} Jump to latest</button>`)}</div>
+    <div class="composer-slot">${() => (hasRoom.value && !huge ? html`
       <form class="composer" @submit=${submit}>
         ${() => (replyTo.value ? html`<div class="replying">${icon('reply')}<span>Replying to <strong>${person(replyTo.value.author).name}</strong>: ${replyTo.value.text}</span>
           <button class="icon-btn" type="button" aria-label="Cancel reply" @click=${() => (replyTo.value = null)}>${icon('close')}</button></div>` : null)}
@@ -199,6 +294,23 @@ export default function ChatRoomPage({ room }) {
           <button class="btn primary send" type="submit" aria-label="Send" ?disabled=${() => !draft.value.trim()}>${icon('send')}</button>
         </div>
         <p class="muted note composer-hint">Enter to send, Shift+Enter for a new line. Try a message with <code>/fail</code>.</p>
-      </form>` : null)}
+      </form>` : null)}</div>
   `;
+
+  // Made after the view, so it runs after the list has updated: how long a load took to put on screen,
+  // and stay at the latest message if the reader was there.
+  effect(() => {
+    visible.value;
+    failed.value;
+    typing.value;
+    if (received && visible.peek().length) {
+      // At the next frame the rows are built, styled and laid out: that's "on screen".
+      const since = received;
+      received = 0;
+      requestAnimationFrame(() => (stats.value = { ms: performance.now() - since, what: `put ${visible.peek().length.toLocaleString()} on screen` }));
+    }
+    if (untrack(() => atBottom.value)) requestAnimationFrame(() => scrollToEnd());
+  });
+
+  return view;
 }

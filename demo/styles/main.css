@@ -558,9 +558,9 @@ rating-stars { display: inline-block; }
 .room-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
 .room-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 0.5rem; padding: 0.6rem 0.75rem; border-radius: 10px; color: var(--text); text-decoration: none; }
 .room-link:hover, .room-link[aria-current="page"] { background: var(--accent-soft); }
-.room-name { font-weight: 600; }
-.room-time { font-size: 0.75rem; color: var(--muted); align-self: center; }
-.room-last { font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-name { font-weight: 600; grid-row: 1; grid-column: 1; }
+.room-time { font-size: 0.75rem; color: var(--muted); align-self: center; grid-row: 1; grid-column: 2; }
+.room-last { font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; grid-row: 2; grid-column: 1; }
 .room-link .badge { grid-column: 2; grid-row: 2; justify-self: end; align-self: center; }
 .chat-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 .chat-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); }
@@ -615,7 +615,7 @@ rating-stars { display: inline-block; }
 .dots i:nth-child(2) { animation-delay: 0.15s; }
 .dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
-.jump { position: absolute; bottom: 7.5rem; left: 50%; white-space: nowrap; transform: translateX(-50%); box-shadow: var(--shadow); gap: 0.4rem; display: inline-flex; align-items: center; }
+.jump { white-space: nowrap; box-shadow: var(--shadow); gap: 0.4rem; display: inline-flex; align-items: center; }
 .composer { border-top: 1px solid var(--border); padding: 0.75rem 1.25rem 0.6rem; }
 .composer-row { display: flex; gap: 0.5rem; align-items: flex-end; }
 .composer textarea { flex: 1; resize: none; max-height: 10rem; min-height: 2.75rem; field-sizing: content; }
@@ -638,5 +638,16 @@ rating-stars { display: inline-block; }
   .chat-back { display: inline-grid; }
   .chat-log, .composer, .chat-head { padding-inline: 0.85rem; }
   .composer-hint { display: none; }
-  .jump { bottom: 5rem; }
 }
+
+/* Chat: huge data (#firehose), message rows, and the floating Jump button */
+.msg-row { display: block; }
+.msg-run.cont { padding-top: 0; }
+.avatar-gap { width: 2.25rem; flex: none; }
+.older { display: flex; justify-content: center; }
+.show-older { margin: 0.5rem 0 1rem; }
+.firehose-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.6rem 1.25rem; border-bottom: 1px solid var(--border); }
+.firehose-bar .btn[aria-pressed="true"] { border-color: var(--danger); color: var(--danger); }
+.firehose-stats { margin: 0; font-variant-numeric: tabular-nums; }
+.jump-slot { position: relative; height: 0; }
+.jump { position: absolute; z-index: 5; bottom: 1rem; left: 50%; transform: translateX(-50%); }
