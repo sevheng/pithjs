@@ -1,4 +1,4 @@
-import { html, signal, computed, resource, paginated, fetchJSON, repeat, selector, untrack, transition } from 'pith';
+import { html, signal, computed, resource, paginated, fetchJSON, repeat, selector, untrack } from 'pith';
 import { router } from '../router.js';
 import { confirm, toast } from '../ui.js';
 import { icon } from '../icons.js';
@@ -64,12 +64,12 @@ export default function InboxPage({ folder }) {
   // Out of the list (moved or deleted), with what it takes to put them back if the save fails or on Undo.
   const takeOut = (these) => {
     const out = list.items.peek().filter((m) => these.includes(m.id));
-    transition(() => list.mutate((items) => items.filter((m) => !these.includes(m.id)))); // the others close the gap
+    list.mutate((items) => items.filter((m) => !these.includes(m.id)));
     checked.value = without(checked.value, these);
     if (these.includes(selectedId.peek())) router.setQuery({ m: null });
     return out;
   };
-  const putBack = (out) => transition(() => list.mutate((items) => [...items, ...out].sort((a, b) => b.at.localeCompare(a.at))));
+  const putBack = (out) => list.mutate((items) => [...items, ...out].sort((a, b) => b.at.localeCompare(a.at)));
 
   // ---------- Actions ----------
 
@@ -275,7 +275,7 @@ export default function InboxPage({ folder }) {
     empty: () => html`<div class="inbox-empty"><span class="icon-tile">${icon(meta.icon)}</span>
       <p><strong>${EMPTY[folder][0]}</strong></p><p class="muted">${EMPTY[folder][1]}</p></div>`,
     list: () => html`
-      <ul class="mail-list motion" aria-label=${`Messages in ${meta.name}`}>${repeat(ids, (id) => id, row)}</ul>
+      <ul class="mail-list" aria-label=${`Messages in ${meta.name}`}>${repeat(ids, (id) => id, row)}</ul>
       <div class="mail-more">${() => {
         if (list.moreError.value) {
           return html`<p class="form-error" role="alert">Couldn't load more. ${list.moreError.value.message}</p>

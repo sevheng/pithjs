@@ -90,7 +90,7 @@ export default function ChatRoomPage({ room }) {
         botTimer = setTimeout(() => { conv.refetch(); typing.value = null; }, 1700);
       }
     } catch (err) {
-      transition(() => (failed.value = [...failed.value, { id: temp.id, text, replyTo: reply, error: err.message }]));
+      failed.value = [...failed.value, { id: temp.id, text, replyTo: reply, error: err.message }];
     }
   }
 
@@ -109,8 +109,9 @@ export default function ChatRoomPage({ room }) {
       e.target.form.requestSubmit();
     }
   };
-  // The reply bar and the "Not sent" messages appear and leave smoothly (class="motion" on their containers).
-  const dropFailed = (f) => transition(() => (failed.value = failed.value.filter((x) => x !== f)));
+  // The reply bar appears and leaves smoothly (class="motion" on the composer). Not the "Not sent" messages: they're
+  // in the log, a scroll box, which wouldn't clip them while they move (W051).
+  const dropFailed = (f) => (failed.value = failed.value.filter((x) => x !== f));
   const replyWith = (value) => transition(() => (replyTo.value = value));
   const retry = (f) => {
     dropFailed(f);
@@ -269,7 +270,7 @@ export default function ChatRoomPage({ room }) {
          ref=${(el) => (scroller = el)}
          @scroll=${(e) => { const el = e.target; atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
       <div class="log-body">${log}</div>
-      <div class="log-end motion">
+      <div class="log-end">
         ${() => failed.value.map((f) => html`
           <div class="msg-row mine"><article class="msg-run">
             <div class="msg-body"><div class="msg failed">

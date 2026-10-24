@@ -224,7 +224,8 @@ submit focus moves to the first bad field. Also: `signup.values()`, `signup.rese
 
 **Animating items in, out and around:** put `class="motion"` on the container and wrap the change in
 `transition(() => (todos.value = ...))`: its children fade in, fade out and move, and what's around them glides.
-Nest it (on the list, and on the section around it) to choose what moves. A row rebuilt in another list (a card
+Nest it (on the list, and on the section around it) to choose what moves. Not on a list inside a scroll box
+(`overflow: auto`): its hidden rows would be drawn outside the box (W051). A row rebuilt in another list (a card
 moved to another column) needs `style=${`view-transition-name: card-${c.id}`}` to slide there.
 Don't add an animation library, and don't call `document.startViewTransition` yourself (it can stall).
 

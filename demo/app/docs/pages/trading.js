@@ -10,8 +10,9 @@ export default () => html`
   <h2 id="try">What to try</h2>
   <ul>
     <li>Watch the watchlist: each price that ticks flashes green or red for a moment, with a ▲ or ▼ (the arrow stays
-      with reduced motion, the flash doesn't). Pick another symbol: the URL, the chart, the book and the ticket follow, and
-      the watchlist keeps its place.</li>
+      with reduced motion, the flash doesn't). Pick another symbol: the URL, the chart, the book and the ticket follow in
+      place, and the watchlist keeps its place. The chart starts loading when you point at a symbol, so it's usually ready
+      by the click; if not, the last chart stays, dimmed, until it is.</li>
     <li>Switch the chart to 1W, 1M or 1Y. The timeframe goes into ${c('?tf=')}, and stays when you pick another symbol.
       Point at the chart, or Tab to it and use the arrow keys, to read each candle. "Show the numbers" lists them all.</li>
     <li>Pause the feed, then Resume. Try 10× and Stress: every symbol ticks 60 times a second, and the bar shows how many
@@ -57,8 +58,9 @@ export default () => html`
       changes) and the account; ${c('live()')} for the account, and ${c('optimistic()')} for placing and cancelling orders.</li>
     <li><a href="/docs/forms">Forms</a>: ${c('form()')} for the ticket, with a 422 from the server shown in it.</li>
     <li><a href="/docs/router">Routing</a>: ${c('/trade/:symbol')} with a layout, ${c('?tf')}, ${c('?q')} and ${c('?feed')} in the URL.</li>
-    <li><a href="/docs/animation">Animation</a>: ${c('class="motion"')} and ${c('transition()')} for orders appearing and for
-      switching between positions and orders.</li>
+    <li><a href="/docs/animation">Animation</a>: ${c('class="motion"')} and ${c('transition()')} around the
+      account's table, so it grows and shrinks smoothly as orders are placed or dismissed. Not on the watchlist: it's a scroll box, and rows scrolled out of its view
+      would be drawn outside it while they move (W051).</li>
   </ul>
 
   <h2 id="code">The interesting parts</h2>
@@ -96,7 +98,7 @@ const row = (x) => {
       …
     </li>\`;
 };
-html\`<ul class="wl-list motion">\${repeat(visible, (x) => x.symbol, row)}</ul>\`;`, { file: 'app/layouts/trade.js' })}
+html\`<ul class="wl-list">\${repeat(visible, (x) => x.symbol, row)}</ul>\`;`, { file: 'app/layouts/trade.js' })}
   <p>Measured with Stress on, in headless Chrome on a desktop (all 40 symbols in each step, while NWX's chart,
     book, trades, ticket and P&amp;L follow the ticks too): about <strong>2,200 updates a second</strong>, each step put on
     screen in <strong>2.7 ms</strong> on average (the worst in a second 4 to 8 ms), and the page kept drawing at 57 frames a

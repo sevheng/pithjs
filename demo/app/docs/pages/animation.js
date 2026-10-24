@@ -172,8 +172,9 @@ transition(() => (open.value = !open.value));`)}
   <section aria-labelledby="in-the-demo">
     <h2 id="in-the-demo">In the demo apps</h2>
     <ul>
-      <li><a href="/inbox">Inbox</a>: archive, delete, Undo and the bulk actions make rows leave or come back, and
-        the others close the gap (${c('class="motion"')} on the list).</li>
+      <li><a href="/trade">Trading</a>: the account's table grows and shrinks smoothly as orders are placed or
+        dismissed (${c('class="motion"')} around it, not on its rows). Not the watchlist or the Inbox's messages: they're scroll boxes, and rows scrolled out of view would
+        be drawn outside them while they move (${c('W051')}).</li>
       <li><a href="/kanban">Kanban</a>: every move (drag and drop, the Move buttons, Alt+arrow keys) is one
         ${c('transition()')} around the new card order. Cards move between columns, so each has a name,
         ${c('view-transition-name: kcard-<id>')}. Focus goes back to the moved card inside the same update.</li>

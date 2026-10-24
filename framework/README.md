@@ -572,6 +572,8 @@ and the new one fades in, while list animations keep a plain cross-fade:
 Animated elements are drawn above the whole page while they move, so a sticky or fixed bar needs its own layer
 during transitions or a row passing under it covers it. The starter styles do this for the header, toasts and
 an open dialog; in dev mode, `transition()` warns (W050) about any other bar that animated elements could cover.
+A scroll box doesn't clip the animated elements inside it either: rows scrolled out of its view are drawn outside
+it, so don't put `class="motion"` on a list inside a scroll box (W051 warns when it happens).
 
 `transition(update)` uses View Transitions when the browser has them and the user hasn't asked for
 reduced motion; otherwise it just runs `update`. `update` always runs exactly once, within 300 ms even if

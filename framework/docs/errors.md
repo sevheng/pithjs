@@ -175,6 +175,13 @@ header or a fixed toolbar is drawn over it. Give the bar its own layer while tra
 The starter styles already do this for `nav-bar`. Only bars that share a column with the animated elements are
 reported: a sidebar beside a list can't be covered by it.
 
+## W051
+**An animated element is outside the visible part of its scroll box during `transition()`.** A scroll box
+(`overflow: auto`, `scroll` or `hidden`) doesn't clip elements that have a `view-transition-name` while they animate,
+so rows scrolled out of its view are drawn outside it, over the rest of the page. Don't animate rows inside a scroll
+box: take `class="motion"` (or the `view-transition-name`) off that list, and let it change at once. To animate the
+area, put `class="motion"` on its parent, so the scroll box moves as one piece.
+
 ## W060
 **A route showed the not-found page while prerendering**, so it wasn't prerendered (printed by `npm run build`).
 The route key in `app/router.js` doesn't match its path. Fix the route pattern.

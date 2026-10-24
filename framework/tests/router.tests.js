@@ -540,4 +540,28 @@ export default async function (t) {
         box.remove();
       }
     }));
+
+  // A scroll box doesn't clip its animated elements: rows scrolled out of its view are drawn outside it (W051).
+  await test('transition: warns about animated rows outside the visible part of their scroll box (W051), not ones in view', () =>
+    withViewTransitions((update) => (update(), fakeTransition), false, async () => {
+      const box = document.createElement('div');
+      box.style.cssText = 'position: absolute; left: -2000px; top: 0; width: 300px';
+      box.innerHTML = `
+        <div id="w51-scroll" style="height: 50px; overflow-y: auto">
+          <ul style="margin: 0; padding: 0">${[1, 2, 3, 4, 5].map((n) => `<li style="view-transition-name: w51-row-${n}; height: 20px">${n}</li>`).join('')}</ul>
+        </div>
+        <ul style="margin: 0"><li style="view-transition-name: w51-free; height: 20px">free</li></ul>`;
+      document.body.append(box);
+      try {
+        await expectWarning(/W051.*w51-scroll/, () => transition(() => {}));
+        const scroll = /** @type {HTMLElement} */ (box.querySelector('#w51-scroll'));
+        scroll.style.height = '200px'; // every row in view now
+        const before = warnings.length;
+        transition(() => {});
+        const got = warnings.slice(before);
+        eq(got.filter((w) => w.includes('W051')).length, 0, `no warning while every row is in view: ${got.join(' / ')}`);
+      } finally {
+        box.remove();
+      }
+    }));
 }

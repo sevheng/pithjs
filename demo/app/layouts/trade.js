@@ -1,8 +1,8 @@
-import { html, svg, computed, effect, resource, fetchJSON, repeat, selector, untrack, onCleanup, transition } from 'pith';
+import { html, svg, computed, effect, resource, fetchJSON, repeat, selector, untrack, onCleanup } from 'pith';
 import { router } from '../router.js';
 import { icon } from '../icons.js';
 import { createFeed, SPEEDS } from '../trade/feed.js';
-import { market, account, watch, DEFAULT_SYMBOL } from '../trade/state.js';
+import { market, account, watch, DEFAULT_SYMBOL, candles, TIMEFRAMES } from '../trade/state.js';
 import { price, percent, signedMoney, cents, count, way, clock } from '../trade/format.js';
 
 /** @typedef {import('../trade/feed.js').Quote} Quote */
@@ -84,10 +84,15 @@ export default function TradeLayout(page) {
     const list = feed.quotes.value.filter((x) => !n || x.symbol.toLowerCase().includes(n) || x.name.toLowerCase().includes(n));
     return [...list.filter((x) => stars.includes(x.symbol)), ...list.filter((x) => !stars.includes(x.symbol))];
   });
-  const toggleStar = (/** @type {string} */ s) => transition(() => {
+  const toggleStar = (/** @type {string} */ s) => {
     const stars = watch.stars.value;
     watch.stars.value = stars.includes(s) ? stars.filter((x) => x !== s) : [...stars, s];
-  });
+  };
+  // Pointing at or focusing a symbol starts loading its chart, so it's usually there by the click.
+  const prefetch = (/** @type {string} */ s) => {
+    const tf = router.query.value.tf;
+    candles(s, TIMEFRAMES.includes(tf) ? tf : '1D').catch(() => {}); // the page shows the error if it's still failing
+  };
   // Links keep the chart's timeframe.
   const hrefFor = (/** @type {string} */ s) => {
     const tf = router.query.value.tf;
@@ -121,7 +126,7 @@ export default function TradeLayout(page) {
     const change = () => ((x.price.value - x.prevClose) / x.prevClose) * 100;
     return html`
       <li class=${() => (isSelected(x.symbol) ? 'wl-row selected' : 'wl-row')}>
-        <a class="wl-link" href=${() => hrefFor(x.symbol)} aria-current=${() => (isSelected(x.symbol) ? 'page' : null)}>
+        <a class="wl-link" href=${() => hrefFor(x.symbol)} @pointerenter=${() => prefetch(x.symbol)} @focus=${() => prefetch(x.symbol)} aria-current=${() => (isSelected(x.symbol) ? 'page' : null)}>
           <span class="wl-id"><span class="wl-sym">${x.symbol}</span> <span class="wl-name">${x.name}</span></span>
           ${spark(x)}
           <span class="wl-nums">
@@ -140,7 +145,7 @@ export default function TradeLayout(page) {
         <p><strong>No symbols match “${q.value.trim()}”</strong></p>
         <p class="muted note">Search by symbol (NWX) or company name.</p>
         <button class="btn" type="button" @click=${() => router.setQuery({ q: null })}>Clear search</button></div>`)
-    : untrack(() => html`<ul class="wl-list motion" aria-label="Symbols">${repeat(visible, (x) => x.symbol, row)}</ul>`))}`;
+    : untrack(() => html`<ul class="wl-list" aria-label="Symbols">${repeat(visible, (x) => x.symbol, row)}</ul>`))}`;
 
   const watchlist = instruments.live({
     loading: () => html`<div class="wl-skeleton" aria-busy="true">

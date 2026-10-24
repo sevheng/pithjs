@@ -2,7 +2,7 @@ import { html, signal, computed, effect, batch, resource, fetchJSON, repeat, unt
 import { router } from '../router.js';
 import { confirm, toast } from '../ui.js';
 import { icon } from '../icons.js';
-import { market, account, TIMEFRAMES, DEFAULT_SYMBOL } from '../trade/state.js';
+import { market, account, candles as loadCandles, TIMEFRAMES, DEFAULT_SYMBOL } from '../trade/state.js';
 import { candleChart, CHART_H } from '../trade/chart.js';
 import { price, percent, signed, signedMoney, cents, count, volume, way, clock } from '../trade/format.js';
 
@@ -11,6 +11,8 @@ import { price, percent, signed, signedMoney, cents, count, volume, way, clock }
  *   status: 'pending' | 'open' | 'filled' | 'cancelled' | 'cancelling' | 'failed', fill: number | null, at: string, error?: string }} Order */
 
 const TF_NAMES = { '1D': 'Today, 5-minute candles', '1W': 'This week, hourly candles', '1M': 'One month, daily candles', '1Y': 'One year, weekly candles' };
+/** The chart last shown (its data and symbol): while another symbol's chart loads, it stays, dimmed. */
+let lastChart = /** @type {{ data: any, q: Quote } | null} */ (null);
 const SAY_EVERY = 5000; // a screen reader hears the price at most this often, not on every tick
 
 /** Run a change as a transition() (class="motion" animates it), and wait for what it returns. */
@@ -77,14 +79,15 @@ export default function TradePage({ symbol }) {
 
     // ---------- The chart ----------
     const tf = computed(() => (TIMEFRAMES.includes(router.query.value.tf) ? router.query.value.tf : '1D'));
-    const candles = resource(({ signal: abort }) =>
-      fetchJSON(`/api/trade?symbol=${encodeURIComponent(symbol)}&tf=${tf.value}`, { signal: abort }));
+    const candles = resource(() => loadCandles(symbol, tf.value)); // shared, so not cancelled: a stale one is ignored
     const chartView = candles.render({
-      loading: () => html`<span class="trade-skel chart-skel" style=${`height: ${CHART_H + 44}px`}></span><p class="sr-only" role="status">Loading the chart…</p>`,
+      loading: () => html`${lastChart
+        ? html`<div class="chart-stale" aria-hidden="true" inert>${candleChart(lastChart.data, lastChart.q)}</div>`
+        : html`<span class="trade-skel chart-skel" style=${`height: ${CHART_H + 44}px`}></span>`}<p class="sr-only" role="status">Loading the chart…</p>`,
       error: (err, retry) => html`<div class="load-error chart-error" role="alert" style=${`min-height: ${CHART_H}px`}>
         <p><strong>Couldn't load the chart.</strong> ${err?.message ?? ''}</p>
         <button class="btn" type="button" @click=${retry}>${icon('refresh')} Try again</button></div>`,
-      ready: (/** @type {any} */ data) => candleChart(data, q),
+      ready: (/** @type {any} */ data) => ((lastChart = { data, q }), candleChart(data, q)),
     });
 
     // ---------- The order book: 10 levels a side, each a row of signals moved in place ----------
@@ -254,7 +257,7 @@ export default function TradePage({ symbol }) {
 
     // ---------- Positions and orders ----------
     const tab = signal(/** @type {'positions' | 'orders'} */ ('positions'));
-    const setTab = (/** @type {'positions' | 'orders'} */ t) => transition(() => (tab.value = t));
+    const setTab = (/** @type {'positions' | 'orders'} */ t) => (tab.value = t); // tabs switch at once: no cross-fade of two tables
 
     /** @param {any} p a position: { symbol, qty, avg } */
     const positionRow = (p) => {
@@ -298,13 +301,13 @@ export default function TradePage({ symbol }) {
           <div class="acct-table"><table>
             <thead><tr><th scope="col">Symbol</th><th scope="col" class="num">Shares</th><th scope="col" class="num">Avg cost</th>
               <th scope="col" class="num">Last</th><th scope="col" class="num">Value</th><th scope="col" class="num">P&amp;L</th></tr></thead>
-            <tbody class="motion">${repeat(positions, (/** @type {any} */ p) => `${p.symbol}:${p.qty}:${p.avg}`, positionRow)}</tbody>
+            <tbody>${repeat(positions, (/** @type {any} */ p) => `${p.symbol}:${p.qty}:${p.avg}`, positionRow)}</tbody>
           </table></div>`)
           : html`<p class="empty">No positions yet. Buy something with the ticket.</p>`)}`;
         const ordersView = () => html`${() => (orders.value.length ? untrack(() => html`
           <div class="acct-table"><table>
             <thead><tr><th scope="col">Time</th><th scope="col">Order</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
-            <tbody class="motion">${repeat(orders, (/** @type {Order} */ o) => `${o.id}:${o.status}`, orderRow)}</tbody>
+            <tbody>${repeat(orders, (/** @type {Order} */ o) => `${o.id}:${o.status}`, orderRow)}</tbody>
           </table></div>`)
           : html`<p class="empty">No orders today.</p>`)}`;
         return html`

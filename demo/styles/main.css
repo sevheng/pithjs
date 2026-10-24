@@ -1283,6 +1283,12 @@ th[aria-sort="descending"] .sort::after { content: '↓'; opacity: 1; color: var
 :root[data-theme="dark"] { --up: #32d74b; --down: #ff7a72; }
 
 .page:has(.trade) { max-width: 1440px; }
+.chart-stale { opacity: 0.45; pointer-events: none; }
+/* Picking another symbol: the whole screen stays still on its own layer, not part of the page's fade, so the
+   panels show the new symbol in place (its chart is usually loaded already, see candles() in app/trade/state.js). */
+[data-transition="page"] .trade { view-transition-name: trade; }
+::view-transition-group(trade), ::view-transition-new(trade) { animation: none; }
+::view-transition-old(trade) { display: none; }
 .trade { display: grid; gap: 1rem; padding-top: 1rem; align-items: start;
   grid-template-columns: 18.5rem minmax(0, 1fr) 20rem; grid-template-rows: auto auto 1fr;
   grid-template-areas: "top top top" "list center side" "list account side"; }
@@ -1644,4 +1650,9 @@ body:has(.docs) .site-footer { display: none; }
 .app-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0 0; font-size: 0.9rem; }
 .app-bar [aria-current="page"] { font-weight: 600; }
 .app-bar-how { margin-left: auto; }
+/* Moving inside an app (another room, folder or symbol): the bar stays still on its own layer, not part of the
+   page's fade. */
+[data-transition="page"] .app-bar { view-transition-name: app-bar; }
+::view-transition-group(app-bar), ::view-transition-new(app-bar) { animation: none; }
+::view-transition-old(app-bar) { display: none; }
 .app-bar + * { margin-top: 0.75rem; }

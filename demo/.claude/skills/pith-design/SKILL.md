@@ -84,6 +84,8 @@ Everything lives in `styles/main.css`. Reuse before you add.
 - Respect `@media (prefers-reduced-motion: reduce)`: turn movement off there.
 - A sticky or fixed bar (toolbar, bottom bar) needs its own layer during `transition()`, or animated rows are
   drawn over it: copy the `nav-bar` rules from the shared block (dev warning W050 names the bar).
+- Don't animate rows inside a scroll box (a list with `overflow: auto`): rows scrolled out of its view are drawn
+  outside it while they animate (W051). Let that list change at once.
 
 ## Polish that's easy to miss
 

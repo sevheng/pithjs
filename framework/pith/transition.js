@@ -26,7 +26,7 @@ export function transition(update, kind) {
   if (kind) set.transition = kind;
   else delete set.transition;
   const t = (current = document.startViewTransition(run));
-  if (DEV) coveredBars(); // after the start: styles for :active-view-transition apply now
+  if (DEV) checkLayers(); // after the start: styles for :active-view-transition apply now
   const clear = () => current === t && delete set.transition; // a newer transition keeps its own kind
   t.finished?.then(clear, clear);
   // A newer transition skips this one, which rejects these promises: that's expected.
@@ -37,7 +37,8 @@ export function transition(update, kind) {
 // W050: while they animate, elements with a view-transition-name are drawn above everything else. A sticky or
 // fixed bar without a layer of its own (a header, a toolbar) is covered when one passes under it. Bars beside the
 // animated elements (a sidebar column) can't be, so only bars sharing their columns are reported.
-function coveredBars() {
+function checkLayers() {
+  const name = (el) => `<${el.localName}${el.id ? `#${el.id}` : ''}${el.classList.length ? `.${[...el.classList].join('.')}` : ''}>`;
   const named = [];
   const bars = [];
   for (const el of document.body.querySelectorAll('*')) {
@@ -47,6 +48,21 @@ function coveredBars() {
     if (layer && !stuck) named.push(el); // a bar with its own layer isn't something that moves under the others
     else if (stuck && !layer && el.checkVisibility()) bars.push(el); // not in a closed <details>, display: none, …
   }
+  // W051: a scroll box doesn't clip the animated elements inside it, so the ones scrolled out of its view are drawn
+  // outside it while they animate (over the rest of the page).
+  for (const n of named) {
+    for (let box = n.parentElement; box && box !== document.body; box = box.parentElement) {
+      const s = getComputedStyle(box);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const r = n.getBoundingClientRect();
+      const v = box.getBoundingClientRect();
+      if (r.top < v.top - 1 || r.bottom > v.bottom + 1 || r.left < v.left - 1 || r.right > v.right + 1) {
+        warn('W051', `${name(n)} animates in transition() while it's outside the visible part of the scroll box ${name(box)}, so it's drawn outside that box. Don't animate elements inside a scroll box (no class="motion" or view-transition-name on them); let the box change at once, or animate the box itself.`);
+        return;
+      }
+      break;
+    }
+  }
   for (const bar of bars) {
     const b = bar.getBoundingClientRect();
     const under = named.find((n) => {
@@ -55,7 +71,6 @@ function coveredBars() {
       return r.left < b.right && r.right > b.left;
     });
     if (under) {
-      const name = (el) => `<${el.localName}${el.id ? `#${el.id}` : ''}${el.classList.length ? `.${[...el.classList].join('.')}` : ''}>`;
       warn('W050', `${name(bar)} is ${getComputedStyle(bar).position} without a view-transition-name, so during transition() animated elements such as ${name(under)} are drawn over it when they pass under it. Give it a layer while transitions run: :root:active-view-transition ${bar.localName}${bar.id ? `#${bar.id}` : ''} { view-transition-name: my-bar; } and ::view-transition-group(my-bar) { z-index: 1; }.`);
     }
   }
