@@ -27,4 +27,12 @@ export const apps = [
     shows: ['Drag and drop, or Move buttons and Alt+arrow keys', 'Moves animated with transition()',
       'Filters by label and person kept in the URL', 'Saved in a store that survives reloads and syncs tabs'],
   },
+  // ---------- Dashboard (/dashboard) ----------
+  {
+    name: 'Dashboard', href: '/dashboard', icon: 'chart',
+    text: 'Analytics for a small online shop: KPIs, charts and a table of orders, all from a date range in the URL.',
+    shows: ['KPI cards with trends vs the previous period', 'SVG line and bar charts with tooltips and a data table',
+      'A sortable, filterable orders table with pages and a detail panel', 'Skeletons while loading, errors with Try again'],
+  },
+  // ---------- end Dashboard ----------
 ];

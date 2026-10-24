@@ -659,3 +659,92 @@ flow('kanban: drag and drop events move a card to the top of a column, or to the
   c2.dispatchEvent(new W.DragEvent('dragend', { bubbles: true, dataTransfer: dt2 }));
   await app.waitFor(() => [...rev.querySelectorAll('.kcard-title')].pop()?.textContent.trim() === 'Dark mode for the docs site', 'card should be last in Review');
 });
+
+// ---------- Dashboard (/dashboard) ----------
+// The dev API makes the same numbers on every run (a fixed seed and a fixed last day), so flows can name them.
+
+const revenue = (app) => app.query('[data-kpi="revenue"] .value')?.textContent.trim();
+
+flow('dashboard: KPIs, charts and orders load; a new range is kept in the URL and changes the numbers', async (app) => {
+  await app.go('/dashboard');
+  await app.see('$86,962');
+  await app.see('Orders by channel');
+  await app.see('Showing 1–10 of 1,022');
+  await app.waitFor(() => !!app.query('svg[role="img"][aria-label^="Revenue per day"]'), 'the revenue chart should have a text summary');
+  await app.click('7 days');
+  await app.waitFor(() => revenue(app) === '$19,256', `7 days of revenue should be $19,256, got ${revenue(app)}`);
+  app.expect(app.window.location.search === '?range=7', `the URL should have ?range=7, got "${app.window.location.search}"`);
+  await app.see('Showing 1–10 of 237');
+  await app.click('Refresh');
+  await app.see('Updated just now');
+  await app.click('30 days');
+  await app.waitFor(() => revenue(app) === '$86,962', 'back to 30 days');
+  app.expect(app.window.location.search === '', 'the default range has no ?range=');
+});
+
+flow('dashboard: sorting the orders by a column (aria-sort follows)', async (app) => {
+  await app.go('/dashboard');
+  await app.see('Showing 1–10 of 1,022');
+  const sorted = () => app.query('th[aria-sort="ascending"], th[aria-sort="descending"]');
+  app.expect(sorted()?.textContent.trim() === 'Date' && sorted().getAttribute('aria-sort') === 'descending', 'newest first by default');
+  await app.click('Total');
+  await app.waitFor(() => app.window.location.search === '?sort=total', 'the sort is kept in the URL');
+  app.expect(sorted()?.textContent.trim() === 'Total' && sorted().getAttribute('aria-sort') === 'descending', 'Total sorts biggest first');
+  const firstTotal = () => app.query('.orders-table tbody tr td.num')?.textContent.trim();
+  await app.waitFor(() => firstTotal() === '$480.00', `the biggest order first, got ${firstTotal()}`);
+  await app.click('Total');
+  await app.waitFor(() => sorted()?.getAttribute('aria-sort') === 'ascending', 'a second click reverses it');
+  await app.waitFor(() => firstTotal() === '$22.00', `the smallest order first, got ${firstTotal()}`);
+});
+
+flow('dashboard: a status filter, and a search that matches nothing', async (app) => {
+  await app.go('/dashboard');
+  await app.see('Showing 1–10 of 1,022');
+  await app.click('[data-status="refunded"]');
+  await app.see('Showing 1–10 of 34');
+  app.expect(app.window.location.search === '?status=refunded', `the filter is kept in the URL, got "${app.window.location.search}"`);
+  app.expect(app.queryAll('.orders-table tbody .status-pill').every((p) => p.textContent.trim() === 'Refunded'), 'only refunded orders');
+  await app.type('Search orders by customer', 'Nobody Here');
+  await app.see('No orders match.');
+  await app.see('Nothing refunded for “Nobody Here” in the last 30 days.');
+  await app.click('Clear filters');
+  await app.see('Showing 1–10 of 1,022');
+  app.expect(app.query('#order-search').value === '', 'the search box is cleared too');
+});
+
+flow('dashboard: paging through the orders', async (app) => {
+  await app.go('/dashboard');
+  await app.see('Page 1 of 103');
+  app.expect(app.query('.pager-buttons button').disabled, 'Previous is disabled on the first page');
+  await app.click('Next');
+  await app.see('Showing 11–20 of 1,022');
+  await app.see('Page 2 of 103');
+  app.expect(app.window.location.search === '?page=2', `the page is kept in the URL, got "${app.window.location.search}"`);
+  await app.click('Previous');
+  await app.see('Showing 1–10 of 1,022');
+});
+
+flow('dashboard: selecting an order opens its details, Close returns to the table', async (app) => {
+  await app.go('/dashboard');
+  await app.see('Showing 1–10 of 1,022');
+  await app.click('Open order 15465');
+  await app.see('Order #15465');
+  await app.see('ann.haddad@example.com');
+  await app.see('1 × Terracotta pot');
+  app.expect(app.queryAll('.orders-table tr.selected').length === 1, 'exactly one row is marked selected');
+  await app.click('Open order 15463');
+  await app.see('Order #15463');
+  app.expect(app.queryAll('.orders-table tr.selected').length === 1, 'still one selected row after picking another');
+  await app.click('Close order details');
+  await app.notSee('Order #15463');
+  app.expect(!app.query('.orders-table tr.selected'), 'no row is selected after closing');
+});
+
+flow('dashboard: when the API fails, each part says so and offers a way out', async (app) => {
+  await app.go('/dashboard?range=fail');
+  await app.see("Couldn't load the numbers.");
+  await app.see("Couldn't load the orders.");
+  await app.click('Show the last 30 days');
+  await app.see('$86,962');
+  await app.see('Showing 1–10 of 1,022');
+});

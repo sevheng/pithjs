@@ -31,6 +31,11 @@ const PATHS = {
   'arrow-up': 'M12 19V5M6 11l6-6 6 6',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
   filter: 'M3 5h18l-7 8v6l-4-2v-4L3 5z',
+  // Dashboard (/dashboard)
+  next: 'M9 5l7 7-7 7',
+  'trend-up': 'M4 17l6-6 4 4 6-7M14 8h6v6',
+  'trend-down': 'M4 7l6 6 4-4 6 7M14 16h6v-6',
+  'trend-flat': 'M4 12h16M15 7l5 5-5 5',
 };
 
 /** @param {string} name one of the names above @param {string} [className] */
