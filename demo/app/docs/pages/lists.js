@@ -67,8 +67,8 @@ import { transition } from 'pith';
 const remove = (id) => transition(() => (todos.value = todos.value.filter((t) => t.id !== id)));
 const shuffle = () => transition(() => (todos.value = [...todos.value].sort(() => Math.random() - 0.5)));
 
-// Each row needs a unique view-transition-name:
-(t) => html\`<li style=\${\`view-transition-name: todo-\${t.id}\`}>\${t.text}</li>\``;
+// class="motion" on the list: rows fade in and out, and slide to their new places
+html\`<ul class="motion">\${repeat(todos, (t) => t.id, (t) => html\`<li>\${t.text}</li>\`)}</ul>\``;
 
 export default () => html`
   <p>${c('repeat(items, key, row)')} renders a list that changes. It remembers each row's DOM by its key.
@@ -122,8 +122,8 @@ export default () => html`
     big and busy. For everything else, replace the item and let its row be rebuilt.`)}
 
   <h2 id="transitions">Animating changes</h2>
-  <p>Wrap the change in ${c('transition()')} and give each row a unique ${c('view-transition-name')}. The
-    browser fades out rows that left and slides rows that moved. With reduced motion, or in a browser
+  <p>Put ${c('class="motion"')} on the list and wrap the change in ${c('transition()')}. The browser fades in
+    rows that arrived, fades out rows that left and slides rows that moved. With reduced motion, or in a browser
     without View Transitions, the change just happens. Try "Shuffle" above.</p>
   ${code(animated)}
   <p>More in <a href="/docs/animation">Animation</a>.</p>

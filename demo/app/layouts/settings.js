@@ -1,4 +1,4 @@
-import { html, signal } from 'pith';
+import { html, signal, transition } from 'pith';
 import { router } from '../router.js';
 import { session } from '../store.js';
 import '../components/settings-context.js';
@@ -34,11 +34,11 @@ export default function SettingsLayout(page) {
             <input id="display-name" class="input" autocomplete="nickname" placeholder="Ann"
                    .value=${displayName} @input=${(e) => (displayName.value = e.target.value)}>
           </div>
-          <button class="btn" type="button" @click=${() => (session.signedIn.value = !session.signedIn.value)}>
+          <button class="btn" type="button" @click=${() => transition(() => (session.signedIn.value = !session.signedIn.value))}>
             ${() => (session.signedIn.value ? 'Sign out' : 'Sign in')}
           </button>
         </aside>
-        <div class="settings-body">${page}</div>
+        <div class="settings-body motion">${page}</div>
       </div>
     </settings-context>
   `;

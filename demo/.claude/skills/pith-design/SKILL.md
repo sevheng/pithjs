@@ -78,7 +78,8 @@ Everything lives in `styles/main.css`. Reuse before you add.
 
 ## Motion
 
-- Use `transition()` for items appearing, moving and leaving, and CSS for small hovers (under 200ms).
+- Items appearing, moving and leaving: `class="motion"` on their container + `transition()` (the shared block
+  animates them and makes the neighbours glide). CSS for small hovers (under 200ms).
 - Animate opacity and transform, not size or position properties.
 - Respect `@media (prefers-reduced-motion: reduce)`: turn movement off there.
 - A sticky or fixed bar (toolbar, bottom bar) needs its own layer during `transition()`, or animated rows are

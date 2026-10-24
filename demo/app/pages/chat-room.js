@@ -1,4 +1,4 @@
-import { html, signal, computed, resource, fetchJSON, effect, onCleanup, repeat, selector, untrack } from 'pith';
+import { html, signal, computed, resource, fetchJSON, effect, onCleanup, repeat, selector, untrack, transition } from 'pith';
 import { router } from '../router.js';
 import { toast } from '../ui.js';
 import { icon } from '../icons.js';
@@ -90,7 +90,7 @@ export default function ChatRoomPage({ room }) {
         botTimer = setTimeout(() => { conv.refetch(); typing.value = null; }, 1700);
       }
     } catch (err) {
-      failed.value = [...failed.value, { id: temp.id, text, replyTo: reply, error: err.message }];
+      transition(() => (failed.value = [...failed.value, { id: temp.id, text, replyTo: reply, error: err.message }]));
     }
   }
 
@@ -109,8 +109,11 @@ export default function ChatRoomPage({ room }) {
       e.target.form.requestSubmit();
     }
   };
+  // The reply bar and the "Not sent" messages appear and leave smoothly (class="motion" on their containers).
+  const dropFailed = (f) => transition(() => (failed.value = failed.value.filter((x) => x !== f)));
+  const replyWith = (value) => transition(() => (replyTo.value = value));
   const retry = (f) => {
-    failed.value = failed.value.filter((x) => x !== f);
+    dropFailed(f);
     send(f.text, f.replyTo);
   };
 
@@ -191,7 +194,7 @@ export default function ChatRoomPage({ room }) {
           aria-label=${`${r.emoji} ${r.count}, ${r.mine ? 'remove your reaction' : 'react'}`} @click=${() => react(m, r.emoji)}>${r.emoji} ${r.count}</button>`)}
       </div>` : null}
       ${m.sending ? null : html`<div class="msg-actions">
-        <button class="icon-btn" type="button" aria-label="Reply" @click=${() => { replyTo.value = { author: m.author, text: m.parts.find((p) => p.type === 'text')?.text ?? 'an attachment' }; document.getElementById('composer')?.focus(); }}>${icon('reply')}</button>
+        <button class="icon-btn" type="button" aria-label="Reply" @click=${() => { replyWith({ author: m.author, text: m.parts.find((p) => p.type === 'text')?.text ?? 'an attachment' }); document.getElementById('composer')?.focus(); }}>${icon('reply')}</button>
         <button class="icon-btn" type="button" aria-label="Add reaction" popovertarget=${`react-${m.id}`}>${icon('smile')}</button>
         <div class="emoji-picker" id=${`react-${m.id}`} popover>
           ${EMOJIS.map((e) => html`<button type="button" aria-label=${`React with ${e}`} @click=${(ev) => { react(m, e); ev.target.closest('[popover]').hidePopover(); }}>${e}</button>`)}
@@ -266,14 +269,14 @@ export default function ChatRoomPage({ room }) {
          ref=${(el) => (scroller = el)}
          @scroll=${(e) => { const el = e.target; atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
       <div class="log-body">${log}</div>
-      <div class="log-end">
+      <div class="log-end motion">
         ${() => failed.value.map((f) => html`
           <div class="msg-row mine"><article class="msg-run">
             <div class="msg-body"><div class="msg failed">
               <p class="msg-text">${f.text}</p>
               <p class="msg-failed-note" role="alert">Not sent: ${f.error}</p>
               <div class="row"><button class="btn" type="button" @click=${() => retry(f)}>${icon('refresh')} Retry</button>
-              <button class="btn ghost" type="button" @click=${() => (failed.value = failed.value.filter((x) => x !== f))}>Delete</button></div>
+              <button class="btn ghost" type="button" @click=${() => dropFailed(f)}>Delete</button></div>
             </div></div>
           </article></div>`)}
         ${() => (typing.value ? html`<p class="typing" aria-live="polite">${typing.value} is typing<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>` : null)}
@@ -281,9 +284,9 @@ export default function ChatRoomPage({ room }) {
     </div>
     <div class="jump-slot">${() => (atBottom.value ? null : html`<button class="btn jump" type="button" @click=${() => { atBottom.value = true; scrollToEnd(true); }}>${icon('down')} Jump to latest</button>`)}</div>
     <div class="composer-slot">${() => (hasRoom.value && !huge ? html`
-      <form class="composer" @submit=${submit}>
+      <form class="composer motion" @submit=${submit}>
         ${() => (replyTo.value ? html`<div class="replying">${icon('reply')}<span>Replying to <strong>${person(replyTo.value.author).name}</strong>: ${replyTo.value.text}</span>
-          <button class="icon-btn" type="button" aria-label="Cancel reply" @click=${() => (replyTo.value = null)}>${icon('close')}</button></div>` : null)}
+          <button class="icon-btn" type="button" aria-label="Cancel reply" @click=${() => replyWith(null)}>${icon('close')}</button></div>` : null)}
         <div class="composer-row">
           <label class="sr-only" for="composer">Message #${room}</label>
           <textarea id="composer" class="input" rows="1" placeholder=${`Message #${room}`} .value=${draft}

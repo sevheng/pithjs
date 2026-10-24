@@ -1,4 +1,4 @@
-import { html, signal, computed, effect, resource, fetchJSON, repeat, selector, untrack, onCleanup } from 'pith';
+import { html, signal, computed, effect, resource, fetchJSON, repeat, selector, untrack, onCleanup, transition } from 'pith';
 import { router } from '../router.js';
 import { icon } from '../icons.js';
 import { revenueChart, channelChart } from '../dashboard/charts.js';
@@ -74,14 +74,17 @@ export default function DashboardPage() {
     range.value; // a new range is a different set of orders
     untrack(() => (current.value = null));
   });
-  const close = () => {
+  // Opening and closing the panel animate (class="motion" on the layout: the table makes room); moving from one
+  // order to another while it's open doesn't.
+  const close = () => transition(() => {
     current.value = null;
     opener?.focus();
-  };
+  });
   /** @param {Order} o @param {Event} e */
   const open = (o, e) => {
     opener = /** @type {HTMLElement} */ (e.currentTarget).querySelector('button');
-    current.value = o;
+    if (current.value) current.value = o;
+    else transition(() => (current.value = o));
   };
 
   /** Change the table's query; anything but a page change starts again at page 1. */
@@ -275,7 +278,7 @@ export default function DashboardPage() {
             </button>`)}
           </div>
         </div>
-        <div class="orders-layout" data-panel=${() => (current.value ? 'open' : null)}>
+        <div class="orders-layout motion" data-panel=${() => (current.value ? 'open' : null)}>
           <div class="orders-main" data-busy=${() => (orders.loading.value && orders.status.value === 'ready' ? 'true' : null)}>
             ${tableView}
           </div>

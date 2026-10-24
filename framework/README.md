@@ -545,16 +545,24 @@ Static hosting doesn't run these. In production, a real backend must answer the 
 
 ### Animations
 
-Use the browser, not a library. CSS `transition` covers hover and open/close, `@starting-style` covers
-items appearing, and the router already animates page changes. For items **removed or reordered**, wrap
-the change in `transition()` and give each row its own `view-transition-name`: the browser snapshots the
-list before and after, fades out what left and slides what moved.
+Use the browser, not a library. CSS `transition` covers hover and open/close, and the router already animates
+page changes. For items that **appear, leave or move**, put `class="motion"` (from the starter styles) on their
+container and wrap the change in `transition()`: the browser snapshots the page before and after; what arrived
+fades and grows in, what left fades out, and everything that moved, including the neighbours pushed aside, glides.
+Nest it to choose what moves: on a list its rows, on the section around it the text below too.
 
 ```js
 import { transition } from 'pith';
+html`<section class="motion">
+  <ul class="motion">${repeat(todos, (t) => t.id, (t) => html`<li>${t.text}</li>`)}</ul>
+  <p>This glides when the list changes.</p>
+</section>`;
 const remove = (id) => transition(() => (todos.value = todos.value.filter((t) => t.id !== id)));
-// each row: <li style=${`view-transition-name: todo-${t.id}`}>   (names must be unique on the page)
 ```
+
+`class="motion"` names elements automatically (`view-transition-name: match-element`), which follows the same
+element. A row that `repeat()` builds again in another list (a card moved to another column) is a new element: give
+it `style=${`view-transition-name: card-${c.id}`}` (unique on the page) to slide across instead of fading.
 
 `transition(update, kind)` sets `data-transition="<kind>"` on `<html>` while it runs, so CSS can style one
 kind of change. The router's page changes are `'page'`; the starter styles use it so the old page goes at once

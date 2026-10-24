@@ -53,7 +53,7 @@ export default function DocPage({ page = 'introduction' }) {
 
   return html`
     <div class=${doc.wide ? 'doc-wrap wide' : 'doc-wrap'}>
-    <article class="doc" ref=${(el) => (article = el)}>
+    <article class="doc motion" ref=${(el) => (article = el)}>
       <header class="doc-head">
         <h1>${doc.title}</h1>
         <p class="lead">${doc.summary}</p>
@@ -67,7 +67,7 @@ export default function DocPage({ page = 'introduction' }) {
           <div class="card example">${example.view()}</div>
         </section>` : null}
 
-      <div class="doc-body">${view}</div>
+      <div class="doc-body motion">${view}</div>
 
       ${example ? html`
         <section aria-labelledby="the-code">

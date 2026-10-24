@@ -522,10 +522,14 @@ export default async function (t) {
         <div style="display: flex">
           <aside id="w50-side" style="position: sticky; top: 0; width: 100px; height: 60px; flex: none"></aside>
           <ul style="flex: 1; margin: 0"><li style="view-transition-name: w50-row; height: 20px">row</li></ul>
-        </div>`;
+        </div>
+        <details><summary>Numbers</summary><table><tr><th id="w50-hidden" style="position: sticky; top: 0">n</th></tr></table></details>`;
       document.body.append(box);
       try {
         await expectWarning(/W050.*w50-bar/, () => transition(() => {}));
+        const mark = warnings.length;
+        transition(() => {});
+        eq(warnings.slice(mark).some((w) => w.includes('w50-hidden')), false, 'a bar that isn\'t shown (in a closed <details>) is not reported');
         const bar = /** @type {HTMLElement} */ (box.querySelector('#w50-bar'));
         bar.style.viewTransitionName = 'w50-bar-layer';
         const before = warnings.length;

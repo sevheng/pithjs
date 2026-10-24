@@ -222,10 +222,11 @@ Field helpers: `input` (any `type`), `textarea`, `select`, `checkbox`. Each take
 submit focus moves to the first bad field. Also: `signup.values()`, `signup.reset()`,
 `signup.setErrors({ email: '...' })`, `signup.valid.value`. Every field name must be in `initial` (W015, W016).
 
-**Animating removals and reorders:** `transition(() => (todos.value = ...))` plus a unique
-`style=${`view-transition-name: todo-${t.id}`}` on each row.
+**Animating items in, out and around:** put `class="motion"` on the container and wrap the change in
+`transition(() => (todos.value = ...))`: its children fade in, fade out and move, and what's around them glides.
+Nest it (on the list, and on the section around it) to choose what moves. A row rebuilt in another list (a card
+moved to another column) needs `style=${`view-transition-name: card-${c.id}`}` to slide there.
 Don't add an animation library, and don't call `document.startViewTransition` yourself (it can stall).
-Appearing items: CSS `@starting-style` or a keyframe animation.
 
 **Confirm, dialogs and toasts: use `app/ui.js`** (this app's own helpers, on the browser's `<dialog>` and popover), never `window.confirm`/`alert`:
 ```js

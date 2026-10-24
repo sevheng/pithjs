@@ -29,9 +29,9 @@ export default function ListsExample() {
       <button class="btn primary">Add</button>
       <button class="btn" type="button" @click=${shuffle}>Shuffle</button>
     </form>
-    <ul class="example-list">
+    <ul class="example-list motion">
       ${repeat(items, (i) => i.id, (i) => html`
-        <li class="example-item" style=${`view-transition-name: item-${i.id}`}>
+        <li class="example-item">
           <span>${i.name}</span>
           <button class="icon-btn danger" type="button" aria-label=${`Remove ${i.name}`} @click=${() => remove(i.id)}>×</button>
         </li>

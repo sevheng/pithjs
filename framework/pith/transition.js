@@ -45,7 +45,7 @@ function coveredBars() {
     const stuck = style.position === 'sticky' || style.position === 'fixed';
     const layer = style.viewTransitionName && style.viewTransitionName !== 'none';
     if (layer && !stuck) named.push(el); // a bar with its own layer isn't something that moves under the others
-    else if (stuck && !layer && el.getClientRects().length) bars.push(el);
+    else if (stuck && !layer && el.checkVisibility()) bars.push(el); // not in a closed <details>, display: none, …
   }
   for (const bar of bars) {
     const b = bar.getBoundingClientRect();

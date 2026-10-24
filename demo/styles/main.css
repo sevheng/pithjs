@@ -315,6 +315,24 @@ select.input { cursor: pointer; }
 ::view-transition-group(pith-toasts), ::view-transition-group(pith-dialog) { z-index: 2; }
 ::view-transition-old(pith-toasts), ::view-transition-old(pith-dialog) { display: none; }
 ::view-transition-new(pith-toasts), ::view-transition-new(pith-dialog) { animation: none; }
+/* class="motion": in a transition() (not a page change), each direct child of .motion appears, leaves or moves
+   smoothly, and what's around it glides to its new place. Nest it to choose what moves: on a list, the rows; on a
+   section, its blocks too (the text below a list that grew). Names are automatic (match-element), so they follow
+   the same element: a row rebuilt in another list needs an explicit view-transition-name to slide there. */
+:root:active-view-transition:not([data-transition="page"]) .motion > * { view-transition-name: match-element; view-transition-class: pith-motion; }
+::view-transition-group(*.pith-motion) { animation-duration: 0.28s; animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+/* A block that moves or resizes (a card around its list) shows its new look at once, not stretched and not
+   blended with the old one, revealed as its box grows (the margin keeps its shadow). */
+::view-transition-old(*.pith-motion), ::view-transition-new(*.pith-motion) { height: 100%; object-fit: none; object-position: top left; }
+::view-transition-old(*.pith-motion) { display: none; }
+::view-transition-new(*.pith-motion) { animation: none; }
+::view-transition-image-pair(*.pith-motion) { overflow: clip; overflow-clip-margin: 1.5rem; }
+/* Something that appears (only a new picture) fades and grows in; something that leaves (only an old one) fades out,
+   faster than its neighbours move, so it's mostly gone before they slide into its place. */
+::view-transition-new(*.pith-motion):only-child { animation: pith-in 0.25s ease-out both; }
+::view-transition-old(*.pith-motion):only-child { display: block; animation: pith-out 0.1s ease-in both; }
+@keyframes pith-in { from { opacity: 0; transform: scale(0.96); } }
+@keyframes pith-out { to { opacity: 0; transform: scale(0.96); } }
 /* Other changes (transition() for a list): only elements with a view-transition-name (the rows) animate. The
    rest of the page switches at once: blending its before and after would show moved text twice, and layers of
    their own would redraw their text slightly differently for the length of the animation. */

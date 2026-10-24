@@ -74,7 +74,7 @@ any view a person waits on.
 - **Buttons say what happens:** "Save changes", "Delete order". Links go somewhere; buttons do something.
 - **Keyboard:** everything clickable is a `<button>` or `<a href>`; dialogs come from `app/ui.js` (they trap and
   return focus); after navigation the router focuses `#main`. Never remove the focus outline.
-- **Lists:** `repeat()` with a stable key; `transition()` when items move or leave; `selector()` for the
+- **Lists:** `repeat()` with a stable key; `class="motion"` on the container + `transition()` when items appear, move or leave; `selector()` for the
   selected row; fine-grained row signals only for big lists that change often.
 - **Don't surprise:** no layout jumps when data arrives (give the loading state the data's size), no autoplay,
   no focus stealing, no scroll jumps.

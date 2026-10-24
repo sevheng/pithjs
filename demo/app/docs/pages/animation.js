@@ -1,7 +1,8 @@
 import { html, signal, repeat, transition } from 'pith';
 import { code, api, note, c } from '../ui.js';
 
-/** A small working list: add, remove, move to the top and shuffle, each wrapped in transition(). */
+/** A small working list: add, remove, move to the top and shuffle, each wrapped in transition(). The list and the
+ * card are class="motion": rows fade in and out and slide, and the card's parts glide as the list grows. */
 function Demo() {
   let nextId = 4;
   const tasks = signal([
@@ -23,14 +24,14 @@ function Demo() {
   const shuffle = () => transition(() => (tasks.value = [...tasks.value].sort(() => Math.random() - 0.5)));
 
   return html`
-    <div class="card example">
+    <div class="card example motion">
       <div class="row">
         <button class="btn primary" type="button" @click=${add}>Add a task</button>
         <button class="btn" type="button" @click=${shuffle}>Shuffle</button>
       </div>
-      <ul class="example-list">
+      <ul class="example-list motion">
         ${repeat(tasks, (t) => t.id, (t) => html`
-          <li class="example-item" style=${`view-transition-name: anim-task-${t.id}`}>
+          <li class="example-item">
             <span>${t.name}</span>
             <span style="display: flex; flex: none">
               <button class="icon-btn" type="button" aria-label=${`Move "${t.name}" to the top`} @click=${() => toTop(t.id)}>↑</button>
@@ -39,6 +40,20 @@ function Demo() {
           </li>`)}
       </ul>
       ${() => (tasks.value.length ? null : html`<p class="empty">Nothing left. Add a task.</p>`)}
+    </div>`;
+}
+
+/** Show and hide: a panel that appears and leaves, and the text after it glides out of its way. */
+function DetailsDemo() {
+  const open = signal(false);
+  return html`
+    <div class="card example motion">
+      <button class="btn" type="button" aria-expanded=${() => String(open.value)}
+              @click=${() => transition(() => (open.value = !open.value))}>${() => (open.value ? 'Hide details' : 'Show details')}</button>
+      ${() => (open.value ? html`<div class="notice">
+        <strong>Details.</strong> This panel faded in, and the line below moved down to make room, instead of jumping.
+      </div>` : null)}
+      <p class="muted">This line glides when the panel opens or closes.</p>
     </div>`;
 }
 
@@ -51,13 +66,14 @@ export default () => html`
     </p>
     <ul>
       <li><strong>Hovers, focus, open and close</strong>: a CSS ${c('transition')} on the property that changes.</li>
-      <li><strong>Items that appear</strong>: CSS ${c('@starting-style')}, or a keyframe animation.</li>
-      <li><strong>Items that are removed or reordered</strong>: wrap the change in ${c('transition()')}.</li>
+      <li><strong>Items that appear, leave or move, with what's around them gliding</strong>: put
+        ${c('class="motion"')} on their container and wrap the change in ${c('transition()')}.</li>
+      <li><strong>Something that only appears</strong> (no layout change around it): CSS ${c('@starting-style')} is enough.</li>
       <li><strong>Page changes</strong>: nothing to do. The router already animates them.</li>
     </ul>
   </section>
 
-  <section aria-labelledby="transition">
+  <section class="motion" aria-labelledby="transition">
     <h2 id="transition">transition(update)</h2>
     <p>
       ${c('transition(update)')} runs ${c('update')} as a
@@ -85,17 +101,38 @@ const remove = (id) => transition(() => {
     </p>
   </section>
 
-  <section aria-labelledby="names">
-    <h2 id="names">A name per row</h2>
+  <section class="motion" aria-labelledby="motion">
+    <h2 id="motion">class="motion"</h2>
     <p>
-      The browser can only slide a row it can tell apart from the others. Give each row its own
-      ${c('view-transition-name')}, made from its key, in an inline ${c('style')}:
+      Put ${c('class="motion"')} on a container, and each of its direct children animates in a
+      ${c('transition()')}: one that appears fades and grows in, one that leaves fades out, and the ones that move,
+      including those pushed aside by a new item, glide to their new places. No names, no extra code: the browser
+      tells the elements apart by itself.
     </p>
-    ${code(`html\`<ul>\${repeat(todos, (t) => t.id, (t) => html\`
-  <li style=\${\`view-transition-name: todo-\${t.id}\`}>\${t.text}</li>\`)}</ul>\`;`)}
-    ${note(html`Names must be unique on the whole page. Two rows with the same name, say ${c('item-1')} in two lists,
-      make the browser skip the animation (the change still happens). Prefix them per list, and use ids with
-      letters, digits and dashes only: a name is a CSS identifier.`, 'warn')}
+    ${code(`html\`<ul class="motion">\${repeat(todos, (t) => t.id, (t) => html\`<li>\${t.text}</li>\`)}</ul>\`;
+
+transition(() => (todos.value = [...todos.value, todo]));   // the new row fades in, the others make room`)}
+    <p>
+      Nest it to choose what moves. On a list, its rows animate. On the section around the list, its blocks do too,
+      so the text below a list that grew glides down instead of jumping. Showing and hiding works the same way:
+    </p>
+    ${code(`html\`<section class="motion">
+  \${() => (open.value ? html\`<div class="notice">…</div>\` : null)}
+  <p>This glides out of the way.</p>
+</section>\`;
+
+transition(() => (open.value = !open.value));`)}
+    <h3 id="try-motion">Try it</h3>
+    ${DetailsDemo()}
+    ${note(html`Only changes wrapped in ${c('transition()')} animate. Page changes don't use ${c('class="motion"')}: the
+      router fades the whole page.`)}
+    <h3 id="names">When a row needs a name</h3>
+    <p>
+      ${c('class="motion"')} follows the same element from before to after. A row that ${c('repeat()')} builds again
+      in another list (a Kanban card moved to another column) is a new element, so it would fade out and in
+      instead of sliding across. For that, give the row a name from its key; names must be unique on the page:
+    </p>
+    ${code(`html\`<li class="card" style=\${\`view-transition-name: card-\${c.id}\`}>…</li>\`;`)}
     ${note(html`Use ${c('repeat()')} with a stable key. Without it, rows are rebuilt instead of moved, and nothing
       has a before and after to slide between.`)}
   </section>
@@ -135,9 +172,11 @@ const remove = (id) => transition(() => {
   <section aria-labelledby="in-the-demo">
     <h2 id="in-the-demo">In the demo apps</h2>
     <ul>
+      <li><a href="/inbox">Inbox</a>: archive, delete, Undo and the bulk actions make rows leave or come back, and
+        the others close the gap (${c('class="motion"')} on the list).</li>
       <li><a href="/kanban">Kanban</a>: every move (drag and drop, the Move buttons, Alt+arrow keys) is one
-        ${c('transition()')} around the new card order, and each card has ${c('view-transition-name: kcard-<id>')}.
-        Focus goes back to the moved card inside the same update.</li>
+        ${c('transition()')} around the new card order. Cards move between columns, so each has a name,
+        ${c('view-transition-name: kcard-<id>')}. Focus goes back to the moved card inside the same update.</li>
       <li><a href="/chat">Chat</a>: a sent message appears with ${c('@starting-style')}, as above.</li>
       <li>The <a href="/docs/lists">Lists</a> example: add, remove and shuffle with ${c('transition()')}.</li>
     </ul>
@@ -148,7 +187,8 @@ const remove = (id) => transition(() => {
     ${api([
       ['transition(update)', 'Run update as a View Transition when the browser has them and motion isn\'t reduced; else run it now. Runs it exactly once, within 300 ms.'],
       ['transition(update, kind)', html`The same, with ${c('data-transition="kind"')} on ${c('<html>')} while it runs, for CSS that styles one kind of change. Page changes are ${c("'page'")}.`],
-      ['view-transition-name: x', 'CSS: a unique name per row, so the browser can slide it. Set it in an inline style from the row\'s key.'],
+      ['class="motion"', 'On a container: its direct children appear, leave and move smoothly in a transition(), and what\'s around them glides.'],
+      ['view-transition-name: x', 'CSS: a unique name for an element that must slide between two places that rebuild it (another list).'],
       ['@starting-style { … }', 'CSS: where an element\'s transition starts when it first appears.'],
     ])}
   </section>
