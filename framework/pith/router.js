@@ -308,7 +308,7 @@ export function createRouter(
       }
       if (focus) /** @type {HTMLElement | null} */ (document.querySelector(focus))?.focus({ preventScroll: true });
     };
-    if (animate && transitions) transition(apply); // never blocks: applies within 300 ms regardless
+    if (animate && transitions) transition(apply, 'page'); // never blocks: applies within 300 ms regardless
     else apply();
   }
 

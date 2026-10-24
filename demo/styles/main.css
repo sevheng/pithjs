@@ -133,7 +133,8 @@ main:focus { outline: none; }
 nav-bar { display: block; position: sticky; top: 0; z-index: 50; background: var(--glass);
   backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--hairline); }
-.site-header { display: flex; align-items: center; gap: 1rem; max-width: 1024px; margin: 0 auto; padding: 0.45rem 1rem; }
+/* Full width on every page, so it doesn't change size (and jump) between a page and a full-screen layout. */
+.site-header { display: flex; align-items: center; gap: 1rem; padding: 0.45rem clamp(1rem, 3vw, 1.5rem); }
 .brand { display: inline-flex; align-items: center; gap: 0.45rem; margin-right: auto; font-weight: 650; font-size: 1.05rem;
   color: var(--text); letter-spacing: -0.02em; }
 .brand:hover { text-decoration: none; }
@@ -294,12 +295,19 @@ select.input { cursor: pointer; }
 /* ---------- Motion ---------- */
 @keyframes slide-in { from { opacity: 0; transform: translateY(-4px); } }
 ::view-transition-old(page), ::view-transition-new(page) { animation-duration: 0.2s; }
-/* A new page cross-fades in place: its layer doesn't slide from where the old page was scrolled to. */
+/* A page change (the router's transitions are data-transition="page"): the new page doesn't slide from where the
+   old one was scrolled to, and the old one goes at once while the new fades in, so two pages never overlap.
+   List animations (transition() with no kind) keep the plain cross-fade, which is invisible for the page. */
 ::view-transition-group(page) { animation: none; }
+[data-transition="page"]::view-transition-old(page) { display: none; }
+[data-transition="page"]::view-transition-new(page) { animation-duration: 0.15s; }
 /* During a View Transition the page is drawn as its own layer: keep the header above it, painted as it looks
    (its tint over the page color) but without the blur, which a snapshot loses and the page would show through. */
 nav-bar { view-transition-name: site-header; }
 ::view-transition-group(site-header) { z-index: 1; }
+/* It switches at once (the current page's link), instead of showing both states blended. */
+::view-transition-old(site-header) { display: none; }
+::view-transition-new(site-header) { animation: none; }
 :root:active-view-transition nav-bar { background: linear-gradient(var(--glass), var(--glass)) var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -1234,7 +1242,6 @@ th[aria-sort="descending"] .sort::after { content: '↓'; opacity: 1; color: var
 
 /* ---------- Docs (/docs) ---------- */
 .page:has(.docs) { max-width: none; padding: 0; }
-body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 .docs { display: grid; grid-template-columns: 17rem minmax(0, 1fr); align-items: start; }
 .docs-side { position: sticky; top: 3.7rem; height: calc(100dvh - 3.7rem); overflow-y: auto; padding: 1.75rem 1rem 3rem 1.25rem;
   border-right: 1px solid var(--hairline); background: color-mix(in srgb, var(--surface) 55%, var(--bg)); }
@@ -1250,9 +1257,6 @@ body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 .docs-side { view-transition-name: docs-side; }
 ::view-transition-group(docs-side), ::view-transition-new(docs-side) { animation: none; }
 ::view-transition-old(docs-side) { display: none; }
-/* Between docs pages the old page goes at once and the new one fades in: two pages of text never overlap. */
-:root:has(.docs)::view-transition-old(page) { display: none; }
-:root:has(.docs)::view-transition-new(page) { animation-duration: 0.15s; }
 .docs-main { min-width: 0; min-height: calc(100dvh - 3.7rem); display: flex; flex-direction: column; gap: 3rem; padding: 2.75rem clamp(1.25rem, 4vw, 4rem) 0; }
 /* On docs pages the footer is the content column's: it sits at the bottom of the screen, beside the sidebar. */
 body:has(.docs) .site-footer { display: none; }

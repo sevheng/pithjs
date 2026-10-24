@@ -556,6 +556,11 @@ const remove = (id) => transition(() => (todos.value = todos.value.filter((t) =>
 // each row: <li style=${`view-transition-name: todo-${t.id}`}>   (names must be unique on the page)
 ```
 
+`transition(update, kind)` sets `data-transition="<kind>"` on `<html>` while it runs, so CSS can style one
+kind of change. The router's page changes are `'page'`; the starter styles use it so the old page goes at once
+and the new one fades in, while list animations keep a plain cross-fade:
+`[data-transition="page"]::view-transition-old(page) { display: none; }`.
+
 `transition(update)` uses View Transitions when the browser has them and the user hasn't asked for
 reduced motion; otherwise it just runs `update`. `update` always runs exactly once, within 300 ms even if
 the browser holds the transition back (it may in a background tab), so an animation never stops a change.

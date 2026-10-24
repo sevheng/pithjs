@@ -147,6 +147,7 @@ const remove = (id) => transition(() => {
     <h2 id="animation-api">API</h2>
     ${api([
       ['transition(update)', 'Run update as a View Transition when the browser has them and motion isn\'t reduced; else run it now. Runs it exactly once, within 300 ms.'],
+      ['transition(update, kind)', html`The same, with ${c('data-transition="kind"')} on ${c('<html>')} while it runs, for CSS that styles one kind of change. Page changes are ${c("'page'")}.`],
       ['view-transition-name: x', 'CSS: a unique name per row, so the browser can slide it. Set it in an inline style from the row\'s key.'],
       ['@starting-style { … }', 'CSS: where an element\'s transition starts when it first appears.'],
     ])}

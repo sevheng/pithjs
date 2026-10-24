@@ -477,4 +477,37 @@ export default async function (t) {
       await new Promise((r) => setTimeout(r, 50));
       eq(runs, 1);
     }));
+
+  // CSS can tell a page change from a list animation: [data-transition="page"]::view-transition-old(page) …
+  await test('transition: a kind is set on <html> as data-transition while it runs, and removed after', () => {
+    let finish;
+    const finished = new Promise((r) => (finish = r));
+    const seen = [];
+    return withViewTransitions((update) => (seen.push(document.documentElement.dataset.transition), update(), { ...fakeTransition, finished }), false, async () => {
+      transition(() => {}, 'page');
+      eq(seen[0], 'page', 'set before the browser takes its first picture');
+      eq(document.documentElement.dataset.transition, 'page', 'kept while it animates');
+      finish();
+      await until(() => document.documentElement.dataset.transition === undefined);
+      transition(() => {});
+      eq(seen[1], undefined, 'a transition without a kind has none');
+    });
+  });
+
+  await test('router: page changes are transitions of kind "page"', async () => {
+    const kinds = [];
+    await withViewTransitions((update) => (kinds.push(document.documentElement.dataset.transition), update(), fakeTransition), false, async () => {
+      const routes = { [start]: () => html`<p>start</p>`, '/__pith/kind': () => html`<p>kind</p>`, '*': () => 'nf' };
+      const router = createRouter(routes, { prefetch: false });
+      try {
+        root(() => mount(html`<div id="outlet">${router.view}</div>`));
+        router.navigate('/__pith/kind');
+        await until(() => text() === 'kind');
+        eq(kinds.includes('page'), true, `got ${JSON.stringify(kinds)}`);
+      } finally {
+        router.dispose();
+        history.replaceState(null, '', startUrl);
+      }
+    });
+  });
 }
