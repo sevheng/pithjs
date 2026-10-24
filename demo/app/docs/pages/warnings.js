@@ -96,7 +96,7 @@ export default () => html`
   </p>
   ${groups.map(([id, title, rows]) => html`
     <h3 id=${id}>${title}</h3>
-    ${api(rows)}
+    ${api(rows, { head: ['Code', 'Problem and fix'] })}
   `)}
   ${note(html`Don't silence a warning to make the check pass. Each one means something on the page is wrong,
     or will be for some user.`, 'warn')}

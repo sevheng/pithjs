@@ -14,10 +14,11 @@ export const code = (source, { file, label } = {}) => html`
 /**
  * An API table: one row per function, option or property.
  * @param {[string, unknown][]} rows [signature, what it does]
+ * @param {{ head?: [string, string] }} [options] head: the column titles
  */
-export const api = (rows) => html`
+export const api = (rows, { head = ['API', 'What it does'] } = {}) => html`
   <div class="doc-table-wrap"><table class="doc-api">
-    <thead><tr><th scope="col">API</th><th scope="col">What it does</th></tr></thead>
+    <thead><tr><th scope="col">${head[0]}</th><th scope="col">${head[1]}</th></tr></thead>
     <tbody>${rows.map(([sig, what]) => html`<tr><td><code>${sig}</code></td><td>${what}</td></tr>`)}</tbody>
   </table></div>`;
 
