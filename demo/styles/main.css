@@ -1228,6 +1228,9 @@ body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 .docs-side { view-transition-name: docs-side; }
 ::view-transition-group(docs-side), ::view-transition-new(docs-side) { animation: none; }
 ::view-transition-old(docs-side) { display: none; }
+/* Between docs pages the old page goes at once and the new one fades in: two pages of text never overlap. */
+:root:has(.docs)::view-transition-old(page) { display: none; }
+:root:has(.docs)::view-transition-new(page) { animation-duration: 0.15s; }
 .docs-main { min-width: 0; min-height: calc(100dvh - 3.7rem); display: flex; flex-direction: column; gap: 3rem; padding: 2.75rem clamp(1.25rem, 4vw, 4rem) 0; }
 /* On docs pages the footer is the content column's: it sits at the bottom of the screen, beside the sidebar. */
 body:has(.docs) .site-footer { display: none; }
