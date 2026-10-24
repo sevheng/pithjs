@@ -39,6 +39,29 @@ export default async function (t) {
 
   // ---------- optimistic ----------
 
+  // The chat case: a message is on its way (optimistic) when another change is saved locally (a reaction).
+  await test('mutate(fn): changes the confirmed data, and pending optimistic updates stay on top, once', async () => {
+    const r = await loaded([{ id: 1 }]);
+    const save = deferred();
+    const sending = r.optimistic((list) => [...list, { id: 'temp' }], () => save.promise);
+    eq(r.data.value.map((x) => x.id).join(), '1,temp');
+    r.mutate((confirmed) => {
+      eq(confirmed.map((x) => x.id).join(), '1', 'the function gets the confirmed data, without the pending update');
+      return confirmed.map((x) => ({ ...x, liked: true }));
+    });
+    eq(r.data.value.map((x) => x.id).join(), '1,temp', 'the pending update is applied once, on top');
+    eq(r.data.value[0].liked, true);
+    save.resolve();
+    await sending;
+    eq(r.data.value.map((x) => x.id).join(), '1,temp', 'confirmed: still once');
+  });
+
+  await test('mutate(value) still replaces the data', async () => {
+    const r = await loaded([{ id: 1 }]);
+    r.mutate([{ id: 2 }]);
+    eq(r.data.value[0].id, 2);
+  });
+
   await test('optimistic: applies the update at once, keeps it when save resolves undefined', async () => {
     const r = await loaded([{ id: 1, done: false }]);
     const save = deferred();

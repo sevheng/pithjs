@@ -43,6 +43,12 @@ any view a person waits on.
 ## Data and saving
 
 - **Always `resource()` / `paginated()`** for reads, `fetchJSON` for writes, never your own fetch + flags.
+- **Views that change often** (a chat, a live feed, a big list you add to): `res.render(ready)` rebuilds the
+  whole ready view on every data change, losing focus and scroll and costing time per row. Switch on
+  `res.status` (a `computed` phase), keep the list in `repeat()` over a `computed` of `res.data`, and change it
+  with `res.mutate((data) => next)`, which won't repeat a pending `optimistic` update.
+- **Huge lists:** put the newest few hundred on screen and offer "Show older", like a chat; keep row
+  templates inside one element (a `repeat()` row that starts with a hole leaks when removed).
 - **Search and filters live in the URL:** `router.setQuery({ q })`, read `router.query.value.q`, so reload and
   shared links keep them. Signals the fetcher reads re-run it, and the old request is cancelled.
 - **Instant feedback:** `await res.optimistic((data) => next, () => fetchJSON(...))` updates first, rolls back

@@ -165,8 +165,11 @@ html`${users.render((list) => html`<ul>${list.map((u) => html`<li>${u.name}</li>
 // users.render({ loading: () => ..., error: (err, retry) => ..., ready: (list) => ... })
 ```
 Also: `users.loading.value` (true during any request, e.g. an "Updating…" hint), `users.refetch()`,
-`users.mutate(newData)` (after a save). `fetchJSON(url, { json: body })` POSTs JSON and throws
-`HttpError` (with the server's JSON on `err.body`) for non-2xx replies.
+`users.mutate(newData)` (after a save), or `users.mutate((data) => next)` to change the confirmed data
+while an `optimistic` save may be pending (a value built from `users.data.value` would repeat it).
+`fetchJSON(url, { json: body })` POSTs JSON and throws `HttpError` (with the server's JSON on `err.body`).
+`render()` builds its ready view again on every data change; for a view that changes often (a chat, a live
+feed), switch on `users.status.value` and put the list in `repeat()` over a `computed` of `users.data`.
 
 **Long lists load in pages** (don't fetch everything):
 ```js

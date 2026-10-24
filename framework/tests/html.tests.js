@@ -1,11 +1,11 @@
 // html`` tests that need several pieces together. Called by index.html with the shared helpers.
 
-import { html } from '../pith/html.js';
+import { html, repeat } from '../pith/html.js';
 import { signal } from '../pith/signal.js';
 
 /** @param {any} t */
 export default async function (t) {
-  const { test, eq, mount, sandbox } = t;
+  const { test, eq, mount, sandbox, expectWarning, warnings } = t;
 
   // A page (or any template placed by a reactive hole) whose own top-level hole fills in after it's shown:
   // the late content sits next to the template's nodes, not inside them, and must still leave with them.
@@ -35,5 +35,20 @@ export default async function (t) {
     n.value = 2;
     eq(sandbox.querySelector('#count').textContent, '2');
     eq(sandbox.querySelector('#count').firstChild, text, 'the same text node, edited');
+  });
+
+  // A row that starts with (or has at its top level) a hole that fills in later would leave that content
+  // behind when the row is removed: repeat() removes the nodes the row was made of.
+  await test('repeat: warns (W017) about a row with a reactive hole at its top level', () =>
+    expectWarning(/W017.*Wrap the row in one element/, () => {
+      const items = signal([{ id: 1 }]);
+      mount(html`<div>${repeat(items, (i) => i.id, (i) => html`${() => (i.id ? 'day' : null)}<p>row</p>`)}</div>`);
+    }));
+
+  await test('repeat: no W017 for a row inside one element', () => {
+    const before = warnings.length;
+    const items = signal([{ id: 1 }]);
+    mount(html`<div>${repeat(items, (i) => i.id, (i) => html`<div>${() => (i.id ? 'day' : null)}<p>row</p></div>`)}</div>`);
+    eq(warnings.slice(before).filter((w) => /W017/.test(w)).length, 0);
   });
 }

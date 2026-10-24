@@ -101,6 +101,16 @@ Add the field to `initial`, or fix the name: `form({ initial: { email: '' }, val
 **A field helper (`f.input`, `f.textarea`, `f.select`, `f.checkbox`) names a field that isn't in `initial`**,
 so it renders nothing. Add it: `initial: { notes: '' }`.
 
+## W017
+**A `repeat()` row has a reactive `${}` hole at its top level**, outside any element:
+`(i) => html\`${() => i.isNew ? 'New' : null}<p>${i.text}</p>\``. What that hole shows after the row was made
+sits next to the row's own nodes, so it would stay on the page when the row is removed. Wrap the row in one
+element, which most rows are anyway:
+
+```js
+repeat(items, (i) => i.id, (i) => html`<li>${() => (i.isNew ? 'New' : null)}<p>${i.text}</p></li>`)
+```
+
 ## W020
 **Redirects kept going** (more than 10 steps), so the router stopped. A route's `redirect` or the
 `guard` sends a URL to a place that sends it back:

@@ -152,11 +152,13 @@ export function resource(fetcher) {
     /** Run the fetcher again. */
     refetch,
     /**
-     * Replace the data locally, e.g. right after a successful save.
-     * @param {T} value
+     * Replace the data locally, e.g. right after a successful save. Pass a function to change it instead:
+     * it gets the confirmed data (without pending optimistic updates, which stay applied on top), so a
+     * change made while a save is on its way doesn't apply that save twice.
+     * @param {T | ((confirmed: T) => T)} value
      */
     mutate(value) {
-      confirm(value);
+      confirm(typeof value === 'function' ? /** @type {(confirmed: T) => T} */ (value)(/** @type {T} */ (base)) : value);
     },
     /**
      * Show a change before the server confirms it: applies `update(data)` now, then awaits `save()`.

@@ -440,7 +440,19 @@ users.render({ loading: () => ..., error: (err, retry) => ..., ready: (list) => 
 users.loading.value;   // true during any request
 users.refetch();       // run again
 users.mutate(data);    // replace locally
+users.mutate((data) => data.filter((u) => u.id !== id)); // change the confirmed data (see below)
+users.status.value;    // 'loading' | 'error' | 'ready'
 ```
+
+- **`mutate(fn)`** changes the *confirmed* data: pending `optimistic()` updates stay applied on top, once.
+  Use it for any local change that can happen while a save is on its way (a chat message being sent, then a
+  reaction): a value built from `users.data.value` would already contain the pending update, which is then
+  applied again.
+- **`render(ready)` builds the ready view again whenever the data changes.** That's right for most views. For
+  a view that changes often (a chat, a live feed, a big list you `mutate` or `optimistic` a lot), switch on
+  `users.status` instead and keep the list in `repeat()` over a `computed` of `users.data`, so an update
+  patches the list instead of rebuilding it. (The demo chat's #firehose: 100-230 ms per update before,
+  13-21 ms after, with 200-900 rows on screen.)
 
 - Signals the fetcher reads before its first `await` are tracked. When they change, the old request is
   **aborted** and a new one starts. A late reply from an old request is ignored.

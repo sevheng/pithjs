@@ -272,6 +272,10 @@ function bindRepeat(anchor, { items, key, render }) {
           sources.push(oldIndex.get(k));
         } else {
           row = root((dispose) => ({ item, nodes: toNodes(render(item)), dispose }));
+          // A reactive hole at the row's top level leaves a comment marker there; what it adds later sits
+          // next to the row's own nodes, and would stay behind when the row is removed.
+          DEV && row.nodes.some((n) => n.nodeType === Node.COMMENT_NODE) &&
+            warn('W017', 'A repeat() row has a ${} hole that updates at its top level (outside any element): what it shows later would stay behind when the row is removed. Wrap the row in one element: (item) => html`<li>...</li>`.');
           sources.push(-1);
         }
         next.set(k, row);
