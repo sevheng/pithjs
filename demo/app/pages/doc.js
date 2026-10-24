@@ -84,7 +84,7 @@ export default function DocPage({ page = 'introduction' }) {
       </nav>
     </article>
     ${doc.wide ? null : html`
-      <aside class="doc-toc" aria-label="On this page">${() => (toc.value.length > 1 ? html`
+      <aside class="doc-toc scroll-quiet" aria-label="On this page">${() => (toc.value.length > 1 ? html`
         <p class="doc-toc-title" aria-hidden="true">On this page</p>
         <ul>${toc.value.map((t) => html`<li><a href=${`#${t.id}`}
           aria-current=${() => (inView.value === t.id ? 'location' : null)}>${t.text}</a></li>`)}</ul>` : null)}

@@ -11,6 +11,8 @@
   --muted: #6e6e73;          /* secondary text: 4.5:1 or more on --bg and --surface */
   --border: #d2d2d7;
   --hairline: rgb(0 0 0 / 0.08);
+  --scrollbar: rgb(0 0 0 / 0.22);
+  --scrollbar-hover: rgb(0 0 0 / 0.4);
   --fill: rgb(0 0 0 / 0.05);         /* quiet button and control backgrounds */
   --fill-strong: rgb(0 0 0 / 0.09);  /* their hover */
   --accent: #0066cc;         /* links and blue text */
@@ -41,6 +43,8 @@
     --muted: #a1a1a6;
     --border: #3a3a3c;
     --hairline: rgb(255 255 255 / 0.1);
+    --scrollbar: rgb(255 255 255 / 0.24);
+    --scrollbar-hover: rgb(255 255 255 / 0.42);
     --fill: rgb(255 255 255 / 0.08);
     --fill-strong: rgb(255 255 255 / 0.14);
     --accent: #2997ff;
@@ -64,6 +68,8 @@
   --muted: #a1a1a6;
   --border: #3a3a3c;
   --hairline: rgb(255 255 255 / 0.1);
+  --scrollbar: rgb(255 255 255 / 0.24);
+  --scrollbar-hover: rgb(255 255 255 / 0.42);
   --fill: rgb(255 255 255 / 0.08);
   --fill-strong: rgb(255 255 255 / 0.14);
   --accent: #2997ff;
@@ -268,6 +274,22 @@ select.input { cursor: pointer; }
 .pith-toast-close:hover { background: var(--fill); color: var(--text); }
 @keyframes pith-pop { from { opacity: 0; transform: scale(0.96); } }
 @keyframes pith-toast-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+
+/* ---------- Scrollbars ---------- */
+/* Thin and rounded, a soft thumb on a clear track, no arrow buttons, in the theme's colors. Chrome and Safari
+   use ::-webkit-scrollbar (the standard properties would bring back Chrome's arrows); Firefox the standard ones. */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { display: none; }
+::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 999px; background: var(--scrollbar) padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-hover); }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent; }
+  .scroll-quiet { scrollbar-color: color-mix(in srgb, var(--scrollbar) 55%, transparent) transparent; }
+}
+/* A side panel (a sidebar, a list beside the content) gets a lighter one: add .scroll-quiet. */
+.scroll-quiet::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--scrollbar) 55%, transparent); }
+.scroll-quiet::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-hover); }
 
 /* ---------- Motion ---------- */
 @keyframes slide-in { from { opacity: 0; transform: translateY(-4px); } }

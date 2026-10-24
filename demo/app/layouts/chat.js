@@ -11,7 +11,7 @@ export default function ChatLayout(page) {
 
   return html`
     <div class="chat" data-view=${() => (current() ? 'room' : 'list')}>
-      <aside class="chat-rooms" aria-labelledby="rooms-title">
+      <aside class="chat-rooms scroll-quiet" aria-labelledby="rooms-title">
         <h2 id="rooms-title" class="chat-rooms-title">Rooms</h2>
         ${rooms.render({
           loading: () => html`<p class="loading">Loading rooms…</p>`,

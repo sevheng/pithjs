@@ -21,7 +21,7 @@ export default function DocsLayout(page) {
 
   return html`
     <div class="docs">
-      <aside class="docs-side">${nav('Docs')}</aside>
+      <aside class="docs-side scroll-quiet">${nav('Docs')}</aside>
       <details class="docs-menu" @click=${(e) => { if (e.target.closest('a')) e.currentTarget.open = false; }}>
         <summary>Docs menu <span class="muted">· ${() => docByName(current())?.title ?? ''}</span></summary>
         ${nav('Docs (menu)')}

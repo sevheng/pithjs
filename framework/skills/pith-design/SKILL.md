@@ -39,7 +39,8 @@ Everything lives in `styles/main.css`. Reuse before you add.
 - **Classes:** `btn` (`primary`, `ghost`, `danger`: pills), `icon-btn` (round), `card`, `section`, `narrow`, `hero`, `lead`, `muted`,
   `note` (small text that wraps), `small` (short labels; doesn't wrap), `grid`, `row`, `input`, `form`,
   `field-label` / `field-hint` / `field-error`, `form-error`, `empty`, `loading`, `load-error`, `notice`, `chip`,
-  `sr-only`, `status-page`.
+  `sr-only`, `status-page`, `scroll-quiet` (a lighter scrollbar for a sidebar or a side list).
+- **Scrollbars** are styled in the shared block (thin, rounded, themed): don't restyle them per page.
 - **New color?** Add it as a token in `:root`, in the dark block **and** in `[data-theme="dark"]`. Never a raw
   hex in a component.
 - New CSS goes in `styles/main.css` under a `/* ---------- Name ---------- */` heading, using the tokens.
