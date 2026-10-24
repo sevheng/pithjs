@@ -120,6 +120,16 @@ flow('settings: Account needs sign-in; the guard sends you to Profile with a not
   await app.see('Only signed-in visitors get here.');
 });
 
+// Every docs page opens with its title and no warnings (npm run check samples only one /docs/:page URL).
+import { docs, docHref } from '../app/docs/index.js';
+flow('docs: every page opens, with its title in the heading', async (app) => {
+  for (const d of docs) {
+    await app.go(docHref(d.name));
+    await app.waitFor(() => app.query('h1')?.textContent.trim() === d.title && !app.query('.doc-skeleton'),
+      `${docHref(d.name)} should show "${d.title}"`);
+  }
+});
+
 flow('docs: a feature page has its live example and its code', async (app) => {
   await app.go('/docs/forms');
   await app.see('Try it');

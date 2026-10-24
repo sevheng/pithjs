@@ -1238,7 +1238,7 @@ th[aria-sort="descending"] .sort::after { content: '↓'; opacity: 1; color: var
   .docs-menu summary { padding: 0.8rem 1rem; min-height: 44px; font-weight: 600; cursor: pointer; }
   .docs-menu nav { padding: 0 0.5rem 0.75rem; }
   .docs-link { padding: 0.65rem 0.75rem; }
-  .doc-api td:first-child { white-space: normal; }
+  .doc-api { min-width: 34rem; } /* long signatures stay whole; the table scrolls in its box */
 }
 
 /* The bar above an example app: back to its docs */
