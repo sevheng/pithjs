@@ -1,9 +1,10 @@
 ---
 name: pith-design
 description: >
-  Make a Pith page look right: layout, spacing, typography, color, dark theme, phones, polish.
-  Use it for any visual work (a new page's look, "make it look better", restyling, responsive fixes) and to
-  review UI you just built. It requires looking at screenshots of the result before calling it done.
+  Make a Pith page look right and stand out: layout, spacing, typography, color, dark theme, phones, polish,
+  and recipes for impressive touches (featured card, badge, segmented toggle, accent hero, check lists, hover lift).
+  Use it for any visual work (a new page's look, "make it look better", landing or pricing pages, restyling,
+  responsive fixes) and to review UI you just built. It requires looking at screenshots before calling it done.
 ---
 
 # Designing with Pith
@@ -83,11 +84,95 @@ Everything lives in `styles/main.css`. Reuse before you add.
 - Consistent wording: the same thing has the same name everywhere; sentence case on buttons and headings.
 - Icons next to text, not instead of it, unless they have an `aria-label`.
 
+## Make it stand out
+
+Correct is the floor. A page people remember has one clear focal point and one or two details made with care.
+Add these only where the page has a reason for them, using the recipes below (copy them into `styles/main.css`
+the first time a page needs one; they use only the tokens, so dark mode and contrast keep working).
+
+- **One focal point per view:** the thing the page is for (the recommended plan, the main number, the main
+  action) gets the most size, color or depth. Everything else steps back.
+- **Contrast of scale:** a big number or headline next to small, quiet labels reads as designed; everything at
+  the same size reads as a form.
+- **Depth, sparingly:** `--shadow` and a lift on the featured or hovered card; flat everywhere else.
+- **Color with a job:** `--accent` for the one primary action and the focal item; `--accent-soft` for selected
+  and highlighted backgrounds. Never more than one accent hue.
+- **Small moments:** a badge ("Most popular", "Save 20%"), check icons in feature lists, a value that animates
+  when it changes, a hover response on cards. One or two per page, not everywhere.
+- **Limits:** no gradients on text, no more than one background tint per page, motion under 200ms (and off for
+  `prefers-reduced-motion`), no decoration that hides content or moves the layout.
+
+### Self-critique (after the screenshots)
+
+Score the screenshots 1-3 on each, and improve anything under 3 once before you finish:
+- **Focal point:** in one second, is it obvious what this page is for and what to do?
+- **Hierarchy:** do size and weight lead the eye in the right order (h1 → focal item → the rest)?
+- **Rhythm:** consistent spacing and edges; related things grouped; nothing cramped or floating?
+- **Polish:** states, hover, focus, phone and dark all look intended?
+- **Delight:** is there one detail that shows care, without being loud?
+
+### Recipes
+
+**Featured card and badge** (the recommended plan, the main offer):
+```css
+.card.featured { border: 2px solid var(--accent); box-shadow: var(--shadow); position: relative; }
+.badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  background: var(--accent); color: var(--accent-text); }
+.card.featured > .badge { position: absolute; top: -0.75rem; left: 1.25rem; }
+.badge.soft { background: var(--accent-soft); color: var(--text); }
+```
+```js
+html`<article class=${p.popular ? 'card featured' : 'card'}>${p.popular ? html`<span class="badge">Most popular</span>` : null}…</article>`
+```
+
+**Segmented toggle** (2-4 choices that switch a view; buttons with `aria-pressed`, in a labelled group):
+```css
+.segmented { display: inline-flex; padding: 0.25rem; gap: 0.25rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.segmented button { border: 0; border-radius: 999px; padding: 0.45rem 1rem; min-height: 2.5rem; background: none; color: var(--muted); font: inherit; cursor: pointer; }
+.segmented button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
+```
+```js
+html`<div class="segmented" role="group" aria-label="Billing">${['monthly', 'yearly'].map((b) => html`
+  <button type="button" aria-pressed=${() => String(billing.value === b)} @click=${() => (billing.value = b)}>${b === 'monthly' ? 'Monthly' : 'Yearly'}</button>`)}</div>`
+```
+
+**Big value with a quiet unit** (prices, stats; numbers don't jitter when they change):
+```css
+.value { font-size: clamp(2.25rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+.value small { font-size: 1rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+```
+
+**Check list** (what's included; an inline SVG check in the accent color):
+```css
+.check-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.55rem; }
+.check-list li { display: flex; gap: 0.6rem; align-items: flex-start; }
+.check-list svg { flex: none; width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; color: var(--accent); }
+```
+```js
+const check = () => html`<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+html`<ul class="check-list">${items.map((t) => html`<li>${check()}<span>${t}</span></li>`)}</ul>`
+```
+
+**Accent hero** (the top of a landing, pricing or empty page; one tint per page):
+```css
+.hero.tinted { padding: 3rem 1.5rem; margin-top: 1rem; border-radius: calc(var(--radius) * 1.5); text-align: center;
+  background: radial-gradient(ellipse at top, var(--accent-soft), transparent 70%); }
+.hero.tinted .lead { margin-inline: auto; }
+```
+
+**Hover lift** (cards that are clickable or compared side by side):
+```css
+.lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow), 0 8px 24px rgb(0 0 0 / 0.08); }
+@media (prefers-reduced-motion: reduce) { .lift { transition: none; } .lift:hover { transform: none; } }
+```
+
 ## Review checklist
 
 - [ ] Screenshots looked at: desktop, phone, dark (full page)
 - [ ] Matches the pages around it: same widths, spacing, buttons, cards
-- [ ] One primary action; clear hierarchy from `<h1>` down
+- [ ] One primary action; clear hierarchy from `<h1>` down; one focal point
+- [ ] Self-critique scored, and anything under 3 improved once
 - [ ] Nothing cramped, nothing floating far from what it belongs to
 - [ ] Phone: no sideways scroll, readable text, tappable buttons
 - [ ] Dark: nothing invisible, no hard-coded colors
