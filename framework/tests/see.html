@@ -13,6 +13,7 @@
   <pre id="problems"></pre>
   <pre id="layout"></pre>
   <pre id="a11y"></pre>
+  <pre id="height"></pre>
   <script type="module">
     import { createFrame, createApp } from './harness.js';
     import { stateText } from './state.js';
@@ -28,6 +29,7 @@
     document.getElementById('problems').textContent = app.problems.join('\n');
     document.getElementById('layout').textContent = findOverflow(app.document);
     document.getElementById('a11y').textContent = accessibilityProblems(app.document, { contrastOnly: params.has('dark') }).join('\n');
+    document.getElementById('height').textContent = String(app.document.documentElement.scrollHeight); // for see --full
 
     // If the page scrolls sideways, name the innermost elements that stick out past the screen edge.
     function findOverflow(doc) {

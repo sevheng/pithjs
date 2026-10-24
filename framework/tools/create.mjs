@@ -1,6 +1,7 @@
 // pith create <folder>: a new Pith project from template/, ready for npm install.
 //   index.html (import map + preloads), app/ (router, home and not-found pages, nav bar, ui.js),
-//   styles/, tests/flows.js, AGENTS.md (this framework's rules, for AI agents), CLAUDE.md, jsconfig.json.
+//   styles/, tests/flows.js, AGENTS.md (this framework's rules, for AI agents), CLAUDE.md, jsconfig.json, and the
+//   agent skills in .claude/skills/ (pith-frontend, pith-design: loaded only for UI work).
 // package.json lists pithjs as a dev dependency: this version when Pith is installed from npm, or a link to
 // this folder (file:...) when it runs from a checkout of the Pith repo.
 
@@ -29,6 +30,7 @@ export function createProject(dir) {
   cpSync(template, dir, { recursive: true });
   renameSync(join(dir, 'gitignore'), join(dir, '.gitignore')); // npm drops .gitignore files from packages
   cpSync(join(framework, 'AGENTS.md'), join(dir, 'AGENTS.md'));
+  cpSync(join(framework, 'skills'), join(dir, '.claude', 'skills'), { recursive: true });
   const fill = (path) => {
     const text = readFileSync(path, 'utf8');
     if (text.includes('__APP_NAME__')) writeFileSync(path, text.replaceAll('__APP_NAME__', title(name)));

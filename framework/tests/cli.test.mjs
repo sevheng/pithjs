@@ -14,7 +14,7 @@ test('package.json makes the framework the pithjs package, with the pith command
   assert.equal(pkg.bin.pith, 'tools/cli.mjs');
   assert.equal(pkg.exports['.'], './pith/index.js');
   assert.equal(pkg.exports['./testing'], './tests/harness.js');
-  for (const dir of ['pith', 'tools', 'tests', 'docs', 'template', 'AGENTS.md']) assert.ok(pkg.files.includes(dir), `files misses ${dir}`);
+  for (const dir of ['pith', 'tools', 'tests', 'docs', 'template', 'skills', 'AGENTS.md']) assert.ok(pkg.files.includes(dir), `files misses ${dir}`);
   assert.match(readFileSync(cli, 'utf8'), /^#!\/usr\/bin\/env node\n/);
 });
 

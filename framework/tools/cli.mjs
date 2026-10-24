@@ -14,7 +14,7 @@ const COMMANDS = {
   build: ['build.mjs', [], 'pith build                production build into dist/, with prerendered pages (needs vite)'],
   preview: ['dev-server.mjs', ['--dist'], 'pith preview              serve the built dist/'],
   check: ['check.mjs', [], 'pith check [--build] [--browsers] [--json]   tests, flows, every route, a11y, types, size'],
-  see: ['see.mjs', [], 'pith see /path [--mobile] [--state]          a page as a text outline + a screenshot'],
+  see: ['see.mjs', [], 'pith see /path [--mobile] [--dark] [--full] [--state]   a page as text + a screenshot'],
   new: ['new.mjs', [], 'pith new page <name> [--nav] | component <tag-name>'],
   release: ['release.mjs', [], 'pith release              rebuild pith/pith.min.js (after changing the framework)'],
 };

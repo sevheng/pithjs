@@ -20,6 +20,8 @@ tests/       framework tests, the test harness ('pith/testing'), and the pages c
 template/    the starter project `pith create` copies
 docs/        errors.md: every warning and error code with its fix
 AGENTS.md    how to build a Pith app, for AI agents (and people): every new project gets a copy
+skills/      agent skills for UI work (pith-frontend: every state of a view; pith-design: the look, checked
+             by screenshots). Every new project gets them in .claude/skills/
 CONTRIBUTING.md  how to change the framework itself
 ```
 
@@ -37,8 +39,8 @@ npm install                          # Pith's tools (pithjs) and Vite: the two d
 npm run check                        # a new project prints "All good"
 ```
 
-It writes `index.html` (import map and preloads), `app/` (router, home and not-found pages, nav bar, `ui.js`),
-`styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
+It writes `index.html` (import map and preloads), `app/` (router, home, 404 and error pages, nav bar, `ui.js`),
+`.claude/skills/` (the `pith-frontend` and `pith-design` agent skills, from `skills/`), `styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
 `pithjs` (from this repo, linked as `file:...`) and calls the `pith` command:
 
 ```json

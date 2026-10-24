@@ -31,6 +31,7 @@ fails above it. Dev-only code (warnings, the state registry) is behind `DEV` and
 | `tools/` | the `pith` command (`cli.mjs`) and every tool: check, see, new, create, dev, build, prerender, release |
 | `tests/` | `index.html` + `*.tests.js` (browser), `*.test.mjs` (Node), the flow harness, `a11y.js` |
 | `template/` | the starter project `pith create` copies |
+| `skills/` | the agent skills `pith create` copies to `.claude/skills/` (also in `../demo/.claude/skills/`) |
 | `docs/errors.md` | every `W…`/`E…` code with its cause and fix |
 
 ## The loop
@@ -49,7 +50,8 @@ fails above it. Dev-only code (warnings, the state registry) is behind `DEV` and
    Keep a change only if its target gets faster and nothing else gets more than 5% slower.
 7. **Docs:** the API in `README.md`. App rules in `AGENTS.md`, then copy it over the top of
    `../demo/AGENTS.md` (a test checks they match). Every new project copies `AGENTS.md`, so keep it short:
-   every line costs every agent tokens.
+   every line costs every agent tokens. UI guidance goes in `skills/` instead (loaded only for UI work);
+   copy changed skills to `../demo/.claude/skills/` too (a test checks).
 
 ## Don't
 

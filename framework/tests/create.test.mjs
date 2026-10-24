@@ -7,6 +7,7 @@ import { createProject } from '../tools/create.mjs';
 import { checkPreloads } from '../tools/preloads.mjs';
 
 const framework = join(import.meta.dirname, '..');
+const SKILLS = ['pith-frontend', 'pith-design'];
 const read = (...p) => readFileSync(join(...p), 'utf8');
 const filesIn = (dir, base = dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
   e.isDirectory() ? filesIn(join(dir, e.name), base) : [join(dir, e.name).slice(base.length + 1)]);
@@ -37,6 +38,9 @@ test('createProject writes a working starter project, named after its folder', (
 
   assert.equal(read(dir, 'AGENTS.md'), read(framework, 'AGENTS.md'), 'AGENTS.md is the framework\'s copy');
   assert.equal(read(dir, 'CLAUDE.md'), '@AGENTS.md\n');
+  for (const skill of SKILLS) {
+    assert.equal(read(dir, '.claude', 'skills', skill, 'SKILL.md'), read(framework, 'skills', skill, 'SKILL.md'), `${skill} is copied`);
+  }
   assert.deepEqual(checkPreloads({ root: dir }), { missing: [], unused: [] });
 });
 
@@ -49,6 +53,21 @@ test('createProject refuses a folder that already has files', (t) => {
   mkdirSync(join(dir, 'empty'));
   createProject(join(dir, 'empty'));
   assert.ok(existsSync(join(dir, 'empty', 'index.html')));
+});
+
+test('each skill has a name and a description that says when to use it', () => {
+  for (const skill of SKILLS) {
+    const text = read(framework, 'skills', skill, 'SKILL.md');
+    assert.match(text, new RegExp(`^---\\nname: ${skill}\\ndescription: >\\n[\\s\\S]+?\\n---\\n`), `${skill}: frontmatter`);
+  }
+});
+
+test("the demo's skills are the framework's", (t) => {
+  if (!existsSync(join(framework, '..', 'demo'))) return t.skip('no ../demo next to the framework');
+  for (const skill of SKILLS) {
+    assert.equal(read(framework, '..', 'demo', '.claude', 'skills', skill, 'SKILL.md'), read(framework, 'skills', skill, 'SKILL.md'),
+      `demo/.claude/skills/${skill} differs from framework/skills/${skill}: copy it over`);
+  }
 });
 
 test("the demo's AGENTS.md is the framework's, plus a section about the demo", (t) => {

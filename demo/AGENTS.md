@@ -13,7 +13,13 @@ Requires Node 24+ and Chrome/Chromium for checks.
 3. To see a page, run `npm run see /path`. It prints the page as a text outline and saves a screenshot you can open.
    Add `-- --state` to also print what the route, stores, page and each component hold (by variable name).
    A failing flow prints that state too, under the page outline: read it before changing code.
+   `-- --mobile`, `--dark` and `--full` (the whole page) take the other screenshots a design review needs.
 4. Done only when `npm run check` prints **All good**. Never claim something works without that.
+
+**UI work** (pages, components, forms, anything a person sees): follow the two skills in `.claude/skills/`:
+`pith-frontend` (every state of a view, and which Pith tool handles it) and `pith-design` (layout, the design
+system, and looking at screenshots before you're done). Claude Code loads them by itself; other agents: read
+those `SKILL.md` files before starting UI work.
 
 `npm run check -- --json` gives the same result as JSON.
 
