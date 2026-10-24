@@ -230,7 +230,7 @@ Changing `selected` re-runs only the two rows whose answer changed, not every ro
 ### Templates
 
 ```js
-import { html, repeat } from 'pith';
+import { html, svg, repeat } from 'pith';
 
 html`
   <p>${name}</p>                       <!-- text, always escaped -->
@@ -246,6 +246,11 @@ html`
 
 An attribute hole must be the whole value: `class=${x}`, not `class="a ${x}"`
 (build the string in JS instead: ``class=${`a ${x}`}``).
+
+**SVG.** Markup inside one `` html`<svg>...</svg>` `` is SVG. A piece of an SVG built in its own template (a
+list of labels, a crosshair) uses `svg` instead of `html`, so its `<text>`, `<path>` and `<g>` are SVG elements
+(as html it would be parsed as unknown HTML tags that never show):
+``html`<svg viewBox="0 0 100 50">${ticks.map((t) => svg`<text x=${t.x} y="48">${t.label}</text>`)}</svg>` ``.
 
 **Lists.** `repeat(items, key, row)` keeps each row's DOM while its key stays, and moves rows instead of
 rebuilding them. A row is built once from its item, so an item replaced by a new object

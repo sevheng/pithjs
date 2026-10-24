@@ -1,4 +1,4 @@
-import { html, signal, onCleanup } from 'pith';
+import { html, svg, signal, onCleanup } from 'pith';
 import { money, compactMoney, count, day, weekday, niceTicks } from './format.js';
 
 // Two small inline-SVG charts. Each is drawn at the pixel width of its box (measured with a ResizeObserver),
@@ -7,8 +7,7 @@ import { money, compactMoney, count, day, weekday, niceTicks } from './format.js
 // (a tooltip on the line; on the bars, which are labelled already, the channel's share next to its name);
 // a screen reader hears it through a live region, and "Show the numbers" opens every value as a table.
 //
-// SVG pieces built in their own html`` (a list of labels, the crosshair) are wrapped in a nested
-// <svg overflow="visible">: a template is parsed as HTML, and only inside <svg> do <text> and <path> become SVG.
+// SVG pieces built on their own (a list of labels, the crosshair) use svg``, so <text> and <path> are SVG.
 
 // Until the box has been measured (a frame later), charts draw at this width, scaled to fit the box.
 const FALLBACK = 480;
@@ -92,15 +91,15 @@ export function revenueChart(points, period) {
         <path class="chart-area" d=${area}/>
         <path class="chart-line" d=${line}/>
         <path class="chart-axis" d=${`M${PAD.left} ${y(0)}H${w - PAD.right}`}/>
-        ${ticks.map((t) => html`<svg overflow="visible"><text class="chart-tick" x=${PAD.left - 10} y=${y(t)} text-anchor="end" dominant-baseline="middle">${compactMoney(t)}</text></svg>`)}
-        ${at.map((i) => html`<svg overflow="visible"><text class="chart-tick" x=${x(i)} y=${H - 8}
-          text-anchor=${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}>${day(points[i].date)}</text></svg>`)}
+        ${ticks.map((t) => svg`<text class="chart-tick" x=${PAD.left - 10} y=${y(t)} text-anchor="end" dominant-baseline="middle">${compactMoney(t)}</text>`)}
+        ${at.map((i) => svg`<text class="chart-tick" x=${x(i)} y=${H - 8}
+          text-anchor=${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}>${day(points[i].date)}</text>`)}
         ${() => {
           const i = active.value;
           if (i === null) return null;
-          return html`<svg overflow="visible">
+          return svg`
             <path class="chart-cross" d=${`M${x(i).toFixed(1)} ${PAD.top}V${y(0)}`}/>
-            <circle class="chart-dot" cx=${x(i)} cy=${y(points[i].value)} r="5"/></svg>`;
+            <circle class="chart-dot" cx=${x(i)} cy=${y(points[i].value)} r="5"/>`;
         }}
       </svg>
       ${() => {
@@ -171,17 +170,17 @@ export function channelChart(channels, period) {
     return html`
       <svg class="chart-svg" width=${fit ? '100%' : w} height=${fit ? '100%' : height} viewBox=${`0 0 ${w} ${height}`} role="img" aria-label=${summary}>
         <path class="chart-grid" d=${grid}/>
-        ${rows.map((c, i) => html`<svg overflow="visible">
+        ${rows.map((c, i) => svg`
           <g class=${() => (active.value === null ? 'chart-bar' : active.value === i ? 'chart-bar on' : 'chart-bar off')}
              @pointerenter=${() => (active.value = i)}>
             <rect class="chart-hit" x="0" y=${i * ROW} width=${w} height=${ROW}/>
             <text class="chart-label" x="0" y=${i * ROW + 15}>${() => (active.value === i ? `${c.name} · ${share(c.orders)} of orders` : c.name)}</text>
             <path class="chart-fill" d=${bar(i * ROW + 25, Math.max(2, len(c.orders)))}/>
             <text class="chart-value" x=${Math.max(2, len(c.orders)) + 8} y=${i * ROW + 25 + BAR / 2} dominant-baseline="middle">${count(c.orders)}</text>
-          </g></svg>`)}
+          </g>`)}
         <path class="chart-axis" d=${`M0.5 0V${n * ROW}`}/>
-        ${ticks.map((t, k) => html`<svg overflow="visible"><text class="chart-tick" x=${len(t)} y=${height - 4}
-          text-anchor=${k === 0 ? 'start' : 'middle'}>${count(t)}</text></svg>`)}
+        ${ticks.map((t, k) => svg`<text class="chart-tick" x=${len(t)} y=${height - 4}
+          text-anchor=${k === 0 ? 'start' : 'middle'}>${count(t)}</text>`)}
       </svg>`;
   };
 

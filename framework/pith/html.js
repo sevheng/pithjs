@@ -59,6 +59,18 @@ export function html(strings, ...values) {
 }
 
 /**
+ * Like html``, for pieces of an <svg> built on their own (labels, a crosshair): parsed inside <svg>, so
+ * <text>, <path> and <g> become SVG elements. Use it inside an html`<svg>...</svg>`.
+ * @param {TemplateStringsArray} strings
+ * @param {...unknown} values
+ * @returns {DocumentFragment}
+ */
+export function svg(strings, ...values) {
+  if (!templates.has(strings)) templates.set(strings, compile(strings, true));
+  return html(strings, ...values);
+}
+
+/**
  * Keyed list: rows are reused by key, only changed rows are re-rendered.
  * Must be the whole ${} hole: <ul>${repeat(items, (t) => t.id, (t) => html`<li>...</li>`)}</ul>
  * @template T
@@ -70,7 +82,7 @@ export function repeat(items, key, render) {
   return { [REPEAT]: true, items, key, render };
 }
 
-function compile(strings) {
+function compile(strings, inSvg) {
   let markup = '';
   let skipQuote = '';
   for (let i = 0; i < strings.length; i++) {
@@ -97,7 +109,9 @@ function compile(strings) {
     }
   }
   const tpl = document.createElement('template');
-  tpl.innerHTML = markup;
+  tpl.innerHTML = inSvg ? `<svg>${markup}</svg>` : markup;
+  // svg``: parsed inside <svg> (so its tags are SVG), then the wrapper is dropped.
+  if (inSvg) tpl.content.firstChild.replaceWith(...tpl.content.firstChild.childNodes);
   dropInvisibleWhitespace(tpl.content);
 
   // Find each hole's node once. Every hole must survive parsing as a marker: inside <textarea>,

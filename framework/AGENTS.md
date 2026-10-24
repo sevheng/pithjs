@@ -296,6 +296,7 @@ A page for an unknown id should still render an `<h1>` (e.g. "No such person") o
 | `${value}` | text (always escaped, safe for user input) |
 | `${signal}` / `${() => expr}` | text or HTML that updates in place |
 | `${html`...`}` / `${[a, b]}` | nested template / list of nodes |
+| `${svg`<text>…</text>`}` | a nested piece of an `<svg>` (`html` would make it HTML, which never shows) |
 | `name=${v}` | attribute (`null`/`false` removes it) |
 | `?disabled=${v}` | boolean attribute |
 | `.value=${v}` | DOM property (use for input values, `.checked`) |

@@ -1,6 +1,6 @@
 // html`` tests that need several pieces together. Called by index.html with the shared helpers.
 
-import { html, repeat } from '../pith/html.js';
+import { html, svg, repeat } from '../pith/html.js';
 import { signal } from '../pith/signal.js';
 
 /** @param {any} t */
@@ -50,5 +50,24 @@ export default async function (t) {
     const items = signal([{ id: 1 }]);
     mount(html`<div>${repeat(items, (i) => i.id, (i) => html`<div>${() => (i.id ? 'day' : null)}<p>row</p></div>`)}</div>`);
     eq(warnings.slice(before).filter((w) => /W017/.test(w)).length, 0);
+  });
+
+  await test('svg: pieces built on their own are SVG elements, with holes, inside an <svg>', () => {
+    const y = signal(10);
+    const ticks = [1, 2];
+    mount(html`<svg id="chart" viewBox="0 0 100 100">${ticks.map((t) => svg`<text class="tick" x=${t} y=${y}>${t}</text>`)}
+      ${() => svg`<g class="cross"><path d=${`M${y.value} 0`}/><circle r="2"/></g>`}</svg>`);
+    const chart = sandbox.querySelector('#chart');
+    const NS = 'http://www.w3.org/2000/svg';
+    const texts = chart.querySelectorAll('text.tick');
+    eq(texts.length, 2);
+    eq(texts[0].namespaceURI, NS);
+    eq(texts[1].textContent, '2');
+    eq(texts[0].getAttribute('y'), '10');
+    eq(chart.querySelector('g.cross path').namespaceURI, NS);
+    eq(chart.querySelector('g.cross').parentNode, chart); // no wrapper element
+    y.value = 20;
+    eq(texts[0].getAttribute('y'), '20');
+    eq(chart.querySelector('g.cross path').getAttribute('d'), 'M20 0');
   });
 }
