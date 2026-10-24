@@ -46,6 +46,11 @@ const PATHS = {
   truck: 'M3 6h11v10H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
   leaf: 'M5 19C5 10 10 5 20 4c-1 10-6 15-15 15zM5 19l8-8',
   // ---------- end Shop ----------
+  // ---------- Spreadsheet (/sheet) ----------
+  sheet: 'M4 4h16v16H4zM4 9h16M4 14h16M9 4v16',
+  undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
+  // ---------- end Spreadsheet ----------
 };
 
 /** @param {string} name one of the names above @param {string} [className] */

@@ -8,6 +8,10 @@ const ORDER = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Trading',
   'Shop', // Shop (/shop)
 ];
 
+// ---------- Spreadsheet (/sheet) ----------
+ORDER.push('Spreadsheet');
+// ---------- end Spreadsheet ----------
+
 export default () => html`
   <p>Each example is a complete app in this demo: its own pages, a fake backend in <code>api/</code>, and user
     flows in <code>tests/flows.js</code> that <code>npm run check</code> runs. Every state is handled (loading,

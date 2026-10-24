@@ -24,17 +24,23 @@ const pending = new Set();
  * A reactive value. Reading .value inside an effect/template subscribes; writing notifies.
  * @template T
  * @param {T} initial
+ * @param {any} [subscribers] internal: computed() keeps its own set, to give it a level
  * @returns {Signal<T>}
  */
-export function signal(initial) {
+export function signal(initial, subscribers = new Set()) {
   if (DEV && recording()) return record('signal', silently(() => signal(initial)));
   let value = initial;
-  const subscribers = new Set();
   return mark({
     get value() {
+      // Levels keep updates in order: an effect sits one above the deepest computed it read (a plain
+      // signal has none), and a nested effect starts above its parent. A flush runs the lowest level
+      // first, so a value is computed once, after everything it reads (no half-updated reads, no
+      // repeats), and a parent goes before the children it may remove. Nothing recurses, so a chain
+      // of computeds can be any length.
       if (currentEffect) {
         subscribers.add(currentEffect);
         currentEffect.deps.add(subscribers);
+        if (subscribers.lv >= currentEffect.lv) currentEffect.lv = subscribers.lv + 1;
       }
       return value;
     },
@@ -56,8 +62,13 @@ export function signal(initial) {
  */
 export function computed(fn) {
   if (DEV && recording()) return record('computed', silently(() => computed(fn)));
-  const s = signal(undefined);
-  effect(() => { s.value = fn(); });
+  /** @type {any} */
+  const subs = new Set();
+  const s = signal(undefined, subs);
+  effect(() => {
+    s.value = fn();
+    subs.lv = currentEffect.lv; // its readers sit above it
+  });
   return mark({
     get value() { return s.value; },
     peek: () => s.peek(),
@@ -70,7 +81,8 @@ export function computed(fn) {
  * @returns {() => void} dispose
  */
 export function effect(fn) {
-  const e = { deps: new Set(), children: [], cleanup: null, disposed: false, run, handler: currentHandler };
+  // lv: its level (see signal). It only goes up, which keeps it above everything it ever read.
+  const e = { deps: new Set(), children: [], cleanup: null, disposed: false, run, handler: currentHandler, lv: currentEffect ? currentEffect.lv + 1 : 0 };
 
   function run() {
     if (e.disposed) return;
@@ -119,16 +131,21 @@ function reset(e) {
 function flush() {
   if (flushing) return;
   flushing = true;
-  let rounds = 0;
+  let rounds = 0, last;
   try {
     while (pending.size) {
-      if (++rounds > 1000) {
+      let min = Infinity, queue;
+      for (const e of pending) {
+        if (e.lv < min) (min = e.lv), (queue = [e]);
+        else if (e.lv <= min) queue.push(e);
+      }
+      // In order, the levels only go up. Effects that keep sending it back down are updating each other.
+      if (min <= last && ++rounds > 1000) {
         pending.clear();
         throw error('E003', 'Effects kept updating each other (infinite loop?). An effect probably writes a signal it also reads.');
       }
-      const queue = [...pending];
-      pending.clear();
-      for (const e of queue) e.run();
+      last = min;
+      for (const e of queue) pending.delete(e), e.run();
     }
   } finally {
     flushing = false;

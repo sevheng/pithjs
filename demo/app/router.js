@@ -69,6 +69,9 @@ export const router = createRouter(
     '/settings/appearance': { redirect: '/shop/account/appearance' },
     '/settings/account': { redirect: '/shop/account/orders' },
     // ---------- end Shop ----------
+    // ---------- Spreadsheet (/sheet) ----------
+    '/sheet': { title: 'Spreadsheet', load: () => import('./pages/sheet.js') },
+    // ---------- end Spreadsheet ----------
     // Older URLs of this demo: the feature pages, the examples hub and the benchmarks moved into the docs.
     '/features': { redirect: '/docs' },
     '/features/:name': { redirect: ({ name }) => `/docs/${name}` },

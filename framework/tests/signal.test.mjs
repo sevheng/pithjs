@@ -85,6 +85,73 @@ test('effects that update each other forever throw instead of hanging', () => {
   }, /infinite loop/);
 });
 
+// A spreadsheet's running total: each value depends on the one before it (the Spreadsheet example).
+function chain(n) {
+  const head = signal(1);
+  const links = [];
+  let runs = 0;
+  let prev = head;
+  for (let i = 0; i < n; i++) {
+    const p = prev;
+    prev = computed(() => (runs++, p.value + 1));
+    links.push(prev);
+  }
+  return { head, links, runs: () => runs };
+}
+
+test('a 5,000-deep chain of computeds updates, each link once, without the infinite-loop error', () => {
+  const c = chain(5000);
+  const before = c.runs();
+  c.head.value = 2;
+  assert.equal(c.links[4999].value, 5002);
+  assert.equal(c.runs() - before, 5000);
+});
+
+test('a computed that reads every link of a chain runs once per change, and never sees half an update', () => {
+  const c = chain(1000);
+  const seen = [];
+  const sum = computed(() => {
+    const total = c.links.reduce((s, l) => s + l.value, 0);
+    seen.push(total);
+    return total;
+  });
+  seen.length = 0;
+  c.head.value = 2;
+  assert.deepEqual(seen, [sum.value]);
+  assert.equal(sum.value, (1000 * 1001) / 2 + 1000 * 2);
+});
+
+test('a diamond (e reads a and twice, twice reads a) computes e once, with both sides new', () => {
+  const a = signal(1);
+  const seen = [];
+  const twice = computed(() => a.value * 2);
+  const e = computed(() => (seen.push([a.value, twice.value]), a.value + twice.value));
+  seen.length = 0;
+  a.value = 2;
+  assert.equal(e.value, 6);
+  assert.deepEqual(seen, [[2, 4]]);
+});
+
+test('an effect nested in another runs after its parent, so a parent that removes it goes first', () => {
+  const user = signal(/** @type {{ name: string } | null} */ ({ name: 'Ann' }));
+  const signedIn = computed(() => user.value !== null);
+  const names = [];
+  effect(() => {
+    if (signedIn.value) effect(() => names.push(/** @type {{ name: string }} */ (user.value).name));
+  });
+  assert.doesNotThrow(() => { user.value = null; });
+  assert.deepEqual(names, ['Ann']);
+});
+
+test('effects that ping-pong forever still throw E003', () => {
+  const a = signal(0);
+  const b = signal(0);
+  effect(() => { b.value = a.value + 1; });
+  assert.throws(() => {
+    root(() => effect(() => { a.value = b.value + 1; }));
+  }, /infinite loop/);
+});
+
 test('catchError sends a synchronous throw to the handler', () => {
   const caught = [];
   const result = catchError(() => { throw new Error('boom'); }, (err) => caught.push(err.message));

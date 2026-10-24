@@ -84,6 +84,10 @@ export const sections = [
       { name: 'shop', title: 'Shop', app: 'Shop', summary: 'A storefront: prerendered product pages, a saved cart, a three-step checkout and an account.',
         load: () => import('./pages/shop.js') },
       // ---------- end Shop ----------
+      // ---------- Spreadsheet (/sheet) ----------
+      { name: 'spreadsheet', title: 'Spreadsheet', app: 'Spreadsheet', summary: 'A 1,000-row sheet of formulas: the stress test for signals, timed in the page.',
+        load: () => import('./pages/spreadsheet.js') },
+      // ---------- end Spreadsheet ----------
     ],
   },
   {

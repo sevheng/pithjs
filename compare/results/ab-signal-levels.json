@@ -1,0 +1,38 @@
+{
+  "create 1,000 rows": {
+    "before": 46.599999999999994,
+    "after": 46.6
+  },
+  "replace 1,000 rows": {
+    "before": 53.5,
+    "after": 53.6
+  },
+  "update every 10th row": {
+    "before": 17.25,
+    "after": 17.25
+  },
+  "select a row": {
+    "before": 0.3,
+    "after": 0.35
+  },
+  "swap two rows": {
+    "before": 5.2,
+    "after": 5.2
+  },
+  "remove a row": {
+    "before": 4.5,
+    "after": 4.5
+  },
+  "create 10,000 rows": {
+    "before": 570.55,
+    "after": 569.6500000000001
+  },
+  "append 1,000 rows": {
+    "before": 57.2,
+    "after": 56.900000000000006
+  },
+  "clear 1,000 rows": {
+    "before": 6.199999999999999,
+    "after": 6.3
+  }
+}

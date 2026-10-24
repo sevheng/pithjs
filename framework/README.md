@@ -215,6 +215,8 @@ batch(() => { a.value = 1; b.value = 2; }); // effects run once
 ```
 
 `effect` returns a dispose function, and can return a cleanup function itself.
+A change runs each affected computed and effect once, after everything it reads (so none sees half an update),
+and a chain of computeds can be any length (a spreadsheet's running total, 1,000 cells deep, is fine).
 `untrack(fn)` reads without subscribing; `root(fn)` creates an ownership scope you dispose manually.
 `catchError(fn, handler)` runs fn in a scope; errors thrown in it, or later in effects/computeds made inside it,
 go to `handler(err)` instead of throwing.

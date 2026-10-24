@@ -366,6 +366,8 @@ The site is **Home** (`/`, the landing page) and **Docs** (`/docs`, `/docs/<page
   Inbox (`/inbox/:folder`, `api/inbox.mjs`), Kanban (`/kanban`, a persisted store), Dashboard (`/dashboard`,
   `api/dashboard.mjs`), Trading (`/trade/:symbol`, `api/trade.mjs` + a feed simulated in `app/trade/feed.js`) and Shop (`/shop`, `api/shop.mjs`: prerendered product pages, a saved cart, a checkout, and an
   account area with a layout and a sign-in guard, which took over the old Settings example: `/settings/*` redirects there). `app/apps.js` lists them.
+- Spreadsheet (`/sheet`), the stress test for signals: formulas in `app/sheet/formula.js` (pure, Node tests in
+  `tests/sheet.test.mjs`), cells as signals and computeds in `app/sheet/model.js`, the windowed grid in `app/sheet/grid.js`.
 - Benchmarks (`/docs/benchmarks`) read `app/data/benchmarks.js`, written by `npm run benchmarks` from
   `../compare/results/measure.json`.
 - Older URLs (`/features/...`, `/examples`, `/benchmarks`, `/todos`, `/about`) redirect into the docs.

@@ -15,6 +15,10 @@ const previews = {
   // ---------- Shop (/shop) ----------
   Shop: () => html`<div class="mini mini-shop" aria-hidden="true">${[0, 1, 2].map(() => html`<i><b></b><s></s></i>`)}</div>`,
   // ---------- end Shop ----------
+  // ---------- Spreadsheet (/sheet) ----------
+  Spreadsheet: () => html`<div class="mini mini-sheet" aria-hidden="true">
+    ${[0, 1, 2, 3, 4].map((r) => html`<i class=${r === 2 ? 'row on' : 'row'}>${[0, 1, 2, 3].map((c) => html`<b class=${r === 2 && c === 2 ? 'cell on' : 'cell'}></b>`)}</i>`)}</div>`,
+  // ---------- end Spreadsheet ----------
 };
 
 /** The drawing for an app in app/apps.js, by name. */

@@ -1938,3 +1938,69 @@ account-context, account-greeting, account-profile { display: block; }
 }
 @keyframes cart-up { from { opacity: 0; transform: translateY(32px); } }
 /* ---------- end Shop ---------- */
+
+/* ---------- Spreadsheet (/sheet) ---------- */
+.page:has(.sheet) { max-width: 1440px; }
+.sheet { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; padding-top: 1rem; }
+.sheet-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; padding: 1rem 1.25rem; }
+.sheet-title h1 { font-size: 1.6rem; margin: 0; letter-spacing: -0.02em; line-height: 1.1; }
+.sheet-title .eyebrow { margin: 0 0 0.15rem; }
+.sheet-tools { display: flex; align-items: center; gap: 0.35rem; }
+.sheet-stress { flex: 1 1 27rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 0.75rem; }
+.sheet-stress .segmented button { min-height: 44px; padding-inline: 0.85rem; }
+.sheet-readout { flex-basis: 100%; margin: 0; min-height: 1.4em; text-align: right; font-variant-numeric: tabular-nums; }
+/* The formula bar: the active cell's name, then what's typed in it */
+.sheet-formula { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.6rem; }
+.sheet-name { min-width: 3.75rem; padding: 0.4rem 0.6rem; border-radius: 8px; background: var(--fill); color: var(--accent);
+  font: 650 0.9rem var(--mono); text-align: center; }
+.sheet-fx { color: var(--muted); font-style: italic; font-weight: 650; }
+.sheet-formula .input { flex: 1; max-width: none; min-width: 0; font-family: var(--mono); font-size: 0.92rem; }
+.sheet-empty { margin: 0; }
+/* The grid, in its own scroll box. Rows are absolutely placed at index × 32px (app/sheet/grid.js); the column
+   letters stick to the top and the row numbers to the left, over the cells. */
+.sheet-frame { padding: 0; overflow: hidden; }
+.sheet-frame:has(.sheet-grid:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sheet-scroll { height: calc(100dvh - 20rem); min-height: 22rem; overflow: auto; overscroll-behavior: contain; }
+.sheet-grid { position: relative; font-size: 0.88rem; font-variant-numeric: tabular-nums; outline: none; user-select: none; -webkit-user-select: none; }
+.sheet-row { display: grid; grid-template-columns: 52px repeat(26, 112px); height: 32px; }
+.sheet-head { position: sticky; top: 0; z-index: 3; }
+.sheet-body { position: relative; }
+.sheet-body .sheet-row { position: absolute; left: 0; right: 0; }
+.sheet-ch, .sheet-corner, .sheet-rh { display: flex; align-items: center; justify-content: center; background: var(--surface-2);
+  color: var(--muted); font-size: 0.78rem; font-weight: 600; border-right: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.sheet-corner { position: sticky; left: 0; z-index: 1; }
+.sheet-rh { position: sticky; left: 0; z-index: 2; }
+.sheet-ch.on, .sheet-rh.on { background: var(--accent-soft); color: var(--accent); }
+.sheet-cell { padding: 0 0.5rem; line-height: 31px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: cell;
+  border-right: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.sheet-cell.num { text-align: right; }
+.sheet-cell.bool { text-align: center; }
+.sheet-cell.err { color: var(--danger); font-weight: 600; }
+/* The selection: one box over the cells, and the active cell's border */
+.sheet-range { position: absolute; z-index: 1; pointer-events: none; background: color-mix(in srgb, var(--accent-fill) 12%, transparent); }
+.sheet-range.single { background: none; }
+.sheet-active { position: absolute; z-index: 1; pointer-events: none; border: 2px solid var(--accent-fill); border-radius: 3px; }
+.sheet-editor { position: absolute; z-index: 1; height: 32px; padding: 0 0.45rem; border: 2px solid var(--accent-fill); border-radius: 3px;
+  background: var(--surface); color: var(--text); font: 0.88rem var(--mono); outline: none; box-shadow: var(--shadow-lift);
+  user-select: text; -webkit-user-select: text; }
+.sheet-help { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; }
+.sheet-help [role="status"] { color: var(--text); font-weight: 600; }
+.sheet-help [role="status"]:empty { display: none; }
+@media (max-width: 700px) {
+  .sheet-stress { margin-left: 0; justify-content: flex-start; }
+  .sheet-readout { text-align: left; }
+  .sheet-scroll { height: 60dvh; }
+}
+/* Its tile: a small grid with the active cell */
+.mini-sheet { flex-direction: column; gap: 0.35rem; }
+.mini-sheet .row { display: flex; flex-wrap: nowrap; align-items: stretch; gap: 0.35rem; flex: 1; }
+.mini-sheet .cell { flex: 1; border-radius: 4px; background: var(--fill-strong); }
+.mini-sheet .cell:first-child { flex: 0.45; background: var(--fill); }
+.mini-sheet .cell.on { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent-fill); }
+/* On the home page it's the last tile: across the whole row of the 3-column grid, its drawing beside its text. */
+@media (min-width: 1001px) {
+  .bento-tile.tile-spreadsheet { grid-column: 1 / -1; flex-direction: row; }
+  .bento-tile.tile-spreadsheet .mini { flex: 0 0 40%; min-height: 8rem; border-bottom: 0; border-right: 1px solid var(--hairline); }
+  .bento-tile.tile-spreadsheet .bento-text { align-self: center; }
+}
+/* ---------- end Spreadsheet ---------- */
