@@ -299,7 +299,9 @@ select.input { cursor: pointer; }
    one fades in, so two pages never overlap. The header stays above the page, switches at once, and is painted
    as it looks (its tint over the page color): a layer's snapshot loses the frosted blur. */
 [data-transition="page"] .page { view-transition-name: page; }
-[data-transition="page"] nav-bar { view-transition-name: site-header; background: linear-gradient(var(--glass), var(--glass)) var(--bg);
+/* The header has its own layer in every transition, so what animates (a page, a row scrolled under the
+   header) is drawn below it, not over it. */
+:root:active-view-transition nav-bar { view-transition-name: site-header; background: linear-gradient(var(--glass), var(--glass)) var(--bg);
   backdrop-filter: none; -webkit-backdrop-filter: none; }
 ::view-transition-group(page) { animation: none; }
 ::view-transition-old(page) { display: none; }
