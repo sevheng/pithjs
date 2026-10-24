@@ -9,8 +9,9 @@ description: >
 
 # Designing with Pith
 
-Good UI here means calm, consistent and readable, built from the project's design system, and checked by
-looking at it. You can see your work: `npm run see` saves screenshots, and you can open them.
+Good UI here means calm, clear and readable, in Pith's Apple-inspired style: soft gray pages, white cards
+floating on soft shadows (no borders), one blue for actions, big tight headlines, pill buttons, frosted glass
+for things on top, true black in dark mode. Built from the project's design system, and checked by looking at it. You can see your work: `npm run see` saves screenshots, and you can open them.
 
 ## The look-at-it loop (required)
 
@@ -27,10 +28,15 @@ done; "the code looks right" isn't the same as the page looking right.
 
 Everything lives in `styles/main.css`. Reuse before you add.
 
-- **Tokens** (light and dark already defined): `--bg` page, `--surface` cards, `--text`, `--muted` secondary
-  text, `--border`, `--accent` and `--accent-text` (primary actions, links), `--accent-soft` (selected and
-  hover backgrounds), `--danger`, `--focus`, `--radius`, `--shadow`, `--font`, `--mono`.
-- **Classes:** `btn` (`primary`, `ghost`), `icon-btn`, `card`, `section`, `narrow`, `hero`, `lead`, `muted`,
+- **Tokens** (light and dark already defined, all text pairs pass 4.5:1): `--bg` page, `--surface` and
+  `--surface-2` cards and insets, `--text`, `--muted` secondary text, `--border` and `--hairline` lines,
+  `--fill` / `--fill-strong` quiet control backgrounds, `--accent` blue **text and links**, `--accent-fill` with
+  `--on-accent` blue **backgrounds** (never `--accent` as a background: in dark mode it's a light blue for text),
+  `--accent-soft` selected backgrounds, `--seg-on` the selected segment, `--danger`, `--success`, `--focus`,
+  `--radius` / `--radius-sm`, `--shadow` / `--shadow-lift`, `--glass` (frosted bars), `--font`, `--mono`.
+- **The shared block:** everything above `/* ===== end of Pith design ===== */` in `styles/main.css` is Pith's
+  design; put the site's own styles below it.
+- **Classes:** `btn` (`primary`, `ghost`, `danger`: pills), `icon-btn` (round), `card`, `section`, `narrow`, `hero`, `lead`, `muted`,
   `note` (small text that wraps), `small` (short labels; doesn't wrap), `grid`, `row`, `input`, `form`,
   `field-label` / `field-hint` / `field-error`, `form-error`, `empty`, `loading`, `load-error`, `notice`, `chip`,
   `sr-only`, `status-page`.
@@ -115,22 +121,16 @@ Score the screenshots 1-3 on each, and improve anything under 3 once before you 
 
 **Featured card and badge** (the recommended plan, the main offer):
 ```css
-.card.featured { border: 2px solid var(--accent); box-shadow: var(--shadow); position: relative; }
-.badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
-  background: var(--accent); color: var(--accent-text); }
+.card.featured { border: 2px solid var(--accent-fill); box-shadow: var(--shadow-lift); position: relative; }
+/* .badge and .badge.soft are in the shared block */
 .card.featured > .badge { position: absolute; top: -0.75rem; left: 1.25rem; }
-.badge.soft { background: var(--accent-soft); color: var(--text); }
 ```
 ```js
 html`<article class=${p.popular ? 'card featured' : 'card'}>${p.popular ? html`<span class="badge">Most popular</span>` : null}…</article>`
 ```
 
-**Segmented toggle** (2-4 choices that switch a view; buttons with `aria-pressed`, in a labelled group):
-```css
-.segmented { display: inline-flex; padding: 0.25rem; gap: 0.25rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
-.segmented button { border: 0; border-radius: 999px; padding: 0.45rem 1rem; min-height: 2.5rem; background: none; color: var(--muted); font: inherit; cursor: pointer; }
-.segmented button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
-```
+**Segmented toggle** (2-4 choices that switch a view; buttons with `aria-pressed`, in a labelled group). `.segmented`
+is in the shared block: a gray track with the selected segment raised, like iOS.
 ```js
 html`<div class="segmented" role="group" aria-label="Billing">${['monthly', 'yearly'].map((b) => html`
   <button type="button" aria-pressed=${() => String(billing.value === b)} @click=${() => (billing.value = b)}>${b === 'monthly' ? 'Monthly' : 'Yearly'}</button>`)}</div>`
@@ -142,30 +142,22 @@ html`<div class="segmented" role="group" aria-label="Billing">${['monthly', 'yea
 .value small { font-size: 1rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 ```
 
-**Check list** (what's included; an inline SVG check in the accent color):
-```css
-.check-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.55rem; }
-.check-list li { display: flex; gap: 0.6rem; align-items: flex-start; }
-.check-list svg { flex: none; width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; color: var(--accent); }
-```
+**Check list** (what's included; an inline SVG check in the accent color). `.check-list` is in the shared block.
 ```js
 const check = () => html`<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 html`<ul class="check-list">${items.map((t) => html`<li>${check()}<span>${t}</span></li>`)}</ul>`
 ```
 
-**Accent hero** (the top of a landing, pricing or empty page; one tint per page):
-```css
-.hero.tinted { padding: 3rem 1.5rem; margin-top: 1rem; border-radius: calc(var(--radius) * 1.5); text-align: center;
-  background: radial-gradient(ellipse 48% 60% at 50% 40%, var(--accent-soft), transparent); }  /* fades out before its edges */
-.hero.tinted .lead { margin-inline: auto; }
-.hero.tinted .badge.soft { background: var(--surface); border: 1px solid var(--border); }  /* soft on soft disappears */
-```
+**Accent hero** (the top of a landing, pricing or empty page; one tint per page): `<section class="hero tinted">`,
+in the shared block (its glow fades out before its edges, and a soft badge on it gets a surface background).
 
-**Hover lift** (cards that are clickable or compared side by side):
+**Hover lift** (cards that are clickable or compared side by side): add `lift` to the card (in the shared block,
+off with reduced motion).
+
+**Frosted bar** (something that floats over content, like a toolbar or a sticky header):
 ```css
-.lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow), 0 8px 24px rgb(0 0 0 / 0.08); }
-@media (prefers-reduced-motion: reduce) { .lift { transition: none; } .lift:hover { transform: none; } }
+.toolbar { position: sticky; top: 3.25rem; z-index: 10; background: var(--glass); border-bottom: 1px solid var(--hairline);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
 ```
 
 ## Review checklist

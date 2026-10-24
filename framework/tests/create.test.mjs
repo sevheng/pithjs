@@ -70,6 +70,15 @@ test("the demo's skills are the framework's", (t) => {
   }
 });
 
+test("the demo's styles start with the template's shared Pith design block", (t) => {
+  const demo = join(framework, '..', 'demo', 'styles', 'main.css');
+  if (!existsSync(demo)) return t.skip('no ../demo next to the framework');
+  const block = (css) => css.slice(0, css.indexOf('/* ===== end of Pith design ===== */'));
+  const shared = block(read(framework, 'template', 'styles', 'main.css'));
+  assert.ok(shared.length > 1000, 'the template has the shared block');
+  assert.equal(block(read(demo)), shared, 'demo/styles/main.css differs in the shared Pith design block: copy it over from template/styles/main.css');
+});
+
 test("the demo's AGENTS.md is the framework's, plus a section about the demo", (t) => {
   const demo = join(framework, '..', 'demo', 'AGENTS.md');
   if (!existsSync(demo)) return t.skip('no ../demo next to the framework');
