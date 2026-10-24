@@ -203,10 +203,11 @@ export function createApp(frame) {
   return {
     /** Load a page (a full page load, like typing the URL). */
     async go(path) {
-      await new Promise((resolve) => {
+      const load = () => new Promise((resolve) => {
         frame.onload = resolve;
         frame.src = path;
       });
+      await load();
       // Like a person on the page: its window has focus. Without this, Firefox ignores el.focus() in a new
       // frame once a focused one was removed (each flow gets a fresh frame), so focus checks would fail.
       frame.contentWindow?.focus();
@@ -216,10 +217,21 @@ export function createApp(frame) {
       });
       // Pages load their code lazily: wait until one has rendered (every route renders an <h1>), with
       // room for a busy machine, so a flow's first step doesn't race the page's code.
-      await waitFor(() => frame.contentDocument?.querySelector('h1'), {
-        timeout: 10_000,
-        message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s.\n${startup()}\nThe page shows:\n${outline(doc())}`,
-      });
+      const rendered = () => frame.contentDocument?.querySelector('h1');
+      try {
+        await waitFor(rendered, { timeout: 10_000, message: 'not rendered' });
+      } catch {
+        // Headless Chrome now and then never delivers a lazily loaded page's code inside this frame (measured:
+        // about 1 page load in 150, more under Chrome's virtual clock; the request doesn't reach the server).
+        // Load the page once more: a page that's really broken fails again, with what did and didn't load.
+        const first = startup();
+        await load();
+        frame.contentWindow?.focus();
+        await waitFor(rendered, {
+          timeout: 10_000,
+          message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s, twice.\nFirst try: ${first}\nSecond try: ${startup()}\nThe page shows:\n${outline(doc())}`,
+        });
+      }
       watch();
       await settle();
     },

@@ -213,3 +213,65 @@ flow('features/dialogs: confirm, then a toast', async (app) => {
   await app.click('Delete');
   await app.see('Deleted');
 });
+
+// ---------- Chat (/chat) ----------
+
+flow('chat: a room shows rich messages grouped by sender, and the rooms list', async (app) => {
+  await app.go('/chat/general');
+  await app.see('Ada Lovelace');
+  await app.see('Selecting a row now re-runs 2 rows');
+  app.expect(!!app.query('.msg-code code'), 'a code block should be shown');
+  app.expect(!!app.query('.msg-file'), 'a file card should be shown');
+  app.expect(!!app.query('.msg-link'), 'a link preview should be shown');
+  app.expect(!!app.query('.msg-quote'), 'a quoted reply should be shown');
+  await app.see('# design');
+  await app.click('Copy code');
+});
+
+flow('chat: sending a message shows it, and the bot in #help answers', async (app) => {
+  await app.go('/chat/help');
+  await app.type('Message #help', 'How do forms work?');
+  await app.pressEnter();
+  await app.see('How do forms work?');
+  await app.see('is typing');
+  await app.see('Use form()');
+});
+
+// Messages sent by flows stay on the dev server while it runs, so flows don't assume a room is empty
+// except #random, which no flow writes to.
+flow('chat: an empty room says so', async (app) => {
+  await app.go('/chat/random');
+  await app.see('No messages yet.');
+});
+
+flow('chat: a message the server rejects shows Not sent, and can be deleted or sent', async (app) => {
+  await app.go('/chat/general');
+  const note = `please /fail ${Date.now()}`;
+  await app.type('Message #general', note);
+  await app.click('Send');
+  await app.see('Not sent');
+  await app.click('Delete');
+  await app.notSee('Not sent');
+  const hello = `hello ${Date.now()}`;
+  await app.type('Message #general', hello);
+  await app.click('Send');
+  await app.see(hello);
+  await app.notSee('Sending…');
+});
+
+flow('chat: replies and reactions', async (app) => {
+  await app.go('/chat/design');
+  await app.see('Love it.');
+  const reply = app.queryAll('button[aria-label="Reply"]')[1];
+  reply.click();
+  await app.see('Replying to');
+  await app.click('Cancel reply');
+  await app.notSee('Replying to');
+  await app.click('😍 2, react');
+  app.expect(!!app.query('[aria-label="😍 3, remove your reaction"]'), 'reacting should add yours');
+});
+
+flow('chat: an unknown room says so', async (app) => {
+  await app.go('/chat/nope');
+  await app.see('No such room.');
+});

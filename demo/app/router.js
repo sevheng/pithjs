@@ -5,6 +5,8 @@ import { statusPage } from './brand.js';
 // The settings pages share one layout (side nav + a display name field). It downloads with the first
 // settings page, and stays mounted while you move between them.
 const settings = { load: () => import('./layouts/settings.js') };
+// The chat frame (rooms list + the open room) stays mounted while you switch rooms.
+const chat = { load: () => import('./layouts/chat.js') };
 
 // Each page's code is downloaded only when it's first needed (or when a link to it is hovered).
 export const router = createRouter(
@@ -14,6 +16,8 @@ export const router = createRouter(
     '/features/:name': { title: 'Feature', load: () => import('./pages/feature.js') },
     '/examples': { title: 'Examples', load: () => import('./pages/examples.js') },
     '/benchmarks': { title: 'Benchmarks', load: () => import('./pages/benchmarks.js') },
+    '/chat': { title: 'Chat', layout: chat, load: () => import('./pages/chat-home.js') },
+    '/chat/:room': { title: 'Chat', layout: chat, load: () => import('./pages/chat-room.js') },
     // The demo's first example pages, replaced by the apps at /examples.
     '/todos': { redirect: '/examples' },
     '/team': { redirect: '/examples' },
