@@ -1,4 +1,6 @@
-import { html } from 'pith';
+import { html, signal } from 'pith';
+import { apps } from '../apps.js';
+import { icon } from '../icons.js';
 import '../components/counter.js';
 
 // The hero's code: a shortened app/components/counter.js, whose full version runs beside it.
@@ -15,88 +17,176 @@ define('pith-counter', (props) => {
   \`;
 }, { props: ['start'] });`;
 
+// A tiny highlighter for the hero code: keywords, strings, Pith's functions. Text only, no innerHTML.
+const TOKENS = /(\/\/.*$)|('[^']*'|`)|\b(import|from|const|return)\b|\b(define|html|signal|computed)\b/gm;
+const highlight = (src) => {
+  const out = [];
+  let last = 0;
+  for (const m of src.matchAll(TOKENS)) {
+    out.push(src.slice(last, m.index));
+    const kind = m[1] ? 'syn-com' : m[2] ? 'syn-str' : m[3] ? 'syn-key' : 'syn-fn';
+    out.push(html`<span class=${kind}>${m[0]}</span>`);
+    last = m.index + m[0].length;
+  }
+  out.push(src.slice(last));
+  return out;
+};
+
 // Measured in ../compare (RESULTS.md), on a slow phone and in the js-framework-benchmark operations.
 const numbers = [
-  ['9.7 KB', 'the whole framework, gzipped'],
-  ['0', 'runtime dependencies, no build step'],
-  ['17–21%', 'sooner on screen than Vue'],
-  ['~½', "the memory of React's and Vue's lists"],
+  ['<10', 'KB', 'the whole framework, gzipped'],
+  ['0', '', 'runtime dependencies, no build needed'],
+  ['29%', '', 'sooner on screen than React'],
+  ['½', '', "the memory of React's and Vue's lists"],
+];
+
+// What `npm run check` prints, shortened.
+const checkOutput = [
+  ['dim', '$ npm run check'],
+  ['', ''],
+  ['', 'User flows'],
+  ['ok', '  ✓ 58 passed'],
+  ['', 'Pages'],
+  ['ok', '  ✓ /           Home · Pith'],
+  ['ok', '  ✓ /docs       Introduction · Pith'],
+  ['ok', '  ✓ /chat/:room Chat · Pith (phone, a11y, dark)'],
+  ['', 'Types, size, preloads'],
+  ['ok', '  ✓ framework 9.8 KB of 10 KB'],
+  ['', ''],
+  ['good', 'All good'],
 ];
 
 const forAgents = [
-  ['One verdict', '`npm run check` tests flows, every page, phone layout, accessibility and types, then says “All good” or exactly what’s wrong.'],
-  ['Errors with the fix', 'Every warning has a code like `[pith W001]` and a fix in the docs, so an agent repairs instead of guessing.'],
-  ['Pages as text', '`npm run see /page --state` prints what a page shows and what its state holds, by variable name.'],
-  ['Tests like a person', 'Flows click and type by visible text, and a failing step shows the page and the app’s state.'],
+  ['check', 'One verdict', 'npm run check runs the tests, every page at phone width, accessibility in both themes and the types, then says "All good" or exactly what\'s wrong.'],
+  ['search', 'Pages as text', 'npm run see /page prints what a page shows, its state by variable name, and saves a screenshot to look at.'],
+  ['file', 'Errors with the fix', 'Every warning has a code like [pith W001] and a fix in the docs, so an agent repairs instead of guessing.'],
+  ['pencil', 'Rules and skills', 'Every project gets AGENTS.md and two skills, for building views right and making them look good.'],
 ];
 
-const tour = [
+const core = [
   ['signals', 'Signals', 'Update exactly the text that changed.'],
-  ['lists', 'Lists', 'Keyed, moved instead of rebuilt, animated.'],
-  ['resource', 'Data', 'Loading, errors and stale requests, handled.'],
+  ['lists', 'Lists', 'Keyed rows, moved instead of rebuilt.'],
+  ['router', 'Routing', 'Lazy pages, params, layouts, guards.'],
+  ['resource', 'Data', 'Loading, errors, stale requests, optimistic saves.'],
   ['forms', 'Forms', 'Validation, accessible errors, server errors.'],
-  ['router', 'Routing', 'Lazy pages, params, query, layouts, guards.'],
-  ['errors', 'Error boundaries', 'One crash doesn’t take down the page.'],
+  ['store', 'Shared state', 'Saved and synced across tabs.'],
+  ['errors', 'Error boundaries', 'One crash doesn\'t take down the page.'],
+  ['animation', 'Animation', 'View Transitions that can\'t stall.'],
 ];
 
-// `inline code` in the short texts above.
-const withCode = (text) => text.split(/`([^`]+)`/).map((part, i) => (i % 2 ? html`<code>${part}</code>` : part));
+// The order of the showcase tiles: Chat is the big one, Dashboard spans two columns.
+const SHOWCASE = ['Chat', 'Inbox', 'Kanban', 'Dashboard', 'Settings'];
+
+// Small drawings of each app for the showcase tiles (decorative: the tile's text says what it is).
+const previews = {
+  Chat: () => html`<div class="mini mini-chat" aria-hidden="true">
+    <i class="b them w70"></i><i class="b them w45"></i><i class="b me w60"></i><i class="b them w55"></i><i class="b me w35"></i></div>`,
+  Inbox: () => html`<div class="mini mini-inbox" aria-hidden="true">
+    ${[1, 2, 3, 4].map((n) => html`<i class=${n === 2 ? 'row on' : 'row'}><b></b><s></s></i>`)}</div>`,
+  Kanban: () => html`<div class="mini mini-kanban" aria-hidden="true">
+    ${[3, 2, 2, 1].map((n) => html`<i class="col">${Array.from({ length: n }, () => html`<b></b>`)}</i>`)}</div>`,
+  Dashboard: () => html`<div class="mini mini-dash" aria-hidden="true">
+    ${[40, 65, 50, 80, 60, 95, 75].map((h) => html`<i style=${`--h: ${h}%`}></i>`)}</div>`,
+  Settings: () => html`<div class="mini mini-settings" aria-hidden="true"><i class="side"></i><i class="pane"><b></b><b></b><s></s></i></div>`,
+};
 
 export default function HomePage() {
+  const copied = signal(false);
+  const commands = 'npx pithjs create my-app\ncd my-app\nnpm install\nnpm run dev';
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(commands);
+      copied.value = true;
+      setTimeout(() => (copied.value = false), 1500);
+    } catch {
+      // clipboard blocked: the commands are on screen to select
+    }
+  };
+
   return html`
-    <section class="hero home-hero">
-      <div>
-        <p class="eyebrow">Pith · a 10 KB web framework</p>
-        <h1>The essential core of a web app.</h1>
-        <p class="lead">
-          Signals, components, routing, data and forms, on the browser's own tech. No build step,
-          no runtime dependencies, and tools made for AI agents.
-        </p>
-        <div class="row">
-          <a class="btn primary" href="/docs">Read the docs</a>
-          <a class="btn" href="#start">Get started</a>
+    <section class="landing-hero" aria-labelledby="hero-title">
+      <p class="badge soft">10 KB · no build needed · made for AI agents</p>
+      <h1 id="hero-title">The essential core of a web app.</h1>
+      <p class="lead">Signals, components, routing, data and forms, on the browser's own tech.
+        Everything hard to get right, and nothing you don't need.</p>
+      <div class="row">
+        <a class="btn primary big" href="/docs/getting-started">Get started</a>
+        <a class="btn big" href="/docs">Read the docs</a>
+      </div>
+    </section>
+
+    <figure class="product-shot" aria-label="A Pith component and what it renders">
+      <div class="window">
+        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>app/components/counter.js</span></div>
+        <div class="window-body">
+          <pre class="hero-code" tabindex="0" aria-label="A Pith component"><code>${highlight(heroCode)}</code></pre>
+          <div class="hero-live">
+            <span class="badge">Live</span>
+            <pith-counter start="5"></pith-counter>
+            <p class="muted note">Runs as written. No build step, no virtual DOM: only the two numbers change.</p>
+          </div>
         </div>
       </div>
-      <figure class="hero-demo">
-        <pre class="code" tabindex="0" aria-label="A Pith component"><code>${heroCode}</code></pre>
-        <figcaption class="muted note">Runs as is, no build. Live (with two more buttons):</figcaption>
-        <pith-counter start="5"></pith-counter>
-      </figure>
-    </section>
+    </figure>
 
-    <section class="section" aria-labelledby="numbers">
-      <h2 id="numbers" class="sr-only">In numbers</h2>
-      <ul class="number-strip">
-        ${numbers.map(([value, label]) => html`<li class="card stat"><span class="stat-value">${value}</span><span class="stat-label">${label}</span></li>`)}
+    <section class="section numbers" aria-labelledby="numbers-title">
+      <h2 id="numbers-title" class="sr-only">In numbers</h2>
+      <ul class="big-numbers">
+        ${numbers.map(([value, unit, label]) => html`<li><span class="big-value">${value}${unit ? html`<small>${unit}</small>` : null}</span><span class="muted">${label}</span></li>`)}
       </ul>
-      <p class="muted note">Measured against the same apps in React and Vue: <a href="/docs/benchmarks">see the benchmarks</a></p>
+      <p class="muted note center">Measured against the same apps in React and Vue on a slow phone. <a href="/docs/benchmarks">See the benchmarks →</a></p>
     </section>
 
-    <section class="section" aria-labelledby="agents">
-      <h2 id="agents">Built for AI agents</h2>
-      <p class="muted">Every project comes with <code>AGENTS.md</code>: the rules, patterns and commands an agent needs. Then:</p>
-      <ul class="feature-grid agent-grid">
-        ${forAgents.map(([title, text]) => html`<li class="card feature"><h3>${title}</h3><p>${withCode(text)}</p></li>`)}
+    <section class="section" aria-labelledby="apps-title">
+      <div class="section-head">
+        <h2 id="apps-title">Real apps, not snippets.</h2>
+        <p class="lead">Five complete apps in this demo, each with every state handled, on phones and in dark mode. Open one.</p>
+      </div>
+      <ul class="bento">
+        ${SHOWCASE.map((name) => apps.find((a) => a.name === name)).map((a) => html`
+          <li class=${`bento-tile lift tile-${a.name.toLowerCase()}`}>
+            ${(previews[a.name] ?? previews.Settings)()}
+            <div class="bento-text">
+              <h3><a class="stretched" href=${a.href}>${a.name}</a></h3>
+              <p class="muted">${a.text}</p>
+            </div>
+          </li>`)}
       </ul>
     </section>
 
-    <section class="section" aria-labelledby="tour">
-      <h2 id="tour">What's in the core</h2>
-      <ul class="feature-grid">
-        ${tour.map(([name, title, text]) => html`
-          <li class="card feature-card"><h3><a href=${`/docs/${name}`}>${title}</a></h3><p>${text}</p></li>`)}
-      </ul>
-      <p><a href="/docs">All of Pith, with live examples →</a></p>
+    <section class="section agents-band" aria-labelledby="agents-title">
+      <div class="agents-copy">
+        <p class="eyebrow">Built for AI agents</p>
+        <h2 id="agents-title">Your agent checks its own work.</h2>
+        <ul class="agent-list">
+          ${forAgents.map(([ic, title, text]) => html`<li><span class="icon-tile">${icon(ic)}</span><div><h3>${title}</h3><p class="muted">${text}</p></div></li>`)}
+        </ul>
+        <a href="/docs/ai-agents">How agents work with Pith →</a>
+      </div>
+      <div class="terminal" role="img" aria-label="npm run check: every test, page and check passed, All good">
+        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div>
+        <pre aria-hidden="true">${checkOutput.map(([kind, line]) => html`<span class=${kind ? `t-line t-${kind}` : 't-line'}>${line || ' '}</span>`)}</pre>
+      </div>
     </section>
 
-    <section class="section narrow" id="start" aria-labelledby="get-started">
-      <h2 id="get-started">Get started</h2>
-      <pre class="code" tabindex="0" aria-label="Commands to start a project"><code>npx pithjs create my-app
-cd my-app
-npm install
-npm run dev      # → http://localhost:8000
-npm run check    # "All good"</code></pre>
+    <section class="section" aria-labelledby="core-title">
+      <div class="section-head">
+        <h2 id="core-title">What's in the core</h2>
+        <p class="lead">The parts most apps need and are easy to get wrong. Dialogs, toasts and widgets stay app code.</p>
+      </div>
+      <ul class="core-grid">
+        ${core.map(([name, title, text]) => html`<li><a href=${`/docs/${name}`}><strong>${title}</strong><span class="muted">${text}</span></a></li>`)}
+      </ul>
+    </section>
+
+    <section class="section start-band" id="start" aria-labelledby="start-title">
+      <h2 id="start-title">Start in a minute.</h2>
+      <div class="start-box">
+        <pre class="start-code" tabindex="0" aria-label="Commands to start a project"><code>${commands}</code></pre>
+        <button class="btn" type="button" @click=${copy}>${icon('copy')} ${() => (copied.value ? 'Copied' : 'Copy')}</button>
+      </div>
       <p class="muted note">Not on npm yet: from the Pith repo, run <code>node framework/tools/cli.mjs create my-app</code>.</p>
+      <div class="row"><a class="btn primary big" href="/docs/getting-started">Read the guide</a></div>
     </section>
   `;
 }
