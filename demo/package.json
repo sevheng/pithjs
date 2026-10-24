@@ -14,7 +14,8 @@
     "new": "pith new",
     "release": "pith release",
     "types": "npx -y -p typescript@5.9.3 tsc -p jsconfig.json",
-    "examples": "node scripts/examples.mjs"
+    "examples": "node scripts/examples.mjs",
+    "benchmarks": "node scripts/benchmarks.mjs"
   },
   "engines": {
     "node": ">=24"

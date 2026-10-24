@@ -308,3 +308,63 @@ flow('chat/#firehose: thousands of messages, only the newest on screen, Show old
   await app.see('1,000 messages · 200 on screen');
   app.expect(app.queryAll('.msg-row').length === 200, `200 rows after a URL change, found ${app.queryAll('.msg-row').length}`);
 });
+
+// ---------- Benchmarks (/benchmarks) ----------
+import bench from '../app/data/benchmarks.js';
+
+// The chart whose caption starts with `title`, and its row for one framework (e.g. 'react').
+const benchRow = (app, title, impl) => {
+  const chart = app.queryAll('.bar-chart').find((f) => f.querySelector('figcaption')?.textContent.trim().startsWith(title));
+  return chart?.querySelector(`[data-impl="${impl}"]`) ?? null;
+};
+const benchText = (el) => (el?.textContent ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+
+flow('benchmarks: each view shows its charts, and the choice is kept in ?view=', async (app) => {
+  await app.go('/benchmarks');
+  await app.see('Loading on a slow phone');
+  await app.waitFor(() => benchRow(app, 'Ready', 'pith'), 'the Load view should chart Ready');
+  await app.click('Runtime');
+  await app.see('Pith is fastest or within the ±10% noise');
+  app.expect(app.window.location.search === '?view=runtime', `the URL should have ?view=runtime, got "${app.window.location.search}"`);
+  await app.waitFor(() => benchRow(app, 'Swap two rows', 'vue'), 'the Runtime view should chart swapping rows');
+  await app.click('Memory');
+  await app.see('With 10,000 rows Pith holds');
+  await app.waitFor(() => benchRow(app, '10,000 rows', 'react'), 'the Memory view should chart 10,000 rows');
+  await app.click('Size');
+  await app.see("The CRM's start page needs");
+  app.expect(app.queryAll('.bar-chart').length === 3, `Size should chart 3 pages, found ${app.queryAll('.bar-chart').length}`);
+  await app.click('Load');
+  app.expect(app.window.location.search === '', 'Load is the default, so it has no ?view=');
+  await app.see('Loading on a slow phone');
+  await app.see('This page, right now');
+});
+
+flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
+  await app.go('/benchmarks');
+  await app.click('Memory');
+  await app.go(`/benchmarks${app.window.location.search}`);
+  await app.see('With 10,000 rows Pith holds');
+  const pressed = app.query('[aria-label="Benchmark"] [aria-pressed="true"]')?.textContent.trim();
+  app.expect(pressed === 'Memory', `Memory should be the selected view after a reload, got "${pressed}"`);
+  await app.click('Load');
+  await app.click('HTTP/2');
+  app.expect(app.window.location.search === '?protocol=h2', `the URL should have ?protocol=h2, got "${app.window.location.search}"`);
+  await app.go('/benchmarks?protocol=h2');
+  const want = `React ${bench.load.h2.todo.react.ready.toLocaleString('en-US')} ms`;
+  await app.waitFor(() => benchText(benchRow(app, 'Ready', 'react')) === want, `after a reload the first Ready chart should read "${want}" (HTTP/2)`);
+});
+
+flow('benchmarks: the numbers shown match the measurements, and the best is marked', async (app) => {
+  await app.go('/benchmarks?view=runtime');
+  const update = bench.runtime['update every 10th row'];
+  await app.waitFor(() => benchRow(app, 'Update every 10th row', 'react'), 'the update chart should be shown');
+  const react = benchRow(app, 'Update every 10th row', 'react');
+  app.expect(benchText(react) === `React ${update.react} ms`, `React's row should read "React ${update.react} ms", got "${benchText(react)}"`);
+  const max = Math.max(...Object.values(update));
+  const width = Number(react.querySelector('.bar').style.getPropertyValue('--w'));
+  app.expect(Math.abs(width - update.react / max) < 0.001, `React's bar should be ${update.react}/${max} wide, got ${width}`);
+  const best = Object.entries(update).sort((a, b) => a[1] - b[1])[0][0];
+  app.expect(benchText(benchRow(app, 'Update every 10th row', best)).endsWith('Best'), `${best} has the lowest time, so it should be marked Best`);
+  await app.see('Where Pith is behind');
+  await app.see(`Pith ${update.pith} ms, React ${update.react} ms`);
+});

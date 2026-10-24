@@ -475,3 +475,51 @@ rating-stars { display: inline-block; }
 .firehose-stats { margin: 0; font-variant-numeric: tabular-nums; }
 .jump-slot { position: relative; height: 0; }
 .jump { position: absolute; z-index: 5; bottom: 1rem; left: 50%; transform: translateX(-50%); }
+
+/* ---------- Benchmarks (/benchmarks) ---------- */
+.bench-switch { display: flex; justify-content: center; margin-top: 2rem; }
+.bench-seg button { min-height: 44px; padding-inline: 1.15rem; }
+.bench-view-head { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; }
+.bench-view-head h2 { margin-top: 0; }
+.bench-view-head p { margin-bottom: 0; }
+.bench-summary { font-size: 1.2rem; line-height: 1.45; letter-spacing: -0.01em; margin: 1.5rem 0; max-width: 46rem; }
+.bench-summary strong { color: var(--accent); }
+.bench-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.bench-card { min-width: 0; padding: 1.25rem 1.5rem; }
+.bench-card h3 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.bench-card > .note { margin: 0 0 1rem; }
+.bar-chart { margin: 0; }
+.bench-grid.wide { grid-template-columns: minmax(0, 1fr); }
+.bench-pair { display: grid; gap: 1.25rem 2.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.bar-chart figcaption { margin-bottom: 0.6rem; }
+.bar-title { font-weight: 600; }
+.bar-note { display: block; font-size: 0.82rem; }
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+.bar-row { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 0.75rem; align-items: center; font-size: 0.9rem; }
+.bar-label { color: var(--muted); line-height: 1.25; }
+.bar-row.is-pith .bar-label { color: var(--text); font-weight: 600; }
+/* The value sits right after its bar; the bar takes its share of the room left beside the value. */
+.bar-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; }
+.bar { flex: none; height: 0.85rem; border-radius: 999px; background: var(--fill-strong);
+  width: max(3px, calc((100% - var(--bar-reserve, 7.25rem)) * var(--w))); }
+.bench-size { --bar-reserve: 10.5rem; }
+.bar-row.is-pith .bar { background: var(--accent-fill); }
+.bar-row.is-pith-variant .bar { background: color-mix(in srgb, var(--accent-fill) 45%, transparent); }
+.bar-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar-row.is-pith .bar-value { font-weight: 600; }
+.bar-best { padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: var(--accent-soft); color: var(--text); white-space: nowrap; }
+.bench-behind { list-style: none; margin: 1rem 0; padding: 0.25rem 1.25rem; }
+.bench-behind li { display: grid; gap: 0.2rem; padding: 0.85rem 0; }
+.bench-behind li + li { border-top: 1px solid var(--hairline); }
+.behind-op { font-weight: 600; }
+.bench-aside { margin: 0; padding: 1rem 0.5rem; align-self: center; }
+.bench-method svg { flex: none; }
+.bench-method + h3 { margin-top: 2rem; }
+@media (max-width: 540px) {
+  .bar-row { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  .bench-card { padding: 1.1rem 1rem; }
+  .bench-summary { font-size: 1.08rem; }
+}
+.bar { transform-origin: left center; animation: bar-grow 0.18s ease-out; }
+@keyframes bar-grow { from { transform: scaleX(0.2); opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .bar { animation: none; } }
