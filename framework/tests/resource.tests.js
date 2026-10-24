@@ -293,6 +293,8 @@ export default async function (t) {
       p = paginated(fetcher, { pageSize: 2 });
       mount(html`<p id="out">${p.render((items) => items.join())}</p>`);
     });
+    p.mutate((items) => [...items, 'early']); // before page 1 arrives: nothing to change
+    eq(p.status.value, 'loading');
     calls[0].resolve(['a', 'b']);
     await tick();
     p.mutate((items) => items.filter((i) => i !== 'a'));

@@ -327,10 +327,10 @@ export function paginated(fetcher, { pageSize } = {}) {
     status: pages.status,
     /**
      * Change the loaded items locally (star, mark read, remove): `fn(items)` returns the new items.
-     * Pages loaded later are appended to the result.
+     * Pages loaded later are appended to the result. Does nothing before page 1 has loaded.
      * @param {(items: I[]) => I[]} fn
      */
-    mutate: (fn) => pages.mutate((p) => ({ ...p, items: fn(p.items) })),
+    mutate: (fn) => pages.data.peek() && pages.mutate((p) => ({ ...p, items: fn(p.items) })),
     /** False once the last page is loaded. */
     hasMore: /** @type {import('./signal.js').ReadonlySignal<boolean>} */ (hasMore),
     /** Fetch the next page and append it. Does nothing while loading or when there is no more. Retries after an error. */
