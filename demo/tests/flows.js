@@ -583,7 +583,7 @@ flow('kanban: a card moves by keyboard, between and within columns', async (app)
   await app.click(`Move "${title}" right`);
   await app.waitFor(() => kanbanColumnOf(app, title) === 'doing', 'the card should move to In progress');
   await app.waitFor(() => app.document.activeElement?.getAttribute('aria-label') === `Move "${title}" right`, 'focus should stay on its Move right button');
-  await app.see(`Moved "${title}" to In progress`);
+  await app.hear(`Moved "${title}" to In progress`);
   const titles = () => app.queryAll('[aria-labelledby="kcol-doing"] .kcard-title').map((b) => b.textContent.trim());
   await app.click(`Move "${title}" up`);
   await app.waitFor(() => titles().indexOf(title) === titles().length - 2, 'the card should move up one place');

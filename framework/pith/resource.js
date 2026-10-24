@@ -321,6 +321,16 @@ export function paginated(fetcher, { pageSize } = {}) {
     loadingMore: /** @type {import('./signal.js').ReadonlySignal<boolean>} */ (loadingMore),
     /** The page 1 error or the last loadMore() error, or null. */
     error: /** @type {import('./signal.js').ReadonlySignal<any>} */ (computed(() => pages.error.value ?? moreError.value)),
+    /** The last loadMore() error, or null (shown next to the "Load more" button). */
+    moreError: /** @type {import('./signal.js').ReadonlySignal<any>} */ (moreError),
+    /** Page 1 only: 'loading' (nothing loaded yet), 'error', or 'ready'. A loadMore() error keeps it 'ready'. */
+    status: pages.status,
+    /**
+     * Change the loaded items locally (star, mark read, remove): `fn(items)` returns the new items.
+     * Pages loaded later are appended to the result. Does nothing before page 1 has loaded.
+     * @param {(items: I[]) => I[]} fn
+     */
+    mutate: (fn) => pages.data.peek() && pages.mutate((p) => ({ ...p, items: fn(p.items) })),
     /** False once the last page is loaded. */
     hasMore: /** @type {import('./signal.js').ReadonlySignal<boolean>} */ (hasMore),
     /** Fetch the next page and append it. Does nothing while loading or when there is no more. Retries after an error. */

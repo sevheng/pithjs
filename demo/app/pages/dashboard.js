@@ -118,28 +118,22 @@ export default function DashboardPage() {
     </div>
     <p class="sr-only" role="status">Loading the numbers…</p>`;
 
-  const overview = (/** @type {'loading' | 'error' | 'ready'} */ s, /** @type {any} */ data) => {
-    if (s === 'loading') return overviewSkeleton();
-    if (s === 'error') {
-      return html`<div class="load-error dash-error" role="alert">
-        <p><strong>Couldn't load the numbers.</strong> ${summary.error.value?.message ?? ''}</p>
-        <div class="row"><button class="btn" type="button" @click=${summary.refetch}>${icon('refresh')} Try again</button>
+  // render(): a new range or a refresh draws the numbers again.
+  const overview = summary.render({
+    loading: overviewSkeleton,
+    error: (err, retry) => html`<div class="load-error dash-error" role="alert">
+        <p><strong>Couldn't load the numbers.</strong> ${err?.message ?? ''}</p>
+        <div class="row"><button class="btn" type="button" @click=${retry}>${icon('refresh')} Try again</button>
           ${range.value in { 7: 1, 30: 1, 90: 1 } ? null : html`<a class="btn ghost" href="/dashboard">Show the last 30 days</a>`}</div>
-      </div>`;
-    }
-    const label = `the last ${data.range} days`;
-    return html`
+      </div>`,
+    ready: (/** @type {any} */ data) => html`
       <div class="kpi-grid">${KPIS.map((k) => kpi(k, data))}</div>
-      <div class="chart-row">${revenueChart(data.revenue, label)}${channelChart(data.channels, label)}</div>`;
-  };
+      <div class="chart-row">${revenueChart(data.revenue, `the last ${data.range} days`)}${channelChart(data.channels, `the last ${data.range} days`)}</div>`,
+  });
 
   // ---------- Orders ----------
   const items = computed(() => /** @type {Order[]} */ (orders.data.value?.items ?? []));
-  const phase = computed(() => {
-    const s = orders.status.value;
-    if (s !== 'ready') return s;
-    return items.value.length ? 'list' : 'empty';
-  });
+  const empty = computed(() => !items.value.length);
 
   const pill = (/** @type {string} */ s) => html`<span class=${`status-pill ${s}`}>${STATUS_NAMES[s]}</span>`;
 
@@ -180,31 +174,32 @@ export default function DashboardPage() {
       </div>
     </div>`;
 
-  const tableView = (/** @type {string} */ p) => {
-    if (p === 'error') {
-      return html`<div class="load-error" role="alert"><p><strong>Couldn't load the orders.</strong> ${orders.error.value?.message ?? ''}</p>
-        <button class="btn" type="button" @click=${orders.refetch}>${icon('refresh')} Try again</button></div>`;
-    }
-    if (p === 'empty') {
-      return html`<div class="orders-empty">
-        <span class="icon-tile">${icon('search')}</span>
-        <p><strong>No orders match.</strong></p>
-        <p class="muted">${() => `Nothing ${status.value ? `${STATUS_NAMES[status.value].toLowerCase()} ` : ''}${needle.value ? `for “${needle.value}” ` : ''}in ${period.value}.`}</p>
-        <button class="btn" type="button" @click=${clearFilters}>Clear filters</button>
-      </div>`;
-    }
-    return html`
-      <div class="table-box" role="region" aria-label="Orders" tabindex="0">
-        <table class="orders-table">
-          <caption class="sr-only">${() => `Orders in ${period.value}, sorted by ${sort.value}, ${dir.value === 'asc' ? 'ascending' : 'descending'}`}</caption>
-          ${head()}
-          ${p === 'loading'
-            ? html`<tbody>${Array.from({ length: 10 }, () => html`<tr class="skeleton-row"><td colspan="6"><span class="dash-skel line"></span></td></tr>`)}</tbody>`
-            : html`<tbody>${repeat(items, (o) => o.id, row)}</tbody>`}
-        </table>
-      </div>
-      ${p === 'loading' ? html`<p class="sr-only" role="status">Loading orders…</p>` : pager()}`;
-  };
+  const table = (/** @type {boolean} */ loading) => html`
+    <div class="table-box" role="region" aria-label="Orders" tabindex="0">
+      <table class="orders-table">
+        <caption class="sr-only">${() => `Orders in ${period.value}, sorted by ${sort.value}, ${dir.value === 'asc' ? 'ascending' : 'descending'}`}</caption>
+        ${head()}
+        ${loading
+          ? html`<tbody>${Array.from({ length: 10 }, () => html`<tr class="skeleton-row"><td colspan="6"><span class="dash-skel line"></span></td></tr>`)}</tbody>`
+          : html`<tbody>${repeat(items, (o) => o.id, row)}</tbody>`}
+      </table>
+    </div>
+    ${loading ? html`<p class="sr-only" role="status">Loading orders…</p>` : pager()}`;
+
+  const noOrders = () => html`<div class="orders-empty">
+    <span class="icon-tile">${icon('search')}</span>
+    <p><strong>No orders match.</strong></p>
+    <p class="muted">${() => `Nothing ${status.value ? `${STATUS_NAMES[status.value].toLowerCase()} ` : ''}${needle.value ? `for “${needle.value}” ` : ''}in ${period.value}.`}</p>
+    <button class="btn" type="button" @click=${clearFilters}>Clear filters</button>
+  </div>`;
+
+  // live(): the table is built once and patched as pages, sorts and filters arrive; only an empty result swaps it.
+  const tableView = orders.live({
+    loading: () => table(true),
+    error: (err, retry) => html`<div class="load-error" role="alert"><p><strong>Couldn't load the orders.</strong> ${err?.message ?? ''}</p>
+      <button class="btn" type="button" @click=${retry}>${icon('refresh')} Try again</button></div>`,
+    ready: () => html`${() => (empty.value ? untrack(noOrders) : untrack(() => table(false)))}`,
+  });
 
   /** @param {Order} o */
   const panel = (o) => html`
@@ -255,11 +250,7 @@ export default function DashboardPage() {
       <section class="overview" aria-labelledby="overview-title" aria-busy=${() => String(summary.loading.value)}
                data-busy=${() => (summary.loading.value && summary.status.value === 'ready' ? 'true' : null)}>
         <h2 id="overview-title" class="sr-only">Key numbers</h2>
-        ${() => {
-          const s = summary.status.value;
-          const data = summary.data.value; // tracked: a new range or a refresh draws the numbers again
-          return untrack(() => overview(s, data));
-        }}
+        ${overview}
       </section>
 
       <section class="section orders" aria-labelledby="orders-title">
@@ -286,10 +277,7 @@ export default function DashboardPage() {
         </div>
         <div class="orders-layout" data-panel=${() => (current.value ? 'open' : null)}>
           <div class="orders-main" data-busy=${() => (orders.loading.value && orders.status.value === 'ready' ? 'true' : null)}>
-            ${() => {
-              const p = phase.value;
-              return untrack(() => tableView(p));
-            }}
+            ${tableView}
           </div>
           ${() => {
             const o = current.value;

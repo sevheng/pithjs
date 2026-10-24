@@ -47,7 +47,10 @@ any view a person waits on.
   whole ready view on every data change, losing focus and scroll and costing time per row. Use
   `res.live(ready)` instead: `ready` is built once and gets the data as a signal; keep the list in `repeat()`
   over it (or a `computed` of it), and change it with `res.mutate((data) => next)`, which won't repeat a
-  pending `optimistic` update. Same for `paginated()`: `list.live((items) => ...)`.
+  pending `optimistic` update. Same for `paginated()`: `list.live((items) => ...)`, `list.mutate((items) => next)`
+  for local changes (star, read, remove), `list.status` for page 1 and `list.moreError` beside "Load more".
+- **Charts drawn in code:** SVG pieces built in their own template (labels, a crosshair) use `` svg`...` ``,
+  not `` html`...` `` (that makes `<text>` an HTML element that never shows).
 - **Huge lists:** put the newest few hundred on screen and offer "Show older", like a chat; keep row
   templates inside one element (a `repeat()` row that starts with a hole leaks when removed).
 - **Search and filters live in the URL:** `router.setQuery({ q })`, read `router.query.value.q`, so reload and

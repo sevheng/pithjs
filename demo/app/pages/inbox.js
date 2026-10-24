@@ -36,31 +36,23 @@ export default function InboxPage({ folder }) {
   const selectedId = computed(() => router.query.value.m ?? null);
   const isSelected = selector(selectedId);
 
-  let lastPage = 1; // which page the latest request was for, to tell a failed first load from a failed "Load more"
   const list = paginated(({ page, signal }) => {
-    lastPage = page;
     if (folder === 'sent') sentVersion.value; // a sent message: load Sent again
     return fetchJSON(`/api/inbox?folder=${folder}&q=${encodeURIComponent(q.value)}&page=${page}`, { signal });
   });
 
-  // Each loaded message becomes a row whose star and read state are signals, so starring or opening one
-  // changes that row in place. paginated() has no mutate(), so the local changes live here, next to the data:
-  // the row signals, and `gone` (moved away, waiting for Undo).
-  const rows = new WeakMap();
-  const rowOf = (m) => {
-    let r = rows.get(m);
-    if (!r) rows.set(m, (r = { ...m, starred: signal(m.starred), read: signal(m.read) }));
-    return r;
-  };
-  const gone = signal(/** @type {Set<string>} */ (new Set()));
-  const visible = computed(() => list.items.value.filter((m) => !gone.value.has(m.id)).map(rowOf));
-  const rowById = (id) => visible.peek().find((r) => r.id === id);
+  // Local changes (star, read, moved away) go into the loaded list with list.mutate(). The rows are keyed by
+  // id and read their message from byId, so a changed message updates its row in place (focus stays put).
+  const ids = computed(() => list.items.value.map((m) => m.id));
+  const byId = computed(() => new Map(list.items.value.map((m) => [m.id, m])));
+  /** @param {string[]} these @param {object} change */
+  const patch = (these, change) => list.mutate((items) => items.map((m) => (these.includes(m.id) ? { ...m, ...change } : m)));
 
   // Checked rows, for the bulk actions.
   const checked = signal(/** @type {Set<string>} */ (new Set()));
-  const checkedIds = computed(() => visible.value.filter((r) => checked.value.has(r.id)).map((r) => r.id));
+  const checkedIds = computed(() => ids.value.filter((id) => checked.value.has(id)));
   const anyChecked = computed(() => checkedIds.value.length > 0);
-  const allChecked = computed(() => visible.value.length > 0 && checkedIds.value.length === visible.value.length);
+  const allChecked = computed(() => ids.value.length > 0 && checkedIds.value.length === ids.value.length);
   const toggleCheck = (id, on) => {
     const next = new Set(checked.value);
     if (on) next.add(id);
@@ -69,37 +61,43 @@ export default function InboxPage({ folder }) {
   };
   const without = (set, ids) => new Set([...set].filter((id) => !ids.includes(id)));
 
-  // Which view the list shows. It changes only between these, so starring or removing a row never rebuilds it.
-  const phase = computed(() => {
-    if (list.error.value && lastPage === 1 && !list.loading.value) return 'error';
-    if (visible.value.length) return 'list';
-    if (list.loading.value) return 'loading';
-    return q.value ? 'no-results' : 'empty';
-  });
+  // Out of the list (moved or deleted), with what it takes to put them back if the save fails or on Undo.
+  const takeOut = (these) => {
+    const out = list.items.peek().filter((m) => these.includes(m.id));
+    list.mutate((items) => items.filter((m) => !these.includes(m.id)));
+    checked.value = without(checked.value, these);
+    if (these.includes(selectedId.peek())) router.setQuery({ m: null });
+    return out;
+  };
+  const putBack = (out) => list.mutate((items) => [...items, ...out].sort((a, b) => b.at.localeCompare(a.at)));
 
   // ---------- Actions ----------
 
-  async function toggleStar(r) {
-    const next = !r.starred.value;
-    r.starred.value = next;
+  // `own`: the preview's star when the message isn't in the loaded list.
+  const starOf = (id, own) => byId.value.get(id)?.starred ?? own?.value;
+  async function toggleStar(id, own) {
+    const set = (on) => {
+      patch([id], { starred: on });
+      if (own) own.value = on;
+    };
+    const next = !untrack(() => starOf(id, own));
+    set(next);
     try {
-      await post({ action: 'star', id: r.id, starred: next });
+      await post({ action: 'star', id, starred: next });
       countsVersion.value += 1;
     } catch (err) {
-      r.starred.value = !next;
+      set(!next);
       toast(`Couldn't change the star: ${err.message}`, { type: 'error' });
     }
   }
 
   const DONE = { trash: ['Moved to Trash', 'to Trash'], archive: ['Archived', 'archived'], inbox: ['Moved to Inbox', 'to Inbox'] };
   async function move(ids, to) {
-    gone.value = new Set([...gone.value, ...ids]);
-    checked.value = without(checked.value, ids);
-    if (ids.includes(selectedId.peek())) router.setQuery({ m: null });
+    const out = takeOut(ids);
     try {
       await post({ action: 'move', ids, to });
     } catch (err) {
-      gone.value = without(gone.value, ids);
+      putBack(out);
       toast(`Couldn't move ${ids.length === 1 ? 'the message' : 'the messages'}: ${err.message}`, { type: 'error' });
       return;
     }
@@ -107,22 +105,22 @@ export default function InboxPage({ folder }) {
     const [one, many] = DONE[to];
     const text = ids.length === 1 ? one : to === 'archive' ? `Archived ${ids.length} messages` : `Moved ${ids.length} messages ${many}`;
     const dismiss = toast(html`${text}
-      <button class="toast-undo" type="button" @click=${() => { dismiss(); undo(ids); }}>Undo</button>`, { timeout: 8000 });
+      <button class="toast-undo" type="button" @click=${() => { dismiss(); undo(ids, out); }}>Undo</button>`, { timeout: 8000 });
   }
 
-  async function undo(ids) {
-    gone.value = without(gone.value, ids);
+  async function undo(ids, out) {
+    putBack(out);
     try {
       await post({ action: 'undo', ids });
       countsVersion.value += 1;
       toast(ids.length === 1 ? 'Message restored' : `${ids.length} messages restored`, { type: 'success' });
     } catch (err) {
-      gone.value = new Set([...gone.value, ...ids]);
+      takeOut(ids);
       toast(`Couldn't undo: ${err.message}`, { type: 'error' });
     }
   }
 
-  const named = (ids) => (ids.length === 1 ? `"${rowById(ids[0])?.subject ?? 'this message'}"` : `${ids.length} messages`);
+  const named = (ids) => (ids.length === 1 ? `"${byId.peek().get(ids[0])?.subject ?? 'this message'}"` : `${ids.length} messages`);
 
   async function remove(ids) {
     if (!ids.length) return;
@@ -131,15 +129,13 @@ export default function InboxPage({ folder }) {
       return;
     }
     if (!(await confirm(`Delete ${named(ids)} forever? This can't be undone.`, { ok: 'Delete forever', danger: true }))) return;
-    gone.value = new Set([...gone.value, ...ids]);
-    checked.value = without(checked.value, ids);
-    if (ids.includes(selectedId.peek())) router.setQuery({ m: null });
+    const out = takeOut(ids);
     try {
       await post({ action: 'destroy', ids });
       countsVersion.value += 1;
       toast(ids.length === 1 ? 'Deleted forever' : `${ids.length} messages deleted forever`, { type: 'success' });
     } catch (err) {
-      gone.value = without(gone.value, ids);
+      putBack(out);
       toast(`Couldn't delete: ${err.message}`, { type: 'error' });
     }
   }
@@ -164,8 +160,7 @@ export default function InboxPage({ folder }) {
     return fetchJSON(`/api/inbox?id=${encodeURIComponent(id)}`, { signal })
       .then((m) => {
         if (m.wasUnread) {
-          const r = rowById(m.id);
-          if (r) r.read.value = true;
+          patch([m.id], { read: true });
           countsVersion.value += 1;
         }
         return m;
@@ -194,15 +189,13 @@ export default function InboxPage({ folder }) {
     <p class="sr-only">Loading the message…</p></div>`;
 
   const messageView = (m) => {
-    // The list's row when it's loaded (so the star is the same one), else a star of its own.
-    const r = rowById(m.id) ?? { id: m.id, subject: m.subject, starred: signal(m.starred) };
     const other = m.from.email === 'you@pith.dev' ? m.to[0] : m.from;
     return html`
       <article class="mail-view">
         <div class="mail-view-bar">
           ${backToList}
           <div class="mail-view-actions">
-            ${starButton(r, 'Star this message')}
+            ${starButton(m.id, 'Star this message', signal(m.starred))}
             ${second ? html`<button class="icon-btn" type="button" aria-label=${second.label} @click=${() => move([m.id], second.to)}>${icon(second.icon)}</button>` : null}
             <button class="icon-btn danger" type="button" aria-label=${folder === 'trash' ? 'Delete forever' : 'Delete'} @click=${() => remove([m.id])}>${icon('trash')}</button>
           </div>
@@ -240,66 +233,60 @@ export default function InboxPage({ folder }) {
 
   // ---------- The list ----------
 
-  /** @param {{ id: string, subject: string, starred: { value: boolean } }} r @param {string} label */
-  function starButton(r, label) {
-    return html`<button type="button" class=${() => (r.starred.value ? 'icon-btn star-btn on' : 'icon-btn star-btn')}
-      aria-pressed=${() => String(r.starred.value)} aria-label=${label} @click=${() => toggleStar(r)}>${icon('star')}</button>`;
+  /** @param {string} id @param {string} label @param {{ value: boolean }} [own] */
+  function starButton(id, label, own) {
+    return html`<button type="button" class=${() => (starOf(id, own) ? 'icon-btn star-btn on' : 'icon-btn star-btn')}
+      aria-pressed=${() => String(!!starOf(id, own))} aria-label=${label} @click=${() => toggleStar(id, own)}>${icon('star')}</button>`;
   }
 
-  // One element per row (a repeat() row must not start with a hole).
-  const row = (r) => {
+  // One element per row (a repeat() row must not start with a hole). Built once per id; `read` follows the list.
+  const row = (id) => {
+    const r = byId.peek().get(id);
+    const read = () => byId.value.get(id)?.read;
     const other = folder === 'sent' ? r.to[0] : r.from;
     return html`
-      <li class=${() => `mail-row${r.read.value ? '' : ' unread'}${isSelected(r.id) ? ' selected' : ''}`}>
+      <li class=${() => `mail-row${read() ? '' : ' unread'}${isSelected(r.id) ? ' selected' : ''}`}>
         <label class="mail-check"><input type="checkbox" class="check" aria-label=${`Select: ${r.subject}`}
           .checked=${() => checked.value.has(r.id)} @change=${(e) => toggleCheck(r.id, e.target.checked)}></label>
         <button type="button" class="mail-open" aria-current=${() => (isSelected(r.id) ? 'true' : null)} @click=${() => open(r)}>
           <span class="avatar" style=${`--avatar: ${colorOf(other.email)}`} aria-hidden="true">${initials(other.name)}</span>
-          <span class="mail-from">${folder === 'sent' ? `To: ${other.name}` : other.name}${() => (r.read.value ? null : html`<span class="sr-only">, unread</span>`)}</span>
+          <span class="mail-from">${folder === 'sent' ? `To: ${other.name}` : other.name}${() => (read() ? null : html`<span class="sr-only">, unread</span>`)}</span>
           <time class="mail-time" datetime=${r.at}>${when(r.at)}</time>
           <span class="mail-subject">${r.subject}</span>
           <span class="mail-snippet">${r.snippet}</span>
         </button>
-        ${starButton(r, `Star: ${r.subject}`)}
+        ${starButton(id, `Star: ${r.subject}`)}
       </li>`;
   };
 
-  const listView = (p) => {
-    if (p === 'loading') {
-      return html`<div class="mail-skeleton" aria-busy="true">
-        ${[1, 2, 3, 4, 5, 6].map(() => html`<div class="mail-skeleton-row"><span class="avatar sk"></span>
-          <span class="mail-skeleton-lines"><span class="sk"></span><span class="sk"></span><span class="sk"></span></span></div>`)}
-        <p class="sr-only">Loading ${meta.name}…</p></div>`;
-    }
-    if (p === 'error') {
-      return html`<div class="inbox-empty"><div class="load-error" role="alert">
-        <p>Couldn't load ${meta.name}. ${list.error.value?.message}</p>
-        <button class="btn" type="button" @click=${list.refetch}>Try again</button></div></div>`;
-    }
-    if (p === 'no-results') {
-      return html`<div class="inbox-empty"><span class="icon-tile">${icon('search')}</span>
-        <p><strong>No messages match "${q}"</strong></p>
-        <p class="muted">Try other words, or look in another folder.</p>
-        <button class="btn" type="button" @click=${() => router.setQuery({ q: null })}>Clear search</button></div>`;
-    }
-    if (p === 'empty') {
-      const [title, text] = EMPTY[folder];
-      return html`<div class="inbox-empty"><span class="icon-tile">${icon(meta.icon)}</span>
-        <p><strong>${title}</strong></p><p class="muted">${text}</p></div>`;
-    }
-    return html`
-      <ul class="mail-list" aria-label=${`Messages in ${meta.name}`}>${repeat(visible, (r) => r.id, row)}</ul>
+  const skeleton = () => html`<div class="mail-skeleton" aria-busy="true">
+    ${[1, 2, 3, 4, 5, 6].map(() => html`<div class="mail-skeleton-row"><span class="avatar sk"></span>
+      <span class="mail-skeleton-lines"><span class="sk"></span><span class="sk"></span><span class="sk"></span></span></div>`)}
+    <p class="sr-only">Loading ${meta.name}…</p></div>`;
+
+  // What the loaded list shows. It changes only between these, so starring or removing a row never rebuilds it.
+  const shows = computed(() => (ids.value.length ? 'list' : list.loading.value ? 'loading' : q.value ? 'no-results' : 'empty'));
+  const views = {
+    loading: skeleton,
+    'no-results': () => html`<div class="inbox-empty"><span class="icon-tile">${icon('search')}</span>
+      <p><strong>No messages match "${q}"</strong></p>
+      <p class="muted">Try other words, or look in another folder.</p>
+      <button class="btn" type="button" @click=${() => router.setQuery({ q: null })}>Clear search</button></div>`,
+    empty: () => html`<div class="inbox-empty"><span class="icon-tile">${icon(meta.icon)}</span>
+      <p><strong>${EMPTY[folder][0]}</strong></p><p class="muted">${EMPTY[folder][1]}</p></div>`,
+    list: () => html`
+      <ul class="mail-list" aria-label=${`Messages in ${meta.name}`}>${repeat(ids, (id) => id, row)}</ul>
       <div class="mail-more">${() => {
-        if (list.error.value && lastPage > 1) {
-          return html`<p class="form-error" role="alert">Couldn't load more. ${list.error.value.message}</p>
+        if (list.moreError.value) {
+          return html`<p class="form-error" role="alert">Couldn't load more. ${list.moreError.value.message}</p>
             <button class="btn" type="button" @click=${list.loadMore}>Try again</button>`;
         }
         if (list.hasMore.value) {
           return html`<button class="btn" type="button" ?disabled=${list.loadingMore} @click=${list.loadMore}>
             ${() => (list.loadingMore.value ? 'Loading…' : 'Load more')}</button>`;
         }
-        return html`<p class="muted note">${() => (visible.value.length === 1 ? 'That’s the only message.' : `That’s all ${visible.value.length} messages.`)}</p>`;
-      }}</div>`;
+        return html`<p class="muted note">${() => (ids.value.length === 1 ? 'That’s the only message.' : `That’s all ${ids.value.length} messages.`)}</p>`;
+      }}</div>`,
   };
 
   return html`
@@ -307,7 +294,7 @@ export default function InboxPage({ folder }) {
       <header class="inbox-head">
         <div>
           <h1 id="folder-title">${meta.name}</h1>
-          <p class="muted note" aria-live="polite">${() => (list.loading.value && phase.value === 'list' ? 'Updating…'
+          <p class="muted note" aria-live="polite">${() => (list.loading.value && ids.value.length ? 'Updating…'
             : q.value ? `Search results for "${q.value}"` : ABOUT[folder])}</p>
         </div>
         <div class="mail-search">
@@ -319,9 +306,9 @@ export default function InboxPage({ folder }) {
       </header>
       <div class="inbox-toolbar" role="toolbar" aria-label="Selected messages">
         <label class="mail-check"><input type="checkbox" class="check" aria-label="Select all"
-          ?disabled=${() => !visible.value.length}
+          ?disabled=${() => !ids.value.length}
           .checked=${allChecked} .indeterminate=${() => anyChecked.value && !allChecked.value}
-          @change=${(e) => (checked.value = e.target.checked ? new Set(visible.peek().map((r) => r.id)) : new Set())}></label>
+          @change=${(e) => (checked.value = e.target.checked ? new Set(ids.peek()) : new Set())}></label>
         ${() => (anyChecked.value ? untrack(() => html`
           <span class="toolbar-count">${() => checkedIds.value.length} selected</span>
           ${second ? html`<button class="btn" type="button" @click=${() => move(checkedIds.peek(), second.to)}>${icon(second.icon)} ${second.label}</button>` : null}
@@ -329,10 +316,13 @@ export default function InboxPage({ folder }) {
           : html`<span class="muted note">Select to ${second ? `${second.label.toLowerCase()} or ` : ''}delete</span>`)}
         <button class="icon-btn toolbar-refresh" type="button" aria-label="Refresh" @click=${() => { checked.value = new Set(); list.refetch(); }}>${icon('refresh')}</button>
       </div>
-      <div class="inbox-scroll">${() => {
-        const p = phase.value; // tracked: the view changes with the phase; what it builds isn't
-        return untrack(() => listView(p));
-      }}</div>
+      <div class="inbox-scroll">${list.live({
+        loading: skeleton,
+        error: (err, retry) => html`<div class="inbox-empty"><div class="load-error" role="alert">
+          <p>Couldn't load ${meta.name}. ${err.message}</p>
+          <button class="btn" type="button" @click=${retry}>Try again</button></div></div>`,
+        ready: () => html`${() => untrack(views[shows.value])}`,
+      })}</div>
     </section>
     <section class=${() => (detail.loading.value && hasSelection.value ? 'inbox-preview updating' : 'inbox-preview')} aria-label="Message">${preview}</section>
   `;
