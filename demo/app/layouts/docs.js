@@ -23,6 +23,9 @@ export default function DocsLayout(page) {
         <summary>Docs menu <span class="muted">· ${() => docByName(current())?.title ?? ''}</span></summary>
         ${nav('Docs (menu)')}
       </details>
-      <div class="docs-main">${page}</div>
+      <div class="docs-main">
+        ${page}
+        <footer class="docs-foot">Built with Pith · no runtime dependencies · no build step</footer>
+      </div>
     </div>`;
 }

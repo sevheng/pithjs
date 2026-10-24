@@ -1216,7 +1216,10 @@ body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 .docs-link:hover { background: var(--fill); text-decoration: none; }
 .docs-link[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .docs-menu { display: none; }
-.docs-main { min-width: 0; padding: 2.75rem clamp(1.25rem, 4vw, 4rem) 4rem; }
+.docs-main { min-width: 0; min-height: calc(100dvh - 3.7rem); display: flex; flex-direction: column; gap: 3rem; padding: 2.75rem clamp(1.25rem, 4vw, 4rem) 0; }
+/* On docs pages the footer is the content column's: it sits at the bottom of the screen, beside the sidebar. */
+body:has(.docs) .site-footer { display: none; }
+.docs-foot { margin-top: auto; padding: 2rem 0; border-top: 1px solid var(--hairline); text-align: center; color: var(--muted); font-size: 0.82rem; }
 
 /* The page and its "On this page" list */
 .doc-wrap { display: grid; grid-template-columns: minmax(0, 46rem) 13.5rem; gap: 4rem; justify-content: center; align-items: start; }
@@ -1292,7 +1295,7 @@ body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 @media (prefers-reduced-motion: reduce) { .doc-skeleton span { animation: none; } }
 @media (max-width: 900px) {
   .docs { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 1rem 1rem 0; }
-  .docs-main { padding: 0 0 3rem; }
+  .docs-main { padding: 0; min-height: 0; }
   .docs-side { display: none; }
   .docs-menu { display: block; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow); }
   .docs-menu summary { padding: 0.8rem 1rem; min-height: 44px; font-weight: 600; cursor: pointer; }
