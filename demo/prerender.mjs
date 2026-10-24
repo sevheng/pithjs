@@ -1,16 +1,14 @@
 // The URLs of :param routes to prerender at build time (npm run build). Runs in Node, like api/*.mjs.
 // Each page bakes in the data api/ returned during the build.
-import { readdirSync } from 'node:fs';
+import { docs } from './app/docs/index.js';
 import { rooms } from './api/chat.mjs';
 import { folders } from './api/inbox.mjs'; // Inbox (/inbox)
 
-// One page per feature example (app/examples/<name>.js).
-const features = readdirSync(new URL('./app/examples/', import.meta.url))
-  .filter((f) => f.endsWith('.js') && f !== 'index.js' && f !== 'sources.js')
-  .map((f) => `/features/${f.replace(/\.js$/, '')}`);
+// Every docs page (/docs itself is a plain route, prerendered anyway).
+const docPages = docs.filter((d) => d.name !== 'introduction').map((d) => `/docs/${d.name}`);
 
 export default async function paths() {
   // Not #firehose: its thousands of messages would be baked into the page.
-  return [...rooms.filter((r) => !r.huge).map((r) => `/chat/${r.id}`), ...features,
+  return [...rooms.filter((r) => !r.huge).map((r) => `/chat/${r.id}`), ...docPages,
     ...folders.map((f) => `/inbox/${f}`)]; // Inbox (/inbox)
 }

@@ -1,10 +1,14 @@
 import { createRouter, html } from 'pith';
 import { session } from './store.js';
 import { statusPage } from './brand.js';
+import { docByName } from './docs/index.js';
 
 // The settings pages share one layout (side nav + a display name field). It downloads with the first
 // settings page, and stays mounted while you move between them.
 const settings = { load: () => import('./layouts/settings.js') };
+// The docs sidebar stays mounted while you move between docs pages.
+const docs = { load: () => import('./layouts/docs.js') };
+const docTitle = ({ page = 'introduction' }) => docByName(page)?.title ?? 'Docs';
 // The chat frame (rooms list + the open room) stays mounted while you switch rooms.
 const chat = { load: () => import('./layouts/chat.js') };
 // ---------- Inbox (/inbox) ---------- the folders pane stays mounted while you switch folders.
@@ -15,10 +19,8 @@ const inbox = { load: () => import('./layouts/inbox.js') };
 export const router = createRouter(
   {
     '/': { title: 'Home', load: () => import('./pages/home.js') },
-    '/features': { title: 'Features', load: () => import('./pages/features.js') },
-    '/features/:name': { title: 'Feature', load: () => import('./pages/feature.js') },
-    '/examples': { title: 'Examples', load: () => import('./pages/examples.js') },
-    '/benchmarks': { title: 'Benchmarks', load: () => import('./pages/benchmarks.js') },
+    '/docs': { title: docTitle, layout: docs, load: () => import('./pages/doc.js') },
+    '/docs/:page': { title: docTitle, layout: docs, load: () => import('./pages/doc.js') },
     '/chat': { title: 'Chat', layout: chat, load: () => import('./pages/chat-home.js') },
     '/chat/:room': { title: 'Chat', layout: chat, load: () => import('./pages/chat-room.js') },
     // ---------- Inbox (/inbox) ----------
@@ -28,12 +30,16 @@ export const router = createRouter(
     // ---------- Kanban (/kanban) ----------
     '/kanban': { title: 'Kanban', load: () => import('./pages/kanban.js') },
     '/dashboard': { title: 'Dashboard', load: () => import('./pages/dashboard.js') }, // Dashboard (/dashboard)
-    // The demo's first example pages, replaced by the apps at /examples.
-    '/todos': { redirect: '/examples' },
-    '/team': { redirect: '/examples' },
-    '/team/:id': { redirect: '/examples' },
-    '/contact': { redirect: '/examples' },
-    '/about': { redirect: '/benchmarks' },
+    // Older URLs of this demo: the feature pages, the examples hub and the benchmarks moved into the docs.
+    '/features': { redirect: '/docs' },
+    '/features/:name': { redirect: ({ name }) => `/docs/${name}` },
+    '/examples': { redirect: '/docs/examples' },
+    '/benchmarks': { redirect: '/docs/benchmarks' },
+    '/todos': { redirect: '/docs/examples' },
+    '/team': { redirect: '/docs/examples' },
+    '/team/:id': { redirect: '/docs/examples' },
+    '/contact': { redirect: '/docs/examples' },
+    '/about': { redirect: '/docs/benchmarks' },
     '/settings': { redirect: '/settings/profile' },
     '/settings/profile': { title: 'Profile', layout: settings, load: () => import('./pages/settings-profile.js') },
     '/settings/appearance': { title: 'Appearance', layout: settings, load: () => import('./pages/settings-appearance.js') },

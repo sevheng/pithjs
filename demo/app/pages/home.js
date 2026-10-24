@@ -53,7 +53,7 @@ export default function HomePage() {
           no runtime dependencies, and tools made for AI agents.
         </p>
         <div class="row">
-          <a class="btn primary" href="/features">See every feature</a>
+          <a class="btn primary" href="/docs">Read the docs</a>
           <a class="btn" href="#start">Get started</a>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function HomePage() {
       <ul class="number-strip">
         ${numbers.map(([value, label]) => html`<li class="card stat"><span class="stat-value">${value}</span><span class="stat-label">${label}</span></li>`)}
       </ul>
-      <p class="muted note">Measured against the same apps in React and Vue: <a href="/benchmarks">see the benchmarks</a></p>
+      <p class="muted note">Measured against the same apps in React and Vue: <a href="/docs/benchmarks">see the benchmarks</a></p>
     </section>
 
     <section class="section" aria-labelledby="agents">
@@ -84,9 +84,9 @@ export default function HomePage() {
       <h2 id="tour">What's in the core</h2>
       <ul class="feature-grid">
         ${tour.map(([name, title, text]) => html`
-          <li class="card feature-card"><h3><a href=${`/features/${name}`}>${title}</a></h3><p>${text}</p></li>`)}
+          <li class="card feature-card"><h3><a href=${`/docs/${name}`}>${title}</a></h3><p>${text}</p></li>`)}
       </ul>
-      <p><a href="/features">All features, with live examples →</a></p>
+      <p><a href="/docs">All of Pith, with live examples →</a></p>
     </section>
 
     <section class="section narrow" id="start" aria-labelledby="get-started">

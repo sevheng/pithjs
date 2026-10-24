@@ -1,4 +1,4 @@
-// Every feature example: shown at /features and /features/<name>. Each example is one file in this
+// Every feature example: shown on its docs page (/docs/<name>). Each example is one file in this
 // folder; its source on the page comes from sources.js (npm run examples writes it).
 import signals from './signals.js';
 import lists from './lists.js';

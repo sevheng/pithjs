@@ -15,27 +15,44 @@ flow('home: counter goes up and the double follows', async (app) => {
 
 flow('navigation: links, title, and the back button', async (app) => {
   await app.go('/');
-  await app.click('Features');
-  await app.expectPath('/features');
-  await app.see('Selecting a row');
-  app.expect(app.document.title === 'Features · Pith', `title should be "Features · Pith", got "${app.document.title}"`);
+  await app.click('Docs');
+  await app.expectPath('/docs');
+  await app.see('What Pith is, what it does for you');
+  await app.waitFor(() => app.document.title === 'Introduction · Pith', `title should be "Introduction · Pith", got "${app.document.title}"`);
   await app.back();
   await app.expectPath('/');
   await app.see('The essential core of a web app.');
 });
 
-flow('navigation: the old example pages redirect to Examples, About to Benchmarks', async (app) => {
+flow('navigation: older URLs redirect into the docs', async (app) => {
+  await app.go('/features/forms');
+  await app.expectPath('/docs/forms');
   await app.go('/todos');
-  await app.expectPath('/examples');
+  await app.expectPath('/docs/examples');
   await app.go('/about');
-  await app.expectPath('/benchmarks');
+  await app.expectPath('/docs/benchmarks');
   await app.see('This page, right now');
 });
 
-flow('examples: the hub lists each app with what it shows', async (app) => {
-  await app.go('/examples');
-  await app.see('Settings');
+flow('docs: the sidebar moves between pages, keeps its place, and each page has its title', async (app) => {
+  await app.go('/docs');
+  await app.click('Forms');
+  await app.expectPath('/docs/forms');
+  await app.see('Validation, accessible errors');
+  await app.waitFor(() => app.document.title === 'Forms · Pith', `title should be "Forms · Pith", got "${app.document.title}"`);
+  app.expect(app.query('.docs-side [aria-current="page"]')?.textContent === 'Forms', 'the sidebar marks the open page');
+  await app.click('Next: Animation');
+  await app.expectPath('/docs/animation');
+});
+
+flow('examples: the docs list each app with what it shows, and an app links back to its docs', async (app) => {
+  await app.go('/docs/examples');
   await app.see('Layouts that stay mounted');
+  await app.click('Open Kanban');
+  await app.expectPath('/kanban');
+  await app.see('Reset board'); // the board, not the examples page it came from
+  await app.click('How it\'s built');
+  await app.expectPath('/docs/kanban');
 });
 
 flow('navigation: unknown URL shows not found, with a way home', async (app) => {
@@ -45,8 +62,8 @@ flow('navigation: unknown URL shows not found, with a way home', async (app) => 
   await app.expectPath('/');
 });
 
-// Has the page downloaded the script for `name` (e.g. 'features')? Matches the source file
-// (/app/pages/features.js) in development and the fingerprinted chunk (/assets/features-3f9a1c.js) in a build.
+// Has the page downloaded the script for `name` (e.g. 'doc')? Matches the source file
+// (/app/pages/doc.js) in development and the fingerprinted chunk (/assets/doc-3f9a1c.js) in a build.
 const downloaded = (app, name) =>
   app.window.performance.getEntriesByType('resource').some((r) => {
     const path = new URL(r.name).pathname;
@@ -57,24 +74,24 @@ flow('lazy loading: a page downloads its code only when it is needed', async (ap
   await app.go('/');
   await app.see('The essential core of a web app.');
   app.expect(downloaded(app, 'home'), 'home.js should be downloaded on /');
-  app.expect(!downloaded(app, 'features'), 'features.js should not be downloaded before it is needed');
-  await app.click('Features');
-  await app.see('Selecting a row');
-  app.expect(downloaded(app, 'features'), 'features.js should be downloaded after visiting /features');
+  app.expect(!downloaded(app, 'doc'), 'doc.js should not be downloaded before it is needed');
+  await app.click('Docs');
+  await app.see('What Pith is, what it does for you');
+  app.expect(downloaded(app, 'doc'), 'doc.js should be downloaded after visiting /docs');
 });
 
 flow('lazy loading: pointing at a link starts downloading its page', async (app) => {
   await app.go('/');
   await app.see('The essential core of a web app.');
-  app.expect(!downloaded(app, 'benchmarks'), 'benchmarks.js should not be downloaded yet');
-  const link = app.queryAll('nav a').find((a) => a.textContent.trim() === 'Benchmarks');
+  app.expect(!downloaded(app, 'doc'), 'doc.js should not be downloaded yet');
+  const link = app.queryAll('nav a').find((a) => a.textContent.trim() === 'Docs');
   link.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-  await app.waitFor(() => downloaded(app, 'benchmarks'), 'hovering the Benchmarks link should prefetch benchmarks.js');
+  await app.waitFor(() => downloaded(app, 'doc'), 'hovering the Docs link should prefetch doc.js');
   await app.expectPath('/'); // prefetch must not navigate
 });
 
 flow('settings: /settings opens Profile, and the layout keeps its state across pages', async (app) => {
-  await app.go('/examples');
+  await app.go('/docs/examples');
   await app.click('Open Settings');
   await app.expectPath('/settings/profile');
   await app.see('Type a display name');
@@ -103,31 +120,27 @@ flow('settings: Account needs sign-in; the guard sends you to Profile with a not
   await app.see('Only signed-in visitors get here.');
 });
 
-flow('features: the list links to each feature, with its live example and code', async (app) => {
-  await app.go('/features');
-  await app.see('Selecting a row');
-  await app.click('Forms');
-  await app.expectPath('/features/forms');
+flow('docs: a feature page has its live example and its code', async (app) => {
+  await app.go('/docs/forms');
+  await app.see('Try it');
   await app.see('The code');
-  app.expect(app.query('pre.code').textContent.includes("form({"), 'the code panel should show forms.js');
-  await app.click('Routing →');
-  await app.expectPath('/features/router');
+  app.expect(app.query('[aria-label="Source of app/examples/forms.js"]').textContent.includes('form({'), 'the code panel should show forms.js');
 });
 
-flow('features: an unknown feature name says so', async (app) => {
-  await app.go('/features/nope');
-  await app.see('No such feature');
+flow('docs: an unknown page says so', async (app) => {
+  await app.go('/docs/nope');
+  await app.see('No such page');
 });
 
 flow('features/signals: +1 updates the count and its double', async (app) => {
-  await app.go('/features/signals');
+  await app.go('/docs/signals');
   await app.click('+1');
   await app.click('+1');
   await app.see('2 × 2 = 4');
 });
 
 flow('features/lists: add and remove an item', async (app) => {
-  await app.go('/features/lists');
+  await app.go('/docs/lists');
   await app.type('New item', 'Milk');
   await app.click('Add');
   await app.see('Milk');
@@ -137,7 +150,7 @@ flow('features/lists: add and remove an item', async (app) => {
 });
 
 flow('features/selector: a click re-runs 2 rows with selector(), every row without it', async (app) => {
-  await app.go('/features/selector');
+  await app.go('/docs/selector');
   await app.click('7');
   await app.see('Rows re-run by the last click: 1 of 100'); // first pick: only row 7 changes
   await app.click('9');
@@ -148,14 +161,14 @@ flow('features/selector: a click re-runs 2 rows with selector(), every row witho
 });
 
 flow('features/components: clicking a star sets the rating', async (app) => {
-  await app.go('/features/components');
+  await app.go('/docs/components');
   await app.see('A tiny framework');
   await app.click('2 stars');
   app.expect(!!app.query('[aria-label="Rating: 2 of 5"]'), 'the rating should be 2 of 5');
 });
 
 flow('features/errors: a crash shows the fallback, and Try again recovers', async (app) => {
-  await app.go('/features/errors');
+  await app.go('/docs/errors');
   await app.click('Break it');
   await app.see('Crashed: Something broke inside this panel.');
   await app.see('This text is outside the panel');
@@ -164,14 +177,14 @@ flow('features/errors: a crash shows the fallback, and Try again recovers', asyn
 });
 
 flow('features/store: the note survives a reload', async (app) => {
-  await app.go('/features/store');
+  await app.go('/docs/store');
   await app.type('A note that survives reloads', 'remember me');
-  await app.go('/features/store');
+  await app.go('/docs/store');
   app.expect(app.query('#store-note').value === 'remember me', 'the note should be restored after a reload');
 });
 
 flow('features/resource: searching loads matching people from the API', async (app) => {
-  await app.go('/features/resource');
+  await app.go('/docs/resource');
   await app.see('Ada Lovelace');
   await app.type('Search people', 'grace');
   await app.see('Grace Hopper');
@@ -179,7 +192,7 @@ flow('features/resource: searching loads matching people from the API', async (a
 });
 
 flow('features/paginated: Load more appends the next page', async (app) => {
-  await app.go('/features/paginated');
+  await app.go('/docs/paginated');
   await app.see('Susan Kare');
   await app.notSee('Margaret Hamilton');
   await app.click('Load more');
@@ -187,7 +200,7 @@ flow('features/paginated: Load more appends the next page', async (app) => {
 });
 
 flow('features/forms: required fields, a server error, then success', async (app) => {
-  await app.go('/features/forms');
+  await app.go('/docs/forms');
   await app.click('Send');
   await app.see('This field is required');
   await app.type('Name', 'Ann');
@@ -201,14 +214,14 @@ flow('features/forms: required fields, a server error, then success', async (app
 });
 
 flow('features/router: a tab is kept in the ?query', async (app) => {
-  await app.go('/features/router');
+  await app.go('/docs/router');
   await app.click('Tab two');
   await app.see('Showing tab two');
   app.expect(app.window.location.search === '?tab=two', `the URL should have ?tab=two, not ${app.window.location.search}`);
 });
 
 flow('features/dialogs: confirm, then a toast', async (app) => {
-  await app.go('/features/dialogs');
+  await app.go('/docs/dialogs');
   await app.click('Confirm…');
   await app.click('Delete');
   await app.see('Deleted');
@@ -320,7 +333,7 @@ const benchRow = (app, title, impl) => {
 const benchText = (el) => (el?.textContent ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
 
 flow('benchmarks: each view shows its charts, and the choice is kept in ?view=', async (app) => {
-  await app.go('/benchmarks');
+  await app.go('/docs/benchmarks');
   await app.see('Loading on a slow phone');
   await app.waitFor(() => benchRow(app, 'Ready', 'pith'), 'the Load view should chart Ready');
   await app.click('Runtime');
@@ -340,22 +353,22 @@ flow('benchmarks: each view shows its charts, and the choice is kept in ?view=',
 });
 
 flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
-  await app.go('/benchmarks');
+  await app.go('/docs/benchmarks');
   await app.click('Memory');
-  await app.go(`/benchmarks${app.window.location.search}`);
+  await app.go(`/docs/benchmarks${app.window.location.search}`);
   await app.see('With 10,000 rows Pith holds');
   const pressed = app.query('[aria-label="Benchmark"] [aria-pressed="true"]')?.textContent.trim();
   app.expect(pressed === 'Memory', `Memory should be the selected view after a reload, got "${pressed}"`);
   await app.click('Load');
   await app.click('HTTP/2');
   app.expect(app.window.location.search === '?protocol=h2', `the URL should have ?protocol=h2, got "${app.window.location.search}"`);
-  await app.go('/benchmarks?protocol=h2');
+  await app.go('/docs/benchmarks?protocol=h2');
   const want = `React ${bench.load.h2.todo.react.ready.toLocaleString('en-US')} ms`;
   await app.waitFor(() => benchText(benchRow(app, 'Ready', 'react')) === want, `after a reload the first Ready chart should read "${want}" (HTTP/2)`);
 });
 
 flow('benchmarks: the numbers shown match the measurements, and the best is marked', async (app) => {
-  await app.go('/benchmarks?view=runtime');
+  await app.go('/docs/benchmarks?view=runtime');
   const update = bench.runtime['update every 10th row'];
   await app.waitFor(() => benchRow(app, 'Update every 10th row', 'react'), 'the update chart should be shown');
   const react = benchRow(app, 'Update every 10th row', 'react');
@@ -590,7 +603,7 @@ flow('kanban: filter by label and person, kept in the URL, then clear', async (a
   await app.click('Bug');
   await app.see('Showing 3 of 14 cards');
   await app.notSee('Dark mode for the docs site');
-  await app.click('Docs');
+  await app.click('.kchip[style*="label-docs"]'); // not the Docs link in the site nav
   app.expect(app.window.location.search === '?label=bug&label=docs', `the URL should keep both labels, got ${app.window.location.search}`);
   await app.go('/kanban?label=bug&label=docs');
   await app.see('Showing 5 of 14 cards');
