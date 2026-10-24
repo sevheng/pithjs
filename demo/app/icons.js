@@ -25,6 +25,11 @@ const PATHS = {
   smile: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01',
   clip: 'M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7',
   down: 'M12 5v14M6 13l6 6 6-6',
+  // Dashboard (/dashboard)
+  next: 'M9 5l7 7-7 7',
+  'trend-up': 'M4 17l6-6 4 4 6-7M14 8h6v6',
+  'trend-down': 'M4 7l6 6 4-4 6 7M14 16h6v-6',
+  'trend-flat': 'M4 12h16M15 7l5 5-5 5',
 };
 
 /** @param {string} name one of the names above @param {string} [className] */

@@ -18,6 +18,7 @@ export const router = createRouter(
     '/benchmarks': { title: 'Benchmarks', load: () => import('./pages/benchmarks.js') },
     '/chat': { title: 'Chat', layout: chat, load: () => import('./pages/chat-home.js') },
     '/chat/:room': { title: 'Chat', layout: chat, load: () => import('./pages/chat-room.js') },
+    '/dashboard': { title: 'Dashboard', load: () => import('./pages/dashboard.js') }, // Dashboard (/dashboard)
     // The demo's first example pages, replaced by the apps at /examples.
     '/todos': { redirect: '/examples' },
     '/team': { redirect: '/examples' },

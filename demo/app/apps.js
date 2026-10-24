@@ -12,4 +12,12 @@ export const apps = [
     text: 'A settings area: pages that share a side nav, and one that needs sign-in.',
     shows: ['Layouts that stay mounted between pages', 'A guard that redirects with a notice', 'provide / inject instead of passing props down'],
   },
+  // ---------- Dashboard (/dashboard) ----------
+  {
+    name: 'Dashboard', href: '/dashboard', icon: 'chart',
+    text: 'Analytics for a small online shop: KPIs, charts and a table of orders, all from a date range in the URL.',
+    shows: ['KPI cards with trends vs the previous period', 'SVG line and bar charts with tooltips and a data table',
+      'A sortable, filterable orders table with pages and a detail panel', 'Skeletons while loading, errors with Try again'],
+  },
+  // ---------- end Dashboard ----------
 ];
