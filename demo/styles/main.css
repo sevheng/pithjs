@@ -272,6 +272,13 @@ select.input { cursor: pointer; }
 /* ---------- Motion ---------- */
 @keyframes slide-in { from { opacity: 0; transform: translateY(-4px); } }
 ::view-transition-old(page), ::view-transition-new(page) { animation-duration: 0.2s; }
+/* A new page cross-fades in place: its layer doesn't slide from where the old page was scrolled to. */
+::view-transition-group(page) { animation: none; }
+/* During a View Transition the page is drawn as its own layer: keep the header above it, painted as it looks
+   (its tint over the page color) but without the blur, which a snapshot loses and the page would show through. */
+nav-bar { view-transition-name: site-header; }
+::view-transition-group(site-header) { z-index: 1; }
+:root:active-view-transition nav-bar { background: linear-gradient(var(--glass), var(--glass)) var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .lift:hover { transform: none; }
@@ -1216,6 +1223,11 @@ body:has(.docs) .site-header { max-width: none; padding-inline: 1.5rem; }
 .docs-link:hover { background: var(--fill); text-decoration: none; }
 .docs-link[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .docs-menu { display: none; }
+/* Moving between docs pages, the sidebar stays still: its own View Transition layer, not part of the page's
+   cross-fade (which would also catch it mid-scroll). */
+.docs-side { view-transition-name: docs-side; }
+::view-transition-group(docs-side), ::view-transition-new(docs-side) { animation: none; }
+::view-transition-old(docs-side) { display: none; }
 .docs-main { min-width: 0; min-height: calc(100dvh - 3.7rem); display: flex; flex-direction: column; gap: 3rem; padding: 2.75rem clamp(1.25rem, 4vw, 4rem) 0; }
 /* On docs pages the footer is the content column's: it sits at the bottom of the screen, beside the sidebar. */
 body:has(.docs) .site-footer { display: none; }

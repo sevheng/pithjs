@@ -138,8 +138,9 @@ export function createRouter(
     }
     return mod.default;
   };
-  // A download that fails (a network blip, a busy server) is tried once more before the error view shows.
-  const twice = (get) => Promise.resolve().then(get).catch(get);
+  // A download that fails (the network changed, a busy server) is tried once more, a moment later, before the
+  // error view shows. Browsers cancel requests while the network changes, so an instant retry often fails too.
+  const twice = (get) => Promise.resolve().then(get).catch(() => new Promise((ok) => setTimeout(ok, 300)).then(get));
   function load(route) {
     if (isReady(route)) return Promise.resolve();
     if (!route.pending) {

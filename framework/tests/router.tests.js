@@ -334,12 +334,13 @@ export default async function (t) {
     console.error = (...args) => errors.push(args.join(' '));
     let pages = 0;
     let layouts = 0;
+    const times = [];
     try {
       const routes = {
         [start]: () => 'start',
         '/__pith/retry': {
           layout: { load: () => (++layouts === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ default: (page) => html`<div>${page}</div>` })) },
-          load: () => (++pages === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ default: () => html`<p>retried</p>` })),
+          load: () => (times.push(performance.now()), ++pages === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ default: () => html`<p>retried</p>` })),
         },
         '*': () => 'nf',
       };
@@ -349,6 +350,7 @@ export default async function (t) {
         eq(pages, 2);
         eq(layouts, 2);
         eq(errors.length, 0, 'a download that works the second time is not an error');
+        eq(times[1] - times[0] >= 250, true, `the second try waits a moment (the network may still be changing), waited ${Math.round(times[1] - times[0])} ms`);
       });
     } finally {
       console.error = consoleError;

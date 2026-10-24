@@ -272,6 +272,13 @@ select.input { cursor: pointer; }
 /* ---------- Motion ---------- */
 @keyframes slide-in { from { opacity: 0; transform: translateY(-4px); } }
 ::view-transition-old(page), ::view-transition-new(page) { animation-duration: 0.2s; }
+/* A new page cross-fades in place: its layer doesn't slide from where the old page was scrolled to. */
+::view-transition-group(page) { animation: none; }
+/* During a View Transition the page is drawn as its own layer: keep the header above it, painted as it looks
+   (its tint over the page color) but without the blur, which a snapshot loses and the page would show through. */
+nav-bar { view-transition-name: site-header; }
+::view-transition-group(site-header) { z-index: 1; }
+:root:active-view-transition nav-bar { background: linear-gradient(var(--glass), var(--glass)) var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .lift:hover { transform: none; }
