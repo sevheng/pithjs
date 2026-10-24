@@ -69,6 +69,8 @@ const messages = {
       { reactions: [{ emoji: '😍', count: 2, mine: false }] }),
     msg('ada', 80, [{ type: 'text', text: 'Love it. Does it hold up at 16px in the tab?' }]),
     msg('mia', 78, [{ type: 'text', text: 'Yes, the dot stays 4px. Checked on a phone too.' }], { replyTo: { author: 'ada', text: 'Does it hold up at 16px in the tab?' } }),
+    msg('you', 60, [{ type: 'text', text: 'This is great. Can we use the ring as the loading spinner too?' }], { reactions: [{ emoji: '👍', count: 1, mine: false }] }),
+    msg('you', 59, [{ type: 'text', text: 'Draft notes: https://example.com/brand/spinner' }]),
     msg('mia', 20, [{ type: 'file', name: 'brand-colors.fig', size: 1_840_000, kind: 'Figma' }]),
   ],
   help: [

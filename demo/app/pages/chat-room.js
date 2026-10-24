@@ -203,15 +203,17 @@ export default function ChatRoomPage({ room }) {
   const row = (m) => {
     const head = () => meta.get(m)?.head || isFirst(m.id);
     const author = person(m.author);
+    const mine = m.author === 'you';
     return html`
-      <div class="msg-row">
+      <div class=${mine ? 'msg-row mine' : 'msg-row'}>
         ${() => (meta.get(m)?.newDay || isFirst(m.id) ? html`<div class="day" role="separator" aria-label=${day(m.at)}><span>${day(m.at)}</span></div>` : null)}
         <article class=${() => (head() ? 'msg-run' : 'msg-run cont')}>
-          ${() => (head()
+          ${mine ? null : () => (head()
             ? html`<span class="avatar" style=${`--avatar: ${author.color}`} aria-hidden="true">${initials(author.name)}</span>`
             : html`<span class="avatar-gap"></span>`)}
           <div class="msg-body">
-            ${() => (head() ? html`<header class="msg-head"><strong>${author.name}</strong> <time datetime=${m.at}>${time(m.at)}</time></header>` : null)}
+            ${() => (head() ? html`<header class="msg-head">${mine ? null : html`<strong>${author.name}</strong>`}
+              <time datetime=${m.at}>${time(m.at)}</time></header>` : null)}
             ${message(m)}
           </div>
         </article>
@@ -277,14 +279,14 @@ export default function ChatRoomPage({ room }) {
       }}</div>
       <div class="log-end">
         ${() => failed.value.map((f) => html`
-          <div class="msg-run mine">
+          <div class="msg-row mine"><article class="msg-run">
             <div class="msg-body"><div class="msg failed">
               <p class="msg-text">${f.text}</p>
-              <p class="form-error" role="alert">Not sent: ${f.error}</p>
+              <p class="msg-failed-note" role="alert">Not sent: ${f.error}</p>
               <div class="row"><button class="btn" type="button" @click=${() => retry(f)}>${icon('refresh')} Retry</button>
               <button class="btn ghost" type="button" @click=${() => (failed.value = failed.value.filter((x) => x !== f))}>Delete</button></div>
             </div></div>
-          </div>`)}
+          </article></div>`)}
         ${() => (typing.value ? html`<p class="typing" aria-live="polite">${typing.value} is typing<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>` : null)}
       </div>
     </div>

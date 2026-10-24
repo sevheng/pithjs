@@ -22,7 +22,8 @@ export default function ChatLayout(page) {
               ${list.map((r) => html`
                 <li>
                   <a class="room-link" href=${`/chat/${r.id}`} aria-current=${() => (current() === r.id ? 'page' : null)}>
-                    <span class="room-name"># ${r.name}</span>
+                    <span class="room-icon" aria-hidden="true">#</span>
+                    <span class="room-name">${r.name}</span>
                     ${r.last ? html`<span class="room-time">${time(r.last.at)}</span>` : null}
                     <span class="room-last">${r.last
                       ? `${r.last.authorName}: ${r.last.parts.find((p) => p.type === 'text')?.text ?? `sent ${r.last.parts[0].type === 'image' ? 'an image' : `a ${r.last.parts[0].type}`}`}`
