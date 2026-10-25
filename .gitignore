@@ -1,3 +1,4 @@
 .pith/
 node_modules/
 dist/
+.claude/worktrees/
