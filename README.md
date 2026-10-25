@@ -15,7 +15,7 @@ a trading screen, a spreadsheet and a shop)
 Needs Node 24+ and Chrome or Chromium (for the checks and prerendering).
 
 ```sh
-npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.0/pithjs-0.1.0.tgz pith create my-app
+npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.1/pithjs-0.1.1.tgz pith create my-app
 cd my-app
 npm install
 npm run dev      # → http://localhost:8000
@@ -24,7 +24,7 @@ npm run build    # production build into dist/, every page prerendered; put dist
 ```
 
 Other versions: [Releases](https://github.com/sevheng/pithjs/releases). Without any tools, point an import map at
-the one-file copy: `"pith": "https://cdn.jsdelivr.net/gh/sevheng/pithjs@v0.1.0/framework/pith/pith.min.js"`.
+the one-file copy: `"pith": "https://cdn.jsdelivr.net/gh/sevheng/pithjs@v0.1.1/framework/pith/pith.min.js"`.
 
 ```js
 import { define, html, signal, computed } from 'pith';
@@ -55,6 +55,7 @@ compare/     the same apps in Pith, React and Vue, measured the same way (RESULT
 
 Working on Pith itself: `cd demo && npm install && npm run check` runs everything; see
 [framework/CONTRIBUTING.md](framework/CONTRIBUTING.md). Releasing: bump `framework/package.json`'s version, add
-its notes to the changelog, then `git tag v<version> && git push --tags`.
+its notes to the changelog, update the version in the install commands (this README, `framework/README.md`,
+`demo/app/brand.js`; `npm run check` fails until they match), then `git tag v<version> && git push --tags`.
 
 MIT license.

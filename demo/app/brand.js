@@ -19,3 +19,8 @@ export const statusPage = ({ code, title, text, detail = null, actions }) => htm
     <div class="row">${actions}</div>
   </section>
 `;
+
+// The current Pith release (GitHub Releases, not npm): update with each release (see the repo's README).
+export const RELEASE = 'v0.1.1';
+export const releaseTgz = `https://github.com/sevheng/pithjs/releases/download/${RELEASE}/pithjs-${RELEASE.slice(1)}.tgz`;
+export const createCommand = `npx --package=${releaseTgz} pith create my-app`;

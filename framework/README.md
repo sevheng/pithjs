@@ -34,7 +34,7 @@ Start a project with `pith create`:
 
 ```sh
 # from a GitHub Release (https://github.com/sevheng/pithjs/releases): the version's .tgz
-npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.0/pithjs-0.1.0.tgz pith create my-app
+npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.1/pithjs-0.1.1.tgz pith create my-app
 # or from a checkout of this repo: node framework/tools/cli.mjs create my-app
 cd my-app
 npm install                          # Pith's tools (pithjs) and Vite: the two dev dependencies
@@ -74,8 +74,9 @@ npm run new page contact -- --nav  # new page, wired into the router and nav
 npm run new component user-card    # new component
 ```
 
-Pith isn't published to npm yet (`package.json` has `"private": true`). To publish, remove that line and run
-`npm publish` in this folder; `pith create` then writes `"pithjs": "^0.1.0"` instead of a `file:` link.
+Pith is released on GitHub (Releases), not npm (`package.json` has `"private": true`). Each release attaches
+`pithjs-<version>.tgz`; `pith create` run from it makes the project depend on that file, and from a checkout of
+the repo it links the folder (`file:...`).
 
 Needs Node 24+ and Chrome/Chromium (set `CHROME_PATH` if it isn't found). Checks run a few headless
 Chromes at a time (a quarter of your CPU cores); `PITH_CHROME_JOBS=2` lowers that on a busy machine.

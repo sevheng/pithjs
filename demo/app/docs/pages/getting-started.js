@@ -1,9 +1,10 @@
 import { html } from 'pith';
 import { code, api, note, c } from '../ui.js';
+import { createCommand } from '../../brand.js';
 
 const create = `
-npx pithjs create my-app      # once Pith is on npm
-# from a checkout of the Pith repo:
+${createCommand}
+# or from a checkout of the Pith repo:
 node framework/tools/cli.mjs create my-app
 
 cd my-app

@@ -1,6 +1,7 @@
 import { html, signal } from 'pith';
 import { apps } from '../apps.js';
 import { icon } from '../icons.js';
+import { createCommand, RELEASE } from '../brand.js';
 import { preview } from '../previews.js';
 import '../components/counter.js';
 
@@ -87,7 +88,7 @@ const COUNT = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eig
 
 export default function HomePage() {
   const copied = signal(false);
-  const commands = 'npx pithjs create my-app\ncd my-app\nnpm install\nnpm run dev';
+  const commands = `${createCommand}\ncd my-app\nnpm install\nnpm run dev`;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(commands);
@@ -182,7 +183,8 @@ export default function HomePage() {
         <pre class="start-code" tabindex="0" aria-label="Commands to start a project"><code>${commands}</code></pre>
         <button class="btn" type="button" @click=${copy}>${icon('copy')} ${() => (copied.value ? 'Copied' : 'Copy')}</button>
       </div>
-      <p class="muted note">Not on npm yet: from the Pith repo, run <code>node framework/tools/cli.mjs create my-app</code>.</p>
+      <p class="muted note">Pith ${RELEASE}, from its <a href="https://github.com/sevheng/pithjs/releases">GitHub Releases</a>.
+        Needs Node 24+.</p>
       <div class="row"><a class="btn primary big" href="/docs/getting-started">Read the guide</a></div>
     </section>
   `;

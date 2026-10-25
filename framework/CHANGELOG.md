@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 (2026-10-25)
 
 - A trailing slash is the same page: `/docs/signals/` (how GitHub Pages and other static hosts serve a prerendered
   page's folder) is `router.path` `/docs/signals`, so links marked as current and layouts match on first load.
