@@ -195,6 +195,20 @@ export function createFrame({ width = 1024, height = 768 } = {}) {
 }
 
 /**
+ * The message of a build tool's error overlay on the page (Vite shows a module that fails to compile this way,
+ * outside the app), or null. Flows and `npm run see` report it as a problem.
+ * @param {Document} doc
+ * @returns {string | null}
+ */
+export function errorOverlay(doc) {
+  const root = doc.querySelector('vite-error-overlay')?.shadowRoot;
+  if (!root) return null;
+  const text = (sel) => root.querySelector(sel)?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  const file = text('.file');
+  return `${text('.message') || 'error'}${file ? ` (${file})` : ''}`;
+}
+
+/**
  * Control the app in `frame`. Every method waits (up to 3s) for its target, then throws an
  * error that describes what the page actually shows, so a failure says what went wrong.
  * @param {HTMLIFrameElement} frame
@@ -262,6 +276,14 @@ export function createApp(frame) {
     }
   };
 
+  // A build error shown over the page (a module that doesn't compile): reported once, as a problem.
+  const overlayLine = () => (errorOverlay(doc()) ? `\nBuild error shown over the page: ${errorOverlay(doc())}` : '');
+  const reportOverlay = () => {
+    const overlay = doc() && errorOverlay(doc());
+    const line = overlay && `Build error shown over the page: ${overlay}`;
+    if (line && !problems.includes(line)) problems.push(line);
+  };
+
   // A timer, not requestAnimationFrame: headless browsers may never paint, so rAF can stall.
   const settle = () => sleep(50);
 
@@ -282,7 +304,8 @@ export function createApp(frame) {
       });
       // Pages load their code lazily: wait until one has rendered (every route renders an <h1>), with
       // room for a busy machine, so a flow's first step doesn't race the page's code.
-      const rendered = () => frame.contentDocument?.querySelector('h1');
+      // A build error over the page won't go away by waiting: stop at once, and report it (reportOverlay below).
+      const rendered = () => frame.contentDocument?.querySelector('h1') || errorOverlay(frame.contentDocument);
       try {
         await waitFor(rendered, { timeout: 10_000, message: 'not rendered' });
       } catch {
@@ -294,10 +317,11 @@ export function createApp(frame) {
         frame.contentWindow?.focus();
         await waitFor(rendered, {
           timeout: 10_000,
-          message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s, twice.\nFirst try: ${first}\nSecond try: ${startup()}\nThe page shows:\n${outline(doc())}`,
+          message: () => `go(${quote(path)}): no page rendered (no <h1>) within 10 s, twice.${overlayLine()}\nFirst try: ${first}\nSecond try: ${startup()}\nThe page shows:\n${outline(doc())}`,
         });
       }
       watch();
+      reportOverlay();
       await settle();
     },
 
@@ -403,6 +427,8 @@ export function createApp(frame) {
     get window() { return win(); },
     /** Errors and console warnings the app produced (checked automatically after each flow). */
     problems,
+    /** Add a build error overlay on the page now, if there is one, to problems. */
+    checkOverlay: reportOverlay,
   };
 }
 
@@ -431,6 +457,7 @@ export async function runFlows() {
     const app = createApp(frame);
     try {
       await fn(app);
+      app.checkOverlay();
       if (app.problems.length) throw new Error(`The app reported problems:\n  ${app.problems.join('\n  ')}`);
       results.push([name, null]);
     } catch (err) {

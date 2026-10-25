@@ -1,7 +1,7 @@
 // Flow harness tests (tests/harness.js): how app.click/type/select find their target, what see() reads,
 // and waiting for a navigation. Called by index.html.
 
-import { findTarget, visibleText, createApp } from './harness.js';
+import { findTarget, visibleText, createApp, errorOverlay } from './harness.js';
 
 /** @param {any} t */
 export default async function (t) {
@@ -12,6 +12,23 @@ export default async function (t) {
     document.body.append(box);
     return { doc: document, done: () => box.remove() };
   };
+
+  // Vite shows a syntax error in a module (a page that can't load) as an overlay, outside the app: see and the flows
+  // must report it, not "No errors".
+  await test('harness: errorOverlay reads the message of a Vite error overlay, and is null without one', () => {
+    const p = page('<p>h-ok</p>');
+    try {
+      eq(errorOverlay(p.doc), null);
+      const overlay = document.createElement('vite-error-overlay');
+      overlay.attachShadow({ mode: 'open' }).innerHTML =
+        '<div class="window"><pre class="message"><span class="plugin">[plugin:vite:import-analysis] </span>' +
+        '<span class="message-body">Failed to parse source</span></pre><pre class="file">/app/pages/x.js:26:107</pre></div>';
+      document.body.append(overlay);
+      try {
+        eq(errorOverlay(p.doc), '[plugin:vite:import-analysis] Failed to parse source (/app/pages/x.js:26:107)');
+      } finally { overlay.remove(); }
+    } finally { p.done(); }
+  });
 
   await test('harness: a target is matched by its accessible name, then case-insensitively', () => {
     const p = page('<button type="button" id="h-save">Save draft</button>');

@@ -22,11 +22,13 @@
     const params = new URLSearchParams(location.search);
     const frame = createFrame({ width: +params.get('width') || 1024, height: +params.get('height') || 768 });
     const app = createApp(frame);
-    await app.go(params.get('path') || '/');
+    // A page that never renders (its code doesn't load or compile) still gets a report, saying why.
+    const failed = await app.go(params.get('path') || '/').then(() => null, (err) => String(err?.message ?? err));
     await new Promise((r) => setTimeout(r, 300)); // let transitions and late renders finish
     document.getElementById('outline').textContent = app.outline();
     if (params.has('state')) document.getElementById('state').textContent = stateText(app.window);
-    document.getElementById('problems').textContent = app.problems.join('\n');
+    app.checkOverlay(); // a page whose code doesn't compile shows the dev server's error over it
+    document.getElementById('problems').textContent = [...(failed ? [failed] : []), ...app.problems].join('\n');
     document.getElementById('layout').textContent = findOverflow(app.document);
     document.getElementById('a11y').textContent = accessibilityProblems(app.document, { contrastOnly: params.has('dark') }).join('\n');
     document.getElementById('height').textContent = String(app.document.documentElement.scrollHeight); // for see --full
