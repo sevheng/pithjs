@@ -1,8 +1,9 @@
 // Production-like server for comparisons: serves one app + framework, gzip-compressed, over
-// HTTP/1.1 (http://) or HTTP/2 (https://, local self-signed cert), plus the shared CRM API.
+// HTTP/1.1 (http://) or HTTP/2 (https://, local self-signed cert). Code every implementation shares (the
+// trading feed, the formula engine) is served from shared/ at /shared/.
 //
 //   node tools/server.mjs <app> <impl> [--h2] [--port 8000]
-//   app:  todo | crm | bench          impl: pith | react | vue
+//   app:  trade | sheet          impl: pith | react | vue | pith-vite
 //
 // pith is served from source (no build step, as Pith is meant to run); react and vue are served
 // from their Vite production builds (dist/), as they are meant to run. pith-vite is Pith's source
@@ -15,13 +16,13 @@ import http2 from 'node:http2';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { handleApi } from '../shared/api.mjs';
 import { forDeploy } from '../../framework/tools/release.mjs';
 
 const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
-export const APPS = ['todo', 'crm', 'bench'];
-export const IMPLS = ['pith', 'react', 'vue', 'pith-vite', 'pith-before', 'pith-fine'];
+export const APPS = ['trade', 'sheet'];
+// pith-before: the same Pith app on a copy of an older pith/ in .pith-before/, for tools/ab.mjs.
+export const IMPLS = ['pith', 'react', 'vue', 'pith-vite', 'pith-before'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -39,7 +40,6 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg']);
 export function appRoot(app, impl) {
   if (impl === 'pith' || impl === 'pith-before') return join(compare, app, 'pith');
   if (impl === 'pith-vite') return join(compare, app, 'pith', 'dist');
-  if (impl === 'pith-fine') return join(compare, app, 'pith-fine'); // bench only: fine-grained rows
   return join(compare, app, impl, 'dist');
 }
 
@@ -67,15 +67,14 @@ const gzCache = new Map();
 export async function startServer({ app, impl, h2 = false, port = 0, flows = null, deploy = false }) {
   if (!APPS.includes(app) || !IMPLS.includes(impl)) throw new Error(`unknown app/impl: ${app} ${impl}`);
   const root = appRoot(app, impl);
-  // pith-before: the same app on Pith's html.js from before the optimization pass (.pith-before/).
   const mounts = [
     ['/pith/', impl === 'pith-before' ? join(compare, '.pith-before') : join(framework, 'pith')],
     ['/__pith/', join(framework, 'tests')],
+    ['/shared/', join(compare, 'shared')],
   ];
   const exact = {
     '/styles.css': join(compare, 'shared', 'styles.css'),
     '/tests/flows.js': flows ?? join(compare, 'flows', `${app}.js`),
-    ...(impl === 'pith-fine' ? { '/app/data.js': join(compare, app, 'pith', 'app', 'data.js') } : {}),
   };
 
   async function resolve(pathname) {
@@ -98,19 +97,6 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
   async function handle(req, res) {
     const url = new URL(req.url, 'http://localhost');
     try {
-      if (url.pathname.startsWith('/api/')) {
-        let body = null;
-        if (req.method !== 'GET' && req.method !== 'HEAD') {
-          const chunks = [];
-          for await (const c of req) chunks.push(c);
-          const text = Buffer.concat(chunks).toString('utf8');
-          body = text ? JSON.parse(text) : null;
-        }
-        const { status, json } = await handleApi(req.method, url, body);
-        res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
-        res.end(json === undefined ? undefined : JSON.stringify(json));
-        return;
-      }
       const file = await resolve(decodeURIComponent(url.pathname));
       if (!file) {
         res.writeHead(404, { 'content-type': 'text/plain' });
@@ -153,7 +139,7 @@ export async function startServer({ app, impl, h2 = false, port = 0, flows = nul
 }
 
 if (import.meta.main) {
-  const [app = 'todo', impl = 'pith'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const [app = 'trade', impl = 'pith'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const portArg = process.argv.indexOf('--port');
   const port = portArg > 0 ? Number(process.argv[portArg + 1]) : 8000;
   const server = await startServer({ app, impl, h2: process.argv.includes('--h2'), port, deploy: process.argv.includes('--deploy') });

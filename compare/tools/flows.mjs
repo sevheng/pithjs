@@ -1,15 +1,15 @@
 // Run the shared user flows against every implementation.
-//   node tools/flows.mjs [todo|crm|bench] [pith|react|vue|pith-vite] [--flows path/to/flows.js] [--deploy]
+//   node tools/flows.mjs [trade|sheet] [pith|react|vue|pith-vite] [--flows path/to/flows.js] [--deploy]
 //   --deploy: pith loads its no-build production copy (pith.min.js), as measure.mjs loads it
 // Exits non-zero if any flow fails anywhere.
 
 import { findChrome, loadPage, parseResults } from '../../framework/tools/chrome.mjs';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
-import { startServer, appRoot, IMPLS } from './server.mjs';
+import { startServer, appRoot, APPS, IMPLS } from './server.mjs';
 
 const args = process.argv.slice(2);
-const apps = args.filter((a) => ['todo', 'crm', 'bench'].includes(a));
+const apps = args.filter((a) => APPS.includes(a));
 const impls = args.filter((a) => IMPLS.includes(a));
 const flowsArg = args.indexOf('--flows');
 const flows = flowsArg >= 0 ? resolve(args[flowsArg + 1]) : null;
@@ -17,9 +17,9 @@ const chrome = findChrome();
 if (!chrome) throw new Error('Chrome not found (set CHROME_PATH)');
 
 let failures = 0;
-for (const app of apps.length ? apps : ['todo', 'crm', 'bench']) {
-  for (const impl of impls.length ? impls : IMPLS) {
-    if (!existsSync(appRoot(app, impl))) continue; // pith-fine exists for bench only
+for (const app of apps.length ? apps : APPS) {
+  for (const impl of impls.length ? impls : IMPLS.filter((i) => i !== 'pith-before')) {
+    if (!existsSync(appRoot(app, impl))) { console.log(`✗ ${app}/${impl}: not built (npm run build)`); failures++; continue; }
     const server = await startServer({ app, impl, flows, deploy: args.includes('--deploy') });
     try {
       const { dom, consoleLines } = await loadPage(chrome, `${server.url}/__pith/flows.html`);

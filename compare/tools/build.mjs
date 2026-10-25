@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 const compare = join(import.meta.dirname, '..');
 const framework = join(compare, '..', 'framework');
-const APPS = ['todo', 'crm', 'bench'];
+import { APPS } from './server.mjs';
 
 // Pith's index.html loads 'pith' through an import map and preloads its files; a bundle replaces both.
 const stripNoBuildTags = {

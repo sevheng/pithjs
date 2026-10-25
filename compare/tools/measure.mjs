@@ -1,31 +1,46 @@
 // Measure every implementation the same way, with real (not virtual) time:
 //   load:    fresh profile per run, "slow 4G + 4x slower CPU" phone profile, over HTTP/1.1 and HTTP/2
-//   runtime: js-framework-benchmark-style operations (median of 10, after warm-up, GC between runs; 3 pages
-//            per implementation per round, --rounds rounds in rotated order)
-//   memory:  JS heap after load, with 1k / 10k rows, and after create/clear cycles (leak check)
+//   runtime: each app's operations (median of 10, after warm-up, GC between runs; 3 pages per implementation
+//            per round, --rounds rounds in rotated order)
+//   stress:  each app under sustained load for a few seconds: frames per second, frame times, long tasks
+//   memory:  JS heap after GC in each app's states
 //
-//   node tools/measure.mjs [load] [runtime] [--runs 5] [--rounds 4] [--source] [--impl pith,pith-fine,react,vue] [--out file.json]
-//   (pith-fine: Pith with fine-grained rows, bench only, runtime only; see README "Fine-grained rows")
+//   node tools/measure.mjs [load] [runtime] [stress] [memory] [--app trade,sheet] [--runs 9] [--rounds 4]
+//                          [--source] [--impl pith,pith-vite,react,vue] [--out file.json]
+//
+// What to measure comes from each app's <app>/measure.js (see the contract at the end of this comment).
 // Writes results/measure.json. Pith runs with dev warnings off (PITH_DEV=false), like the others'
 // production builds. Its load test serves it as deployed without a build: one file, pith.min.js
-// (framework/tools/release.mjs). --source loads its dev sources instead (ten files, dev code included).
+// (framework/tools/release.mjs). --source loads its dev sources instead (dev code included).
+//
+// <app>/measure.js exports (scripts are strings evaluated in the page, with the helpers below as __m):
+//   load:    { path, ready }                       ready: a CSS selector present once real content is on screen
+//   runtime: [{ path, script }]                    script resolves to { 'operation': ms } via __m.ops({...})
+//   stress:  [{ name, path, script }]              script resolves to __m.underLoad(...)'s result
+//   memory:  [{ name, path, script? }]             script (optional) brings the page to that state first
+// In the page:
+//   __m.ops({ name: { setup, run, ok, n? } })      setup/run may be async; run's own work is what's timed:
+//                                                  from run() to the DOM updated and laid out
+//   __m.underLoad(start, stop, ms = 5000)          frames per second, median / 95th-percentile frame and long tasks
+//   __m.tick(), __m.afterFrame(), __m.waitFor(fn)
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { findChrome } from '../../framework/tools/chrome.mjs';
 import { launch } from './cdp.mjs';
-import { startServer } from './server.mjs';
+import { startServer, APPS } from './server.mjs';
 
 const compare = join(import.meta.dirname, '..');
 const args = process.argv.slice(2);
-const want = (part) => !args.some((a) => ['load', 'runtime'].includes(a)) || args.includes(part);
-const runsArg = args.indexOf('--runs');
-const RUNS = runsArg >= 0 ? Number(args[runsArg + 1]) : 5;
-const implArg = args.indexOf('--impl');
-const IMPLS = implArg >= 0 ? args[implArg + 1].split(',') : ['pith', 'pith-vite', 'react', 'vue', 'pith-fine'];
-const LOAD_IMPLS = IMPLS.filter((i) => i !== 'pith-fine'); // fine-grained rows exist for the bench app only
+const PARTS = ['load', 'runtime', 'stress', 'memory'];
+const want = (part) => !args.some((a) => PARTS.includes(a)) || args.includes(part);
+const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
+const RUNS = Number(opt('--runs', 9));
+const ROUNDS = Number(opt('--rounds', 4));
+const IMPLS = opt('--impl', 'pith,pith-vite,react,vue').split(',');
+const ONLY_APPS = opt('--app', APPS.join(',')).split(',');
 const DEPLOY = !args.includes('--source');
-const OUT = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'measure.json';
+const OUT = opt('--out', 'measure.json');
 
 const median = (xs) => {
   const s = xs.filter((x) => typeof x === 'number').sort((a, b) => a - b);
@@ -33,7 +48,11 @@ const median = (xs) => {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
+const round1 = (x) => (x == null ? null : Math.round(x * 10) / 10);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const specs = {};
+for (const app of ONLY_APPS) specs[app] = await import(join(compare, app, 'measure.js'));
 
 const chromePath = findChrome();
 if (!chromePath) throw new Error('Chrome not found (set CHROME_PATH)');
@@ -41,23 +60,91 @@ const browser = await launch(chromePath);
 const resultsFile = join(compare, 'results', OUT);
 const results = existsSync(resultsFile) ? JSON.parse(readFileSync(resultsFile, 'utf8')) : {};
 results.environment = {
+  ...results.environment,
   date: new Date().toISOString(),
   chrome: (await (await browser.newPage()).evaluate('navigator.userAgent')).match(/Chrome\/[\d.]+/)?.[0],
   node: process.version,
-  // A run of only one part keeps the other part's settings (results are merged into the same file).
-  runs: want('load') ? RUNS : results.environment?.runs,
+  ...(want('load') ? { runs: RUNS } : {}),
+  ...(want('runtime') || want('stress') ? { rounds: ROUNDS } : {}),
 };
 
 // Turn off Pith's dev warnings for measurements (the server injects nothing into React/Vue).
 const prodScript = 'globalThis.PITH_DEV = false;';
 
-// ---------- Load ----------
-const LOAD_PAGES = [
-  { app: 'todo', path: '/', ready: 'li.todo' },
-  { app: 'crm', path: '/', ready: '.stat-value' },
-  { app: 'crm', path: '/customers', ready: '.table tbody tr' },
-];
+// The in-page helpers every app's script uses, so all are timed the same way.
+const helpers = `
+globalThis.__m = (() => {
+  const tick = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+  // Start each measurement right after the browser has drawn a frame. Otherwise its next regular frame
+  // (style, paint: several ms) lands inside the timed window more or less often depending on how long the
+  // setup took. The timeout keeps a page that never draws (headless, hidden) from waiting forever.
+  const afterFrame = () => new Promise((r) => { let t; requestAnimationFrame(() => { clearTimeout(t); setTimeout(r, 0); }); t = setTimeout(r, 100); });
+  const settle = async () => { await tick(); await tick(); globalThis.gc?.(); await tick(); await afterFrame(); };
+  const waitFor = async (fn, ms = 10000) => { const end = performance.now() + ms; while (!fn()) { if (performance.now() > end) throw new Error('timed out'); await new Promise((r) => setTimeout(r, 10)); } };
+  async function ops(list) {
+    const out = {};
+    for (const [name, op] of Object.entries(list)) {
+      const times = [];
+      const n = op.n ?? 10;
+      for (let i = 0; i < n + 3; i++) {
+        await op.setup?.();
+        await settle();
+        const t0 = performance.now();
+        const p = op.run();
+        if (p?.then) await p;
+        await tick();
+        document.body.offsetHeight; // include style and layout
+        const t = performance.now() - t0;
+        if (!(await op.ok())) throw new Error(name + ': wrong result');
+        if (i >= 3) times.push(t); // the first 3 are warm-up
+      }
+      times.sort((a, b) => a - b);
+      out[name] = times[Math.floor(times.length / 2)];
+    }
+    return out;
+  }
+  // Run the app under load for ms and record every frame: how smooth it stays, and how much it blocks.
+  async function underLoad(start, stop, ms = 5000) {
+    await settle();
+    const frames = [];
+    let longTasks = 0, longMs = 0;
+    const obs = new PerformanceObserver((l) => { for (const e of l.getEntries()) { longTasks++; longMs += e.duration; } });
+    try { obs.observe({ type: 'longtask' }); } catch {}
+    let last = 0, running = true;
+    const frame = (t) => { if (last) frames.push(t - last); last = t; if (running) requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+    const t0 = performance.now();
+    await start();
+    await new Promise((r) => setTimeout(r, ms));
+    await stop();
+    running = false;
+    const elapsed = performance.now() - t0;
+    obs.disconnect();
+    const s = [...frames].sort((a, b) => a - b);
+    const pick = (q) => s[Math.min(s.length - 1, Math.floor(s.length * q))];
+    return { fps: (frames.length / elapsed) * 1000, frameP50: pick(0.5), frameP95: pick(0.95), longTasks, longMs };
+  }
+  return { tick, afterFrame, settle, waitFor, ops, underLoad };
+})();`;
 
+async function heapMB(page) {
+  await page.send('HeapProfiler.collectGarbage');
+  const { usedSize } = await page.send('Runtime.getHeapUsage');
+  return Math.round((usedSize / 1024 / 1024) * 100) / 100;
+}
+
+/** A fresh page on path, with the helpers in it, once its load event fired. */
+async function openPage(server, path) {
+  const page = await browser.newPage();
+  await page.send('Page.enable');
+  await page.send('Page.addScriptToEvaluateOnNewDocument', { source: prodScript + helpers });
+  const loaded = page.once('Page.loadEventFired');
+  await page.send('Page.navigate', { url: server.url + path });
+  await loaded;
+  return page;
+}
+
+// ---------- Load ----------
 const injectLoad = (selector) => `
   window.__lcp = 0; window.__tbt = 0;
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lcp = e.startTime; })
@@ -110,8 +197,9 @@ async function loadOnce(url, selector) {
 
 if (want('load')) {
   results.load = {};
-  for (const { app, path, ready } of LOAD_PAGES) {
-    for (const impl of LOAD_IMPLS) {
+  for (const app of ONLY_APPS) {
+    const { path, ready } = specs[app].load;
+    for (const impl of IMPLS) {
       for (const h2 of [false, true]) {
         const server = await startServer({ app, impl, h2, deploy: DEPLOY });
         const runs = [];
@@ -126,128 +214,100 @@ if (want('load')) {
         } finally {
           server.close();
         }
-        const key = `${app}${path === '/' ? '' : path} · ${impl} · ${h2 ? 'h2' : 'h1'}`;
-        const pick = (field) => Math.round(median(runs.map((r) => r[field])) * 10) / 10;
+        const key = `${app} · ${impl} · ${h2 ? 'h2' : 'h1'}`;
+        const pick = (field) => round1(median(runs.map((r) => r[field])));
         results.load[key] = {
-          app: `${app}${path === '/' ? '' : path}`, impl, protocol: runs[0].protocol,
+          app, impl, protocol: runs[0].protocol,
           fcp: pick('fcp'), lcp: pick('lcp'), ready: pick('ready'), tbt: pick('tbt'),
           jsKB: pick('jsKB'), jsFiles: runs[0].jsFiles, requests: runs[0].requests,
         };
-        console.log(key.padEnd(34), JSON.stringify(results.load[key]));
+        console.log(key.padEnd(26), JSON.stringify(results.load[key]));
       }
     }
   }
 }
 
-// ---------- Runtime + memory ----------
-const BENCH = `(async () => {
-  const $ = (s) => document.querySelector(s);
-  const rows = () => document.querySelectorAll('tbody tr').length;
-  const tick = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
-  const click = (sel) => $(sel).click();
-  // Start each measurement right after the browser has drawn a frame. Otherwise its next regular frame
-  // (style, paint: several ms) lands inside the timed window more or less often depending on how long the
-  // setup took, which penalised whichever framework's setup happened to line up with it. The timeout
-  // keeps a page that never draws (headless, hidden) from waiting forever.
-  const afterFrame = () => new Promise((r) => { let t; requestAnimationFrame(() => { clearTimeout(t); setTimeout(r, 0); }); t = setTimeout(r, 100); });
-  const settle = async () => { await tick(); await tick(); window.gc?.(); await tick(); await afterFrame(); };
-  const fresh = async (n) => { click('#clear'); await tick(); if (n) { click(n === 1000 ? '#run' : '#runlots'); await tick(); } };
-
-  const ops = {
-    'create 1,000 rows':      { setup: () => fresh(0),    run: () => click('#run'),      ok: () => rows() === 1000 },
-    'replace 1,000 rows':     { setup: () => fresh(1000), run: () => click('#run'),      ok: () => rows() === 1000 },
-    'update every 10th row':  { setup: () => fresh(1000), run: () => click('#update'),   ok: () => $('tbody tr:nth-child(11) .lbl').textContent.endsWith(' !!!') },
-    'select a row':           { setup: () => fresh(1000), run: () => $('tbody tr:nth-child(2) .lbl').click(), ok: () => $('tbody tr:nth-child(2)').classList.contains('selected') },
-    'swap two rows':          { setup: () => fresh(1000), run: () => click('#swaprows'), ok: () => true },
-    'remove a row':           { setup: () => fresh(1000), run: () => $('tbody tr:nth-child(4) .remove').click(), ok: () => rows() === 999 },
-    'create 10,000 rows':     { setup: () => fresh(0),    run: () => click('#runlots'),  ok: () => rows() === 10000, n: 5 },
-    'append 1,000 rows':      { setup: () => fresh(1000), run: () => click('#add'),      ok: () => rows() === 2000 },
-    'clear 1,000 rows':       { setup: () => fresh(1000), run: () => click('#clear'),    ok: () => rows() === 0 },
-  };
-  const out = {};
-  for (const [name, op] of Object.entries(ops)) {
-    const times = [];
-    const n = op.n ?? 10;
-    for (let i = 0; i < n + 3; i++) {
-      await op.setup();
-      await settle();
-      const t0 = performance.now();
-      op.run();
-      await tick();
-      document.body.offsetHeight; // include style and layout
-      const t = performance.now() - t0;
-      if (!op.ok()) throw new Error(name + ': wrong result');
-      if (i >= 3) times.push(t); // first 3 are warm-up
+// ---------- Runtime and stress ----------
+// Rounds, with the implementations in a rotated order each round, and medians over all of them: whichever runs
+// first is otherwise measured on a warmer, busier machine.
+async function rounds(label, each) {
+  const perImpl = Object.fromEntries(IMPLS.map((i) => [i, []]));
+  for (let round = 0; round < ROUNDS; round++) {
+    for (const impl of [...IMPLS.slice(round % IMPLS.length), ...IMPLS.slice(0, round % IMPLS.length)]) {
+      perImpl[impl].push(...(await each(impl)));
+      console.log(`${label} round ${round + 1}/${ROUNDS}`, impl);
     }
-    times.sort((a, b) => a - b);
-    out[name] = times[Math.floor(times.length / 2)];
   }
-  click('#clear');
+  const out = {};
+  for (const impl of IMPLS) {
+    const all = perImpl[impl];
+    out[impl] = Object.fromEntries(Object.keys(all[0]).map((k) => [k, round1(median(all.map((r) => r[k])))]));
+    console.log(impl.padEnd(10), JSON.stringify(out[impl]));
+  }
   return out;
-})()`;
-
-async function heapMB(page) {
-  await page.send('HeapProfiler.collectGarbage');
-  const { usedSize } = await page.send('Runtime.getHeapUsage');
-  return Math.round((usedSize / 1024 / 1024) * 100) / 100;
 }
 
-// Runtime runs in rounds, the implementations in a rotated order each round, and takes medians over all of
-// them: whichever runs first (right after the load phase) is otherwise measured on a warmer, busier machine.
-const roundsArg = args.indexOf('--rounds');
-const ROUNDS = roundsArg >= 0 ? Number(args[roundsArg + 1]) : 4;
+async function inPages(app, impl, path, script, passes) {
+  const server = await startServer({ app, impl });
+  const got = [];
+  try {
+    for (let pass = 0; pass < passes; pass++) {
+      const page = await openPage(server, path);
+      try {
+        got.push(await page.evaluate(script));
+      } finally {
+        await page.close();
+      }
+    }
+  } finally {
+    server.close();
+  }
+  return got;
+}
+
 if (want('runtime')) {
   results.runtime = {};
-  results.memory = {};
-  const pagesOf = Object.fromEntries(IMPLS.map((i) => [i, []]));
-  for (let round = 0; round < ROUNDS; round++)
-  for (const impl of [...IMPLS.slice(round % IMPLS.length), ...IMPLS.slice(0, round % IMPLS.length)]) {
-    const server = await startServer({ app: 'bench', impl });
-    const perPage = pagesOf[impl];
-    let memory;
-    try {
-      for (let pass = 0; pass < 3; pass++) {
-        const page = await browser.newPage();
-        try {
-          await page.send('Page.enable');
-          await page.send('Page.addScriptToEvaluateOnNewDocument', { source: prodScript });
-          const loaded = page.once('Page.loadEventFired');
-          await page.send('Page.navigate', { url: `${server.url}/` });
-          await loaded;
-          await page.evaluate(`new Promise((r) => { const t = setInterval(() => document.querySelector('#run') && (clearInterval(t), r()), 20); })`);
-          if (pass === 0 && round === 0) {
-            const click = (sel, n) => page.evaluate(`(async () => { document.querySelector('${sel}').click();
-              await new Promise((r) => { const t = setInterval(() => document.querySelectorAll('tbody tr').length === ${n} && (clearInterval(t), r()), 10); }); })()`);
-            const m = { ready: await heapMB(page) };
-            await click('#run', 1000);
-            m['1,000 rows'] = await heapMB(page);
-            await click('#runlots', 10000);
-            m['10,000 rows'] = await heapMB(page);
-            for (let i = 0; i < 5; i++) {
-              await click('#run', 1000);
-              await click('#clear', 0);
-            }
-            m['after 5 create/clear'] = await heapMB(page);
-            memory = m;
-          }
-          perPage.push(await page.evaluate(BENCH));
-        } finally {
-          await page.close();
-        }
-      }
-    } finally {
-      server.close();
-    }
-    if (memory) results.memory[impl] = memory;
-    console.log(`round ${round + 1}/${ROUNDS}`, impl);
+  for (const app of ONLY_APPS) {
+    results.runtime[app] = await rounds(`${app} runtime`, async (impl) => {
+      // Each of the app's pages (e.g. ?n=40 and ?n=1000) adds its operations to the same record.
+      const pages = [];
+      for (const { path, script } of specs[app].runtime) pages.push(await inPages(app, impl, path, script, 3));
+      return pages[0].map((_, pass) => Object.assign({}, ...pages.map((p) => p[pass])));
+    });
   }
-  for (const impl of IMPLS) {
-    const perPage = pagesOf[impl];
-    results.runtime[impl] = Object.fromEntries(
-      Object.keys(perPage[0]).map((op) => [op, Math.round(median(perPage.map((p) => p[op])) * 10) / 10])
-    );
-    console.log(impl.padEnd(10), JSON.stringify(results.runtime[impl]));
-    console.log(''.padEnd(10), 'memory MB', JSON.stringify(results.memory[impl]));
+}
+
+if (want('stress')) {
+  results.stress = {};
+  for (const app of ONLY_APPS) {
+    for (const { name, path, script } of specs[app].stress) {
+      const byImpl = await rounds(`${app} stress ${name}`, (impl) => inPages(app, impl, path, script, 1));
+      (results.stress[app] ??= {})[name] = byImpl;
+    }
+  }
+}
+
+if (want('memory')) {
+  results.memory = {};
+  for (const app of ONLY_APPS) {
+    const byImpl = (results.memory[app] = {});
+    for (const impl of IMPLS) {
+      const server = await startServer({ app, impl });
+      try {
+        for (const { name, path, script } of specs[app].memory) {
+          const page = await openPage(server, path);
+          try {
+            if (script) await page.evaluate(script);
+            (byImpl[impl] ??= {})[name] = await heapMB(page);
+          } finally {
+            await page.close();
+          }
+        }
+      } finally {
+        server.close();
+      }
+      console.log(`${app} memory`, impl.padEnd(10), JSON.stringify(byImpl[impl]));
+    }
   }
 }
 

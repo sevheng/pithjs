@@ -1,14 +1,14 @@
 // Code and developer-experience numbers:
 //   - lines of app code per implementation (non-blank, non-comment), files, characters
 //   - npm packages each framework needs (transitive, from package-lock.json) and their size on disk
-// Framework/library code is not counted as app code; shared CSS and the API are identical for all.
+// Framework/library code is not counted as app code; shared/ (CSS, the feed, the formula engine) is the same for all.
 // Writes results/code.json.
 
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 
 const compare = join(import.meta.dirname, '..');
-const APPS = ['todo', 'crm', 'bench'];
+import { APPS } from './server.mjs';
 const SOURCE_EXT = new Set(['.js', '.jsx', '.vue', '.html']);
 
 function files(dir) {
@@ -85,8 +85,8 @@ function diskMB(keys) {
 const toolchain = ['vite'];
 const sets = {
   pith: [],
-  react: ['react', 'react-dom', 'react-router', '@vitejs/plugin-react', ...toolchain],
-  vue: ['vue', 'vue-router', '@vitejs/plugin-vue', ...toolchain],
+  react: ['react', 'react-dom', '@vitejs/plugin-react', ...toolchain],
+  vue: ['vue', '@vitejs/plugin-vue', ...toolchain],
 };
 const deps = {};
 for (const [name, roots] of Object.entries(sets)) {
