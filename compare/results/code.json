@@ -1,0 +1,95 @@
+{
+  "code": {
+    "trade/pith": {
+      "files": 3,
+      "lines": 207,
+      "chars": 11437,
+      "list": [
+        "trade/pith/app/detail.js",
+        "trade/pith/app/main.js",
+        "trade/pith/index.html"
+      ]
+    },
+    "trade/react": {
+      "files": 3,
+      "lines": 245,
+      "chars": 9442,
+      "list": [
+        "trade/react/index.html",
+        "trade/react/src/App.jsx",
+        "trade/react/src/main.jsx"
+      ]
+    },
+    "trade/vue": {
+      "files": 13,
+      "lines": 247,
+      "chars": 11642,
+      "list": [
+        "trade/vue/index.html",
+        "trade/vue/src/App.vue",
+        "trade/vue/src/CandleSet.vue",
+        "trade/vue/src/EquityValue.vue",
+        "trade/vue/src/OrderBook.vue",
+        "trade/vue/src/PositionRow.vue",
+        "trade/vue/src/PositionsTable.vue",
+        "trade/vue/src/PriceChart.vue",
+        "trade/vue/src/SymbolDetail.vue",
+        "trade/vue/src/WatchRow.vue",
+        "trade/vue/src/main.js",
+        "trade/vue/src/positions.js",
+        "trade/vue/src/store.js"
+      ]
+    },
+    "sheet/pith": {
+      "files": 3,
+      "lines": 227,
+      "chars": 12342,
+      "list": [
+        "sheet/pith/app/main.js",
+        "sheet/pith/app/model.js",
+        "sheet/pith/index.html"
+      ]
+    },
+    "sheet/react": {
+      "files": 4,
+      "lines": 188,
+      "chars": 9773,
+      "list": [
+        "sheet/react/index.html",
+        "sheet/react/src/App.jsx",
+        "sheet/react/src/main.jsx",
+        "sheet/react/src/sheet.js"
+      ]
+    },
+    "sheet/vue": {
+      "files": 6,
+      "lines": 227,
+      "chars": 11528,
+      "list": [
+        "sheet/vue/index.html",
+        "sheet/vue/src/App.vue",
+        "sheet/vue/src/SheetRow.vue",
+        "sheet/vue/src/SheetSummary.vue",
+        "sheet/vue/src/main.js",
+        "sheet/vue/src/model.js"
+      ]
+    }
+  },
+  "deps": {
+    "pith": {
+      "direct": 0,
+      "total": 0,
+      "diskMB": 0
+    },
+    "react": {
+      "direct": 4,
+      "total": 19,
+      "diskMB": 41
+    },
+    "vue": {
+      "direct": 3,
+      "total": 35,
+      "diskMB": 49
+    }
+  }
+}

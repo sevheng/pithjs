@@ -85,7 +85,17 @@ export const runtime = [
 
 export const stress = [
   {
-    name: '1,000 symbols, 60 steps/s',
+    // A busy market: 40 of the 1,000 symbols tick in each step, 60 steps a second (2,400 price updates a second).
+    name: '1,000 symbols, 40 ticking per step, 60 steps/s',
+    path: '/?n=1000',
+    script: `(async () => {
+      ${prelude(1000)}
+      return __m.underLoad(() => window.bench.start(60, 40), () => window.bench.stop(), 5000);
+    })()`,
+  },
+  {
+    // Every symbol in every step: more than a browser can lay out 60 times a second, whatever draws it.
+    name: '1,000 symbols, all ticking, 60 steps/s',
     path: '/?n=1000',
     script: `(async () => {
       ${prelude(1000)}

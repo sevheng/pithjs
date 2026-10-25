@@ -102,7 +102,8 @@ html\`<ul class="wl-list">\${repeat(visible, (x) => x.symbol, row)}</ul>\`;`, { 
   <p>Measured with Stress on, in headless Chrome on a desktop (all 40 symbols in each step, while NWX's chart,
     book, trades, ticket and P&amp;L follow the ticks too): about <strong>2,200 updates a second</strong>, each step put on
     screen in <strong>2.7 ms</strong> on average (the worst in a second 4 to 8 ms), and the page kept drawing at 57 frames a
-    second (median frame 16.7 ms). The bar above the watchlist shows the same numbers on your machine.</p>
+    second (median frame 16.7 ms). The bar above the watchlist shows the same numbers on your machine.
+    The same screen written in React and Vue, measured side by side: <a href="/docs/benchmarks?view=trade">Benchmarks</a>.</p>
   ${note(html`A signal per field costs memory per row, so it's for lists that are busy, like this one. The positions and
     orders tables change a few times a minute: they replace their rows instead.`)}
 

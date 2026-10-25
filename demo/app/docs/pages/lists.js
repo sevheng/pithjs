@@ -103,7 +103,7 @@ export default () => html`
   <p>When the order changes, Pith finds the longest run of rows that are already in the right order and
     leaves those where they are; only the others move. Swapping two rows of 1,000 moves 2 rows. Where the
     browser has it, Pith moves rows with ${c('moveBefore')}, so a focused input in a moved row stays focused.
-    In the benchmark, swapping two rows takes 5.7 ms, against 47.8 ms in React and 8.5 ms in Vue.</p>
+</p>
 
   <h2 id="one-element">A row is one element</h2>
   <p>Give each row a single outer element (${c('<li>')}, ${c('<tr>')}, a card). A reactive hole at the
@@ -115,9 +115,10 @@ export default () => html`
   <p>For a <strong>big list whose rows change often</strong> (a live table, a feed of prices), rebuilding a
     row for each change adds up. Make the field that changes a signal, and write to it in place:</p>
   ${code(fine)}
-  <p>Measured on 1,000 rows (<a href="/docs/benchmarks">Benchmarks</a>), updating every 10th row took
-    14.1 ms this way, instead of 19.2 ms (React 16.2, Vue 16.5). But each row now holds a signal and an
-    effect: 2.3 MB at 1,000 rows instead of 1.6, and 16 MB at 10,000 instead of 9.</p>
+  <p>The <a href="/docs/trading">Trading</a> example's watchlist is written this way. Measured against the same
+    screen in React and Vue (<a href="/docs/benchmarks?view=trade">Benchmarks</a>), when 10 of 1,000 prices tick
+    Pith updates the page in 2.8 ms, React in 8.1 and Vue in 3.2. But each row now holds its signals and effects:
+    the 1,000-row watchlist takes 8.4 MB, against React's 5.6.</p>
   ${note(html`Don't make every field a signal by default. Use it for the fields that change, in lists that are
     big and busy. For everything else, replace the item and let its row be rebuilt.`)}
 

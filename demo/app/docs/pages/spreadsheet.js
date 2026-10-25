@@ -18,8 +18,9 @@ export default () => html`
       the net (${c('=A2-B2')}), the balance (${c('=D1+C2')}, the one above plus this month's net) and a status. G1:G4 sum
       it up with ${c('MIN')}, ${c('AVERAGE')} and ${c('SUM')} over whole columns. Or open
       <a href="/sheet?demo">${c('/sheet?demo')}</a>, which starts with it (unless your sheet has something in it).</li>
-    <li>Press Edit A1. The bar shows how many cells were recomputed (A1, the 1,000 balances, their statuses and the
-      sums) and how long it took. Scroll to row 900 and watch it change too.</li>
+    <li>Press Edit A1. The bar shows how many cells were recomputed (A1, the 1,000 balances, the sums, and the
+      statuses on screen: the ones scrolled away have no reader, so they wait until you scroll to them) and how long it
+      took. Scroll to row 900 and watch it change too.</li>
     <li>Turn on Random edits at 100 or 1,000 a second: incomes and costs in random months change, and every balance
       below them follows. The bar shows the edits, the cells recomputed and the time a frame takes.</li>
     <li>Keyboard: arrows move, Shift+arrows select a range, Enter or F2 edits, typing replaces, Escape cancels, Tab saves
@@ -122,16 +123,17 @@ html\`<div class="sheet-scroll" ref=\${win.ref}>
     numbers the bar shows (25 runs of Edit A1 after 5 to warm up; 5 seconds of Random edits at each rate), with the demo
     budget:</p>
   <ul>
-    <li><strong>Edit A1</strong> recomputes 2,003 cells (A1, the 1,000 balances, the 1,000 statuses, and the two sums that
-      read the balances), each once, and updates the rows on screen in <strong>8.7 ms</strong> (median; the slowest 12 ms).
-      It's on screen by the next frame, 17 ms after the click. Before Pith ordered its updates, this edit failed with
-      ${c('E003')}.</li>
-    <li><strong>Random edits</strong> at 100 a second: about <strong>74,000 cells recomputed a second</strong>, 8.8 ms a
-      frame (the worst in a second 15 to 19 ms), and the page kept drawing at 60 frames a second.</li>
+    <li><strong>Edit A1</strong> recomputes about 1,030 cells (A1, the 1,000 balances, the sums that read them, and the
+      statuses on screen; the other statuses have no reader, so they skip it), each once, and updates the rows on screen
+      in <strong>5.6 ms</strong> (median; the slowest 8.5 ms). It's on screen 13 ms after the click. Before Pith ordered
+      its updates, this edit failed with ${c('E003')}; before computeds nobody reads skipped their updates, it took
+      8.7 ms and recomputed 2,003 cells.</li>
+    <li><strong>Random edits</strong> at 100 a second: about <strong>37,000 cells recomputed a second</strong>, under 5 ms
+      a frame (the worst in a second 8 to 14 ms), and the page kept drawing at 60 frames a second.</li>
     <li>At 1,000 a second (about 16 edits in each frame's ${c('batch()')}, so a balance below several of them is still
-      worked out once): about <strong>110,000 cells a second</strong>, 12 to 13 ms a frame (the worst 17 to 29 ms), at 58
-      frames a second.</li>
-    <li><strong>Fill demo data</strong> (5,007 cells, each worked out once, in order) takes 85 to 165 ms.</li>
+      worked out once): about <strong>61,000 cells a second</strong>, 6 ms a frame (the worst 9 to 12 ms).</li>
+    <li><strong>Fill demo data</strong> (5,007 cells; the 4,033 values in use worked out once, in order) takes 35 to 48 ms.</li>
+    <li>The same sheet written in React and Vue: <a href="/docs/benchmarks?view=sheet">Benchmarks</a>.</li>
   </ul>
   <p>The bar shows the same numbers on your machine.</p>
 

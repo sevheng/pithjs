@@ -33,12 +33,12 @@ const highlight = (src) => {
   return out;
 };
 
-// Measured in ../compare (RESULTS.md), on a slow phone and in the js-framework-benchmark operations.
+// Measured in ../compare (RESULTS.md): the Trading app on a slow phone, and with 10 of 1,000 prices ticking.
 const numbers = [
   ['<10', 'KB', 'the whole framework, gzipped'],
   ['0', '', 'runtime dependencies, no build needed'],
-  ['29%', '', 'sooner on screen than React'],
-  ['½', '', "the memory of React's and Vue's lists"],
+  ['22%', '', 'sooner on screen than React'],
+  ['2.9×', '', 'faster live updates than React'],
 ];
 
 // What `npm run check` prints, shortened.
@@ -129,7 +129,7 @@ export default function HomePage() {
       <ul class="big-numbers">
         ${numbers.map(([value, unit, label]) => html`<li><span class="big-value">${value}${unit ? html`<small>${unit}</small>` : null}</span><span class="muted">${label}</span></li>`)}
       </ul>
-      <p class="muted note center">Measured against the same apps in React and Vue on a slow phone. <a href="/docs/benchmarks">See the benchmarks →</a></p>
+      <p class="muted note center">Measured against the same trading screen and spreadsheet in React and Vue. <a href="/docs/benchmarks">See the benchmarks →</a></p>
     </section>
 
     <section class="section" aria-labelledby="apps-title">

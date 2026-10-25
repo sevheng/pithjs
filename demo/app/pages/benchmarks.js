@@ -14,24 +14,39 @@ function measure() {
   };
 }
 
-const NAMES = { pith: 'Pith', 'pith-vite': 'Pith + Vite', react: 'React', vue: 'Vue', 'pith-fine': 'Pith, fine-grained' };
-const PAGES = { todo: 'Todo app', crm: 'CRM, start page', 'crm/customers': 'CRM, customer list' };
-const PAGE_NOTES = { todo: 'One page: the list from localStorage.', crm: 'Ready when the stats are on the page.', 'crm/customers': 'A lazy route: ready when the table rows are in.' };
-const MEMORY = { ready: 'Empty page', '1,000 rows': '1,000 rows', '10,000 rows': '10,000 rows', 'after 5 create/clear': 'After 5 create/clear cycles' };
-const VIEWS = [['load', 'Load'], ['runtime', 'Runtime'], ['memory', 'Memory'], ['size', 'Size']];
+const NAMES = { pith: 'Pith', 'pith-vite': 'Pith + Vite', react: 'React', vue: 'Vue' };
+const APPS = {
+  trade: { name: 'Trading', href: '/docs/trading', note: 'A watchlist of prices that tick, a candlestick chart, an order book, trades and positions with live P&L.' },
+  sheet: { name: 'Spreadsheet', href: '/docs/spreadsheet', note: '1,000 × 26 cells of formulas, with a running total 1,000 cells deep.' },
+};
+// What each operation does, in a sentence.
+const OPS = {
+  'step: 40 of 40 symbols': 'Every price in a 40-symbol watchlist ticks once, and the chart, book and P&L follow.',
+  'switch symbol': 'Pick another symbol: its chart, order book, trades and quote replace the old ones.',
+  'step: 1,000 of 1,000 symbols': 'All 1,000 prices tick at once (mostly the browser’s style and layout).',
+  'step: 10 of 1,000 symbols': 'Ten of 1,000 prices tick: does the cost follow what changed, or the size of the list?',
+  'fill demo data': 'From empty to about 5,000 cells: every value worked out once.',
+  'Edit A1 (1,000-deep chain)': 'Change the cell at the top of the chain: 1,000 running totals follow.',
+  'edit one cell nobody reads': 'Change a cell no formula uses: does the cost follow what changed?',
+  'scroll one screen': 'Scroll the grid one screen: the new rows are drawn.',
+  clear: 'Empty all 5,000 cells.',
+};
+const VIEWS = [['load', 'Load'], ['trade', 'Trading'], ['sheet', 'Spreadsheet'], ['memory', 'Memory'], ['size', 'Size']];
 const PROTOCOLS = [['h1', 'HTTP/1.1'], ['h2', 'HTTP/2']];
 
 const num = (v) => v.toLocaleString('en-US');
 const capital = (s) => s[0].toUpperCase() + s.slice(1);
 const percent = (a, b) => Math.round(Math.abs(1 - a / b) * 100);
+const times = (a, b) => `${(b / a).toFixed(1)}×`;
 const check = () => html`<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const isPith = (key) => key.startsWith('pith');
+const rivalOf = (v) => (v.react <= v.vue ? 'react' : 'vue');
 
 /** A horizontal bar chart: one row per framework, bar width = value / max, the exact value as text. */
-function chart(title, unit, values, { note = '', hideTitle = false, format = (v, key) => `${num(v)}\u00a0${unit}` } = {}) {
+function chart(title, unit, values, { note = '', hideTitle = false, high = false, format = (v, key) => `${num(v)} ${unit}` } = {}) {
   const entries = Object.entries(values);
   const max = Math.max(...entries.map(([, v]) => v));
-  const best = Math.min(...entries.map(([, v]) => v));
+  const best = (high ? Math.max : Math.min)(...entries.map(([, v]) => v));
   return html`
     <figure class="bar-chart">
       <figcaption class=${hideTitle ? 'sr-only' : null}><span class="bar-title">${title}</span>${note ? html`<span class="bar-note muted">${note}</span>` : null}</figcaption>
@@ -50,8 +65,7 @@ function chart(title, unit, values, { note = '', hideTitle = false, format = (v,
   `;
 }
 
-const only = (obj, keys) => Object.fromEntries(keys.map((k) => [k, obj[k]]));
-const field = (byImpl, f) => Object.fromEntries(Object.entries(byImpl).map(([k, v]) => [k, v[f]]));
+const field = (byImpl, f) => Object.fromEntries(Object.entries(byImpl).map(([k, v]) => [k, Math.round(v[f] * 10) / 10]));
 
 function LoadView(protocol) {
   return html`
@@ -73,18 +87,19 @@ function LoadView(protocol) {
 }
 
 function loadCharts(protocol) {
-  const pages = data.load[protocol];
-  const crm = field(pages.crm, 'ready');
+  const apps = data.load[protocol];
+  const t = field(apps.trade, 'ready');
   return html`
-      <p class="bench-summary">On the CRM, Pith is ready <strong>${percent(crm.pith, crm.react)}% sooner than React</strong>
-        and ${percent(crm.pith, crm.vue)}% sooner than Vue. With Vite: ${percent(crm['pith-vite'], crm.react)}% and ${percent(crm['pith-vite'], crm.vue)}%.</p>
+      <p class="bench-summary">Trading is on screen <strong>${percent(t.pith, t.react)}% sooner than React</strong> in Pith without a
+        build, and ${t.pith <= t.vue ? `${percent(t.pith, t.vue)}% sooner` : `${percent(t.pith, t.vue)}% later`} than Vue.
+        Bundled with Vite, Pith is first: ${percent(t['pith-vite'], t.react)}% sooner than React, ${percent(t['pith-vite'], t.vue)}% sooner than Vue.</p>
       <div class="bench-grid wide">
-        ${Object.entries(pages).map(([page, byImpl]) => html`
+        ${Object.entries(apps).map(([app, byImpl]) => html`
           <article class="card bench-card">
-            <h3>${PAGES[page]}</h3>
-            <p class="muted note">${PAGE_NOTES[page]}</p>
+            <h3>${APPS[app].name}</h3>
+            <p class="muted note">${APPS[app].note}</p>
             <div class="bench-pair">
-              ${chart('Ready', 'ms', field(byImpl, 'ready'), { note: 'The content is in the page.' })}
+              ${chart('Ready', 'ms', field(byImpl, 'ready'), { note: 'The real content is on screen.' })}
               ${chart('First paint', 'ms', field(byImpl, 'fcp'), { note: 'The browser first drew something.' })}
             </div>
           </article>`)}
@@ -92,57 +107,88 @@ function loadCharts(protocol) {
   `;
 }
 
-function RuntimeView() {
-  const ops = Object.entries(data.runtime);
+function AppView(app) {
+  const ops = Object.entries(data.runtime[app]);
+  const runs = Object.entries(data.stress[app] ?? {});
   const leads = ops.filter(([, v]) => v.pith <= Math.min(v.react, v.vue) * 1.1).length;
+  const summary = app === 'trade'
+    ? (() => {
+        const v = data.runtime.trade['step: 10 of 1,000 symbols'];
+        return html`When 10 of 1,000 prices tick, Pith updates the page in <strong>${num(v.pith)} ms</strong>: ${times(v.pith, v.react)} faster
+          than React (${num(v.react)} ms), and ${v.pith <= v.vue ? `ahead of Vue (${num(v.vue)} ms)` : `behind Vue (${num(v.vue)} ms)`}.
+          Pith is fastest or within 10% on <strong>${leads} of ${ops.length}</strong> operations.`;
+      })()
+    : (() => {
+        const leaf = data.runtime.sheet['edit one cell nobody reads'];
+        const a1 = data.runtime.sheet['Edit A1 (1,000-deep chain)'];
+        return html`An edit nobody else reads costs Pith <strong>${num(leaf.pith)} ms</strong> (React ${num(leaf.react)}, Vue ${num(leaf.vue)}):
+          only what changed recomputes. On the 1,000-deep chain Vue is ahead (${num(a1.vue)} ms against Pith's ${num(a1.pith)}), and
+          React, with no reactive cells to build, fills and clears the sheet fastest.`;
+      })();
   return html`
     <section class="section bench-view" aria-labelledby="view-title">
-      <h2 id="view-title">Runtime</h2>
-      <p class="muted">A table of rows, js-framework-benchmark style, on a desktop CPU. Time from the click until the DOM
-        is updated and laid out. Milliseconds, lower is better.</p>
-      <p class="bench-summary">Pith is fastest or within the ±10% noise on <strong>${leads} of ${ops.length} operations</strong>.
-        Selecting a row takes ${num(data.runtime['select a row'].pith)} ms, against React's ${num(data.runtime['select a row'].react)} and Vue's ${num(data.runtime['select a row'].vue)}.</p>
+      <h2 id="view-title">${APPS[app].name}</h2>
+      <p class="muted">${APPS[app].note} <a href=${APPS[app].href}>The full example</a>. On a desktop CPU, from the call until the
+        DOM is updated and laid out. Milliseconds, lower is better.</p>
+      <p class="bench-summary">${summary}</p>
       <div class="bench-grid">
-        ${ops.map(([op, values]) => html`<article class="card bench-card">${chart(capital(op), 'ms', values)}</article>`)}
-        <p class="muted note bench-aside">"Pith, fine-grained" is the same Pith app with each row's label as a signal, an opt-in
-          pattern for big, busy lists. "Pith" is the default way to write it. "Pith + Vite" is Pith bundled with Vite.</p>
+        ${ops.map(([op, values]) => html`<article class="card bench-card">${chart(capital(op), 'ms', values, { note: OPS[op] ?? '' })}</article>`)}
       </div>
+      ${runs.length ? html`
+        <h3 class="bench-sub">Under load</h3>
+        <p class="muted">Five seconds of sustained work while every frame is recorded. Frames a second, higher is better.
+          ${runs.every(([, byImpl]) => { const f = Object.values(byImpl).map((v) => v.fps); return Math.max(...f) <= Math.min(...f) * 1.15; })
+            ? 'All four draw within 15% of each other here: the browser’s own work is the limit, not the framework.' : ''}</p>
+        <div class="bench-grid">
+          ${runs.map(([name, byImpl]) => html`
+            <article class="card bench-card">
+              ${chart(capital(name), 'fps', field(byImpl, 'fps'), { high: true,
+                note: `The slowest frames (95th percentile): ${Object.entries(byImpl).map(([k, v]) => `${NAMES[k]} ${num(Math.round(v.frameP95))} ms`).join(', ')}.` })}
+            </article>`)}
+        </div>` : null}
     </section>
   `;
 }
 
+const MEMORY_NOTES = { trade: 'Each of the 1,000 rows holds its own signals in Pith and Vue; React keeps plain objects.', sheet: 'Every cell with something in it is a reactive value in Pith and Vue; React keeps the raw text and works the values out.' };
+
 function MemoryView() {
-  const big = data.memory['10,000 rows'];
+  const t = data.memory.trade['1,000 symbols'];
+  const sh = data.memory.sheet['demo data'];
   return html`
     <section class="section bench-view" aria-labelledby="view-title">
       <h2 id="view-title">Memory</h2>
-      <p class="muted">The JavaScript heap after a forced garbage collection, in the same table app. Megabytes, lower is better.</p>
-      <p class="bench-summary">With 10,000 rows Pith holds <strong>${num(big.pith)} MB</strong>: ${percent(big.pith, big.react)}% less than
-        React and ${percent(big.pith, big.vue)}% less than Vue. After create/clear cycles it returns close to where it started.</p>
-      <div class="bench-grid">
-        ${Object.entries(data.memory).map(([state, values]) => html`
-          <article class="card bench-card">${chart(MEMORY[state], 'MB', values)}</article>`)}
-      </div>
+      <p class="muted">The JavaScript heap after a forced garbage collection. Megabytes, lower is better.</p>
+      <p class="bench-summary">React holds the least: plain data costs less than reactive values. Trading with 1,000 symbols takes
+        ${num(t.pith)} MB in Pith, ${num(t.vue)} in Vue and <strong>${num(t.react)} in React</strong>; the full spreadsheet
+        ${num(sh.pith)} MB in Pith, ${num(sh.vue)} in Vue and ${num(sh.react)} in React.</p>
+      ${Object.entries(data.memory).map(([app, states]) => html`
+        <h3 class="bench-sub">${APPS[app].name}</h3>
+        <p class="muted note">${MEMORY_NOTES[app]}</p>
+        <div class="bench-grid">
+          ${Object.entries(states).map(([state, values]) => html`
+            <article class="card bench-card">${chart(capital(state), 'MB', values)}</article>`)}
+        </div>`)}
     </section>
   `;
 }
 
 function SizeView() {
-  const pages = data.load.h1;
-  const crm = field(pages.crm, 'jsKB');
+  const apps = data.load.h1;
+  const t = field(apps.trade, 'jsKB');
   return html`
     <section class="section bench-view bench-size" aria-labelledby="view-title">
       <h2 id="view-title">Size</h2>
-      <p class="muted">JavaScript downloaded to show each page, gzipped, as a real host sends it. Kilobytes, lower is better.</p>
-      <p class="bench-summary">The CRM's start page needs <strong>${num(crm.pith)}\u00a0KB of JavaScript</strong> in Pith, without a build.
-        Vue sends ${num(crm.vue)}\u00a0KB and React ${num(crm.react)}\u00a0KB.</p>
+      <p class="muted">JavaScript downloaded to show each app, gzipped, as a real host sends it. Kilobytes, lower is better.</p>
+      <p class="bench-summary">Trading needs <strong>${num(t.pith)} KB of JavaScript</strong> in Pith without a build, app included
+        (${num(t['pith-vite'])} KB bundled). Vue sends ${num(t.vue)} KB and React ${num(t.react)} KB.</p>
       <div class="bench-grid wide">
-        ${Object.entries(pages).map(([page, byImpl]) => html`
+        ${Object.entries(apps).map(([app, byImpl]) => html`
           <article class="card bench-card">
-            <h3>${PAGES[page]}</h3>
-            ${chart(`JavaScript for the ${PAGES[page]}`, 'KB', field(byImpl, 'jsKB'), {
+            <h3>${APPS[app].name}</h3>
+            ${chart(`JavaScript for ${APPS[app].name}`, 'KB', field(byImpl, 'jsKB'), {
               hideTitle: true,
-              format: (v, key) => `${num(v)}\u00a0KB · ${byImpl[key].jsFiles}\u00a0${byImpl[key].jsFiles === 1 ? 'file' : 'files'}`,
+              format: (v, key) => `${num(v)} KB · ${byImpl[key].jsFiles} ${byImpl[key].jsFiles === 1 ? 'file' : 'files'}`,
             })}
           </article>`)}
       </div>
@@ -152,14 +198,18 @@ function SizeView() {
 
 // Where Pith is behind, read from the numbers (so it stays true when they're measured again).
 function behind() {
-  const rows = Object.entries(data.runtime).flatMap(([op, v]) => {
-    const rival = v.react <= v.vue ? 'react' : 'vue';
-    return v.pith > v[rival] ? [{ op, pith: v.pith, rival, value: v[rival], pct: percent(v.pith, v[rival]) }] : [];
-  }).sort((a, b) => b.pct - a.pct);
-  const unbundled = Object.values(data.load).flatMap((pages) =>
-    ['crm', 'crm/customers'].map((p) => percent(pages[p].pith.ready, pages[p]['pith-vite'].ready)));
-  const update = data.runtime['update every 10th row'];
-  return { rows, unbundled: [Math.min(...unbundled), Math.max(...unbundled)], update };
+  const rows = Object.entries(data.runtime).flatMap(([app, ops]) => Object.entries(ops).flatMap(([op, v]) => {
+    const rival = rivalOf(v);
+    return v.pith > v[rival] ? [{ op: `${APPS[app].name}: ${op}`, pith: v.pith, rival, value: v[rival], pct: percent(v.pith, v[rival]), unit: 'ms' }] : [];
+  }));
+  // Memory: each app's state where Pith is furthest behind.
+  for (const [app, states] of Object.entries(data.memory)) {
+    const worst = Object.entries(states).map(([state, v]) => ({ state, v, rival: rivalOf(v) }))
+      .filter((x) => x.v.pith > x.v[x.rival]).sort((a, b) => b.v.pith / b.v[b.rival] - a.v.pith / a.v[a.rival])[0];
+    if (worst) rows.push({ op: `${APPS[app].name}: memory, ${worst.state}`, pith: worst.v.pith, rival: worst.rival, value: worst.v[worst.rival], pct: percent(worst.v.pith, worst.v[worst.rival]), unit: 'MB' });
+  }
+  const unbundled = Object.values(data.load).flatMap((apps) => Object.values(apps).map((a) => percent(a.pith.ready, a['pith-vite'].ready)));
+  return { rows: rows.filter((r) => r.pct >= 1).sort((a, b) => b.pct - a.pct), unbundled: [Math.min(...unbundled), Math.max(...unbundled)] };
 }
 
 export default function BenchmarksPage() {
@@ -170,24 +220,24 @@ export default function BenchmarksPage() {
   // computed: a change to ?protocol= doesn't rebuild the whole view (and lose focus), only its charts.
   const view = computed(() => (VIEWS.some(([k]) => k === router.query.value.view) ? router.query.value.view : 'load'));
   const protocol = computed(() => (router.query.value.protocol === 'h2' ? 'h2' : 'h1'));
-  const views = { load: () => LoadView(protocol), runtime: RuntimeView, memory: MemoryView, size: SizeView };
+  const views = { load: () => LoadView(protocol), trade: () => AppView('trade'), sheet: () => AppView('sheet'), memory: MemoryView, size: SizeView };
   const gaps = behind();
 
   // The four numbers people ask about, read from the measurements.
-  const crm = field(data.load.h1.crm, 'ready');
-  const mem = data.memory['10,000 rows'];
-  const js = field(data.load.h1.crm, 'jsKB');
-  const ops = Object.values(data.runtime);
+  const ready = field(data.load.h1.trade, 'ready');
+  const tick = data.runtime.trade['step: 10 of 1,000 symbols'];
+  const js = field(data.load.h1.trade, 'jsKB');
+  const ops = Object.values(data.runtime).flatMap((o) => Object.values(o));
   const close = ops.filter((v) => v.pith <= Math.min(v.react, v.vue) * 1.1).length;
   const score = [
-    { value: percent(crm.pith, crm.react), unit: '%', label: 'sooner on screen than React', pith: crm.pith, rival: crm.react,
-      note: `CRM start page on a slow phone: ${num(Math.round(crm.pith))} ms vs ${num(Math.round(crm.react))} ms` },
-    { value: percent(mem.pith, Math.min(mem.react, mem.vue)), unit: '%', label: 'less memory at 10,000 rows', pith: mem.pith, rival: Math.min(mem.react, mem.vue),
-      note: `${num(mem.pith)} MB vs ${num(mem.react)} MB (React) and ${num(mem.vue)} MB (Vue)` },
-    { value: num(js.pith), unit: ' KB', label: 'of JavaScript for the CRM, no build', pith: js.pith, rival: Math.min(js.react, js.vue),
+    { value: percent(ready.pith, ready.react), unit: '%', label: 'sooner on screen than React', pith: ready.pith, rival: ready.react,
+      note: `Trading on a slow phone, no build: ${num(Math.round(ready.pith))} ms vs ${num(Math.round(ready.react))} ms` },
+    { value: times(tick.pith, tick.react), unit: '', label: 'faster than React when 10 of 1,000 prices tick', pith: tick.pith, rival: tick.react,
+      note: `${num(tick.pith)} ms vs ${num(tick.react)} ms (React) and ${num(tick.vue)} ms (Vue)` },
+    { value: num(js.pith), unit: ' KB', label: 'of JavaScript for Trading, no build', pith: js.pith, rival: Math.min(js.react, js.vue),
       note: `Vue ${num(js.vue)} KB, React ${num(js.react)} KB` },
-    { value: `${close}/${ops.length}`, unit: '', label: 'list operations fastest or within 10%', pith: close, rival: ops.length, bars: false,
-      note: 'Create, update, swap, select, remove, append and clear rows' },
+    { value: `${close}/${ops.length}`, unit: '', label: 'operations fastest or within 10%', pith: close, rival: ops.length, bars: false,
+      note: 'Ticks, switching, filling, editing, scrolling and clearing, in both apps' },
   ];
 
   const stat = (value, label) => html`<li class="card stat"><span class="value">${value}</span><span class="stat-label">${label}</span></li>`;
@@ -231,29 +281,31 @@ export default function BenchmarksPage() {
         ${gaps.rows.map((r) => html`
           <li>
             <span class="behind-op">${capital(r.op)}</span>
-            <span>Pith ${num(r.pith)} ms, ${NAMES[r.rival]} ${num(r.value)} ms: <strong>${r.pct}% slower</strong>${r.pct < 10 ? html`<span class="muted"> (within the noise)</span>` : null}</span>
+            <span>Pith ${num(r.pith)} ${r.unit}, ${NAMES[r.rival]} ${num(r.value)} ${r.unit}: <strong>${r.pct >= 100 ? `${(r.pith / r.value).toFixed(1)}× ${r.unit === 'MB' ? 'more' : 'slower'}` : `${r.pct}% ${r.unit === 'MB' ? 'more' : 'slower'}`}</strong>${r.pct < 10 ? html`<span class="muted"> (within the noise)</span>` : null}</span>
           </li>`)}
         <li>
-          <span class="behind-op">No build on a multi-page app</span>
-          <span>On the CRM, Pith without a build is ready <strong>${gaps.unbundled[0]}–${gaps.unbundled[1]}% later</strong> than Pith + Vite:
-            the browser finds each lazy page's imports a round trip late.</span>
+          <span class="behind-op">No build</span>
+          <span>Without a build, Pith is ready <strong>${gaps.unbundled[0]}–${gaps.unbundled[1]}% later</strong> than Pith + Vite:
+            the browser fetches the app's files one by one instead of one bundle.</span>
         </li>
       </ul>
-      <p class="note">Updating rows is behind because Pith rebuilds a row whose item is a new object, where React patches its text.
-        Fine-grained rows close that gap (${num(gaps.update['pith-fine'])} ms, the fastest), at a price in memory:
-        ${num(data.memory['10,000 rows']['pith-fine'])} MB at 10,000 rows instead of ${num(data.memory['10,000 rows'].pith)}.</p>
+      <p class="note">The spreadsheet's fill and clear are where reactivity costs most: Pith and Vue build (and take down) a reactive
+        value for each of 5,000 cells, React only stores text. The same values make Pith's and Vue's memory higher. In return, an
+        edit recomputes only what depends on it.</p>
       <p class="note">Not measured at all: server rendering, the ecosystem, hiring and years of maintenance, where React and Vue are far ahead.</p>
     </section>
 
     <section class="section" aria-labelledby="method">
       <h2 id="method">How it was measured</h2>
       <ul class="check-list bench-method">
-        <li>${check()}<span><strong>Same apps, same flows.</strong> A Todo app, a 6-route CRM and a benchmark table, each written in Pith,
-          React 19 and Vue 3 the way their docs recommend, and each passing the same user flows.</span></li>
+        <li>${check()}<span><strong>Same apps, same flows.</strong> A trading screen and a spreadsheet, each written in Pith,
+          React 19 and Vue 3 the way their docs recommend, sharing the code that isn't the framework's (the price feed, the
+          formulas), and each passing the same user flows.</span></li>
         <li>${check()}<span><strong>Load:</strong> Chrome with a fresh profile per run, Slow 4G (150 ms round trip, 1.6 Mbps) and 4× CPU
           slowdown, served gzipped over HTTP/1.1 and HTTP/2. Median of ${data.runs} runs.</span></li>
         <li>${check()}<span><strong>Runtime:</strong> 3 warm-up and 10 measured runs with garbage collection in between, in 3 fresh pages,
-          over 4 rounds with the frameworks in a rotated order. Medians. Each result is checked.</span></li>
+          over 4 rounds with the frameworks in a rotated order. Medians. Each result is checked in the page.</span></li>
+        <li>${check()}<span><strong>Under load:</strong> five seconds of ticks or edits on a timer, every frame recorded.</span></li>
         <li>${check()}<span><strong>Memory:</strong> the JavaScript heap after a forced garbage collection.</span></li>
         <li>${check()}<span><strong>Pith</strong> runs as deployed without a build (its one-file production copy, no dev warnings);
           "Pith + Vite" bundles the app too, to show what skipping the build costs.</span></li>
@@ -262,9 +314,8 @@ export default function BenchmarksPage() {
       <ul class="list note">
         <li>Runtime numbers vary up to ±10% between sessions; smaller differences don't mean much.</li>
         <li>Headless Chrome on one machine: no real phones, no other browsers.</li>
-        <li>The biggest app has 6 routes. 100+ routes and many developers are untested.</li>
-        <li>React and Vue use hand-written data loading and forms, as Pith has those built in. Libraries would shorten their code
-          and add dependencies.</li>
+        <li>Two apps, one screen each: routing, data loading and forms aren't in these numbers.</li>
+        <li>No extra libraries: React has no signals or state library, which would change its spreadsheet numbers.</li>
       </ul>
     </section>
     </div>

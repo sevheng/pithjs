@@ -229,7 +229,7 @@ const isSelected = selector(selected);                         // selected: a si
 html`<tr class=${() => (isSelected(row.id) ? 'selected' : '')}>`
 ```
 Changing `selected` re-runs only the two rows whose answer changed, not every row, as
-`selected.value === row.id` would. In the benchmark that makes selecting a row 3× faster than React.
+`selected.value === row.id` would: in a 1,000-row list, 2 rows instead of 1,000.
 
 ### Templates
 
@@ -267,9 +267,9 @@ html`${repeat(rows, (r) => r.id, (r) => html`<tr><td>${r.label}</td></tr>`)}`;
 batch(() => rows.value.forEach((r, i) => i % 10 === 0 && (r.label.value += ' !!!'))); // only those texts change
 ```
 
-Adding and removing rows still replaces the array (`rows.value = [...]`). Measured in `../compare`
-("fine-grained rows"), updating every 10th of 1,000 rows took 14.1 ms instead of 19.2 (React 16.2, Vue 16.5),
-for ~75% more memory (each row holds a signal and an effect: 16 MB at 10,000 rows instead of 9).
+Adding and removing rows still replaces the array (`rows.value = [...]`). Measured in `../compare` (Trading,
+written this way), when 10 of a 1,000-row watchlist's prices tick the page updates in 2.8 ms (React 8.1, Vue 3.2),
+for more memory: each row holds its signals and effects, 8.4 MB for the 1,000 rows against React's 5.6.
 So use it for the fields that change, in lists that are big and busy, not by default.
 
 ### Components

@@ -119,7 +119,7 @@ export default () => html`
   </p>
   <p>
     Which to pick? Measured on a slow phone (in the repo's ${c('compare/')} folder), a site deployed this way
-    is ready 2–19% sooner than the same app in Vue, and 0–21% behind ${c('npm run build')}, which also bundles
-    your own files and prerenders. Keep ${c('/pith/index.js')} in development either way, so the warnings stay on.
+    is ready about as soon as the same app in Vue (from 9% later to 9% sooner) and 20–30% sooner than in React,
+    but 13–33% behind ${c('npm run build')}, which bundles your own files into one and prerenders. Keep ${c('/pith/index.js')} in development either way, so the warnings stay on.
   </p>
 `;

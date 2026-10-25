@@ -54,9 +54,10 @@ export default () => html`
     while the row is built, it's a snapshot like ${c('${selected.value}')} and never updates.`, 'warn')}
 
   <h2 id="numbers">How much it saves</h2>
-  <p>In the benchmark's 1,000-row table (<a href="/docs/benchmarks">Benchmarks</a>), selecting a row takes
-    0.3 ms in Pith, against 1.2 ms in React and 2.5 ms in Vue. For a handful of rows, comparing in each row
-    is fine; reach for ${c('selector')} when the list is long or the selection changes often (arrow keys).</p>
+  <p>In a 1,000-row list, picking another row re-runs 2 rows' effects instead of 1,000. That's how the
+    <a href="/docs/trading">Trading</a> example marks the symbol on screen in its watchlist. For a handful of rows,
+    comparing in each row is fine; reach for ${c('selector')} when the list is long or the selection changes often
+    (arrow keys).</p>
 
   <h2 id="api">API</h2>
   ${api([

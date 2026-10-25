@@ -315,22 +315,29 @@ const benchRow = (app, title, impl) => {
   const chart = app.queryAll('.bar-chart').find((f) => f.querySelector('figcaption')?.textContent.trim().startsWith(title));
   return chart?.querySelector(`[data-impl="${impl}"]`) ?? null;
 };
+// A view's button in the page's own switch (the docs sidebar has links called Trading and Spreadsheet too).
+const benchView = (app, name) =>
+  app.queryAll('[aria-label="Benchmark"] button').find((b) => b.textContent.trim() === name).click();
 const benchText = (el) => (el?.textContent ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
 
 flow('benchmarks: each view shows its charts, and the choice is kept in ?view=', async (app) => {
   await app.go('/docs/benchmarks');
   await app.see('Loading on a slow phone');
   await app.waitFor(() => benchRow(app, 'Ready', 'pith'), 'the Load view should chart Ready');
-  await app.click('Runtime');
-  await app.see('Pith is fastest or within the ±10% noise');
-  app.expect(app.window.location.search === '?view=runtime', `the URL should have ?view=runtime, got "${app.window.location.search}"`);
-  await app.waitFor(() => benchRow(app, 'Swap two rows', 'vue'), 'the Runtime view should chart swapping rows');
+  benchView(app, 'Trading');
+  await app.see('When 10 of 1,000 prices tick');
+  app.expect(app.window.location.search === '?view=trade', `the URL should have ?view=trade, got "${app.window.location.search}"`);
+  await app.waitFor(() => benchRow(app, 'Switch symbol', 'vue'), 'the Trading view should chart switching symbol');
+  await app.see('Under load');
+  benchView(app, 'Spreadsheet');
+  await app.see('An edit nobody else reads costs Pith');
+  await app.waitFor(() => benchRow(app, 'Edit A1', 'react'), 'the Spreadsheet view should chart Edit A1');
   await app.click('Memory');
-  await app.see('With 10,000 rows Pith holds');
-  await app.waitFor(() => benchRow(app, '10,000 rows', 'react'), 'the Memory view should chart 10,000 rows');
+  await app.see('React holds the least');
+  await app.waitFor(() => benchRow(app, 'Demo data', 'react'), 'the Memory view should chart the spreadsheet with its demo data');
   await app.click('Size');
-  await app.see("The CRM's start page needs");
-  app.expect(app.queryAll('.bar-chart').length === 3, `Size should chart 3 pages, found ${app.queryAll('.bar-chart').length}`);
+  await app.see('Trading needs');
+  app.expect(app.queryAll('.bar-chart').length === 2, `Size should chart 2 apps, found ${app.queryAll('.bar-chart').length}`);
   await app.click('Load');
   app.expect(app.window.location.search === '', 'Load is the default, so it has no ?view=');
   await app.see('Loading on a slow phone');
@@ -341,7 +348,7 @@ flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
   await app.go('/docs/benchmarks');
   await app.click('Memory');
   await app.go(`/docs/benchmarks${app.window.location.search}`);
-  await app.see('With 10,000 rows Pith holds');
+  await app.see('React holds the least');
   const pressed = app.query('[aria-label="Benchmark"] [aria-pressed="true"]')?.textContent.trim();
   app.expect(pressed === 'Memory', `Memory should be the selected view after a reload, got "${pressed}"`);
   await app.click('Load');
@@ -349,24 +356,29 @@ flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
   app.expect(app.window.location.search === '?protocol=h2', `the URL should have ?protocol=h2, got "${app.window.location.search}"`);
   await app.go('/docs/benchmarks?protocol=h2');
   if (!bench) return;
-  const want = `React ${bench.load.h2.todo.react.ready.toLocaleString('en-US')} ms`;
+  const want = `React ${(Math.round(bench.load.h2.trade.react.ready * 10) / 10).toLocaleString('en-US')} ms`;
   await app.waitFor(() => benchText(benchRow(app, 'Ready', 'react')) === want, `after a reload the first Ready chart should read "${want}" (HTTP/2)`);
 });
 
 flow('benchmarks: the numbers shown match the measurements, and the best is marked', async (app) => {
-  await app.go('/docs/benchmarks?view=runtime');
+  await app.go('/docs/benchmarks?view=trade');
   if (!bench) return;
-  const update = bench.runtime['update every 10th row'];
-  await app.waitFor(() => benchRow(app, 'Update every 10th row', 'react'), 'the update chart should be shown');
-  const react = benchRow(app, 'Update every 10th row', 'react');
-  app.expect(benchText(react) === `React ${update.react} ms`, `React's row should read "React ${update.react} ms", got "${benchText(react)}"`);
-  const max = Math.max(...Object.values(update));
+  const tick = bench.runtime.trade['step: 10 of 1,000 symbols'];
+  const title = 'Step: 10 of 1,000 symbols';
+  await app.waitFor(() => benchRow(app, title, 'react'), 'the 10-of-1,000 chart should be shown');
+  const react = benchRow(app, title, 'react');
+  app.expect(benchText(react).startsWith(`React ${tick.react} ms`), `React's row should read "React ${tick.react} ms", got "${benchText(react)}"`);
+  const max = Math.max(...Object.values(tick));
   const width = Number(react.querySelector('.bar').style.getPropertyValue('--w'));
-  app.expect(Math.abs(width - update.react / max) < 0.001, `React's bar should be ${update.react}/${max} wide, got ${width}`);
-  const best = Object.entries(update).sort((a, b) => a[1] - b[1])[0][0];
-  app.expect(benchText(benchRow(app, 'Update every 10th row', best)).endsWith('Best'), `${best} has the lowest time, so it should be marked Best`);
+  app.expect(Math.abs(width - tick.react / max) < 0.001, `React's bar should be ${tick.react}/${max} wide, got ${width}`);
+  const best = Object.entries(tick).sort((a, b) => a[1] - b[1])[0][0];
+  app.expect(benchText(benchRow(app, title, best)).endsWith('Best'), `${best} has the lowest time, so it should be marked Best`);
+  // Where Pith is behind: every operation where Pith is slower than the faster of React and Vue is listed.
   await app.see('Where Pith is behind');
-  await app.see(`Pith ${update.pith} ms, React ${update.react} ms`);
+  for (const [op, v] of Object.entries(bench.runtime.sheet)) {
+    const rival = v.react <= v.vue ? 'react' : 'vue';
+    if (v.pith > v[rival] * 1.01) await app.see(`Spreadsheet: ${op}`);
+  }
 });
 
 // ---------- Inbox (/inbox) ----------
