@@ -82,7 +82,7 @@ test('effects that update each other forever throw instead of hanging', () => {
   effect(() => { s.value; });
   assert.throws(() => {
     root(() => effect(() => { s.value = s.value + 1; }));
-  }, /infinite loop/);
+  }, /E003/);
 });
 
 // A spreadsheet's running total: each value depends on the one before it (the Spreadsheet example).
@@ -182,7 +182,7 @@ test('effects that ping-pong forever still throw E003', () => {
   effect(() => { b.value = a.value + 1; });
   assert.throws(() => {
     root(() => effect(() => { a.value = b.value + 1; }));
-  }, /infinite loop/);
+  }, /E003/);
 });
 
 test('catchError sends a synchronous throw to the handler', () => {

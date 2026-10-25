@@ -106,7 +106,9 @@ export function createRouter(
   }
 
   // The app's path for a URL's pathname: without the base the site is served under (see withBase).
-  const local = (pathname) => (pathname.startsWith(base) ? pathname.slice(base.length - 1) : pathname);
+  // A trailing slash is dropped: static hosts serve a prerendered page's folder as /page/ (GitHub Pages
+  // redirects /page there), and it's the same page.
+  const local = (pathname) => (pathname.startsWith(base) ? pathname.slice(base.length - 1) : pathname).replace(/(.)\/$/, '$1');
 
   // Follow route redirects and the guard until a URL is allowed. Returns the URL to show.
   function allowed(url) {

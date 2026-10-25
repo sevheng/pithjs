@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- A trailing slash is the same page: `/docs/signals/` (how GitHub Pages and other static hosts serve a prerendered
+  page's folder) is `router.path` `/docs/signals`, so links marked as current and layouts match on first load.
+- E003 keeps its full message in development only, like E001, E002, E004 and E005.
+
 ## 0.1.0 (2026-10-25)
 
 The first release. Pith is an experiment: its API may still change.

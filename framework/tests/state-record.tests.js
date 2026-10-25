@@ -158,7 +158,7 @@ export default async function (t) {
       root(() => mount(html`<rec-app></rec-app>`));
       eq(shape(sandbox.querySelector('rec-app').__pithState.state), 'theme:signal');
       eq(registry.pages.length, 1);
-      eq(registry.pages[0].path, start);
+      eq(registry.pages[0].path, start.replace(/(.)\/$/, '$1')); // the router's path has no trailing slash
       eq(registry.pages[0].name, 'StartPage');
       eq(shape(registry.pages[0].state), 'query:signal people:resource');
 

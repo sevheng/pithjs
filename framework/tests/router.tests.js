@@ -279,6 +279,10 @@ export default async function (t) {
         router.navigate(here);
         await until(() => text() !== 'page b');
         eq(location.pathname, start);
+        // Static hosts serve a prerendered folder at /page/ (GitHub Pages redirects /page there): the same page.
+        router.navigate('/base-b/');
+        await until(() => text() === 'page b');
+        eq(router.path.value, '/base-b', 'a trailing slash is the same path');
       });
     } finally {
       setBase('/');

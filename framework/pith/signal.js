@@ -207,7 +207,7 @@ function flush() {
       // In order, the levels only go up. Effects that keep sending it back down are updating each other.
       if (low <= last && ++rounds > 1000) {
         (pending = []), (waiting = low = 0);
-        throw error('E003', 'Effects kept updating each other (infinite loop?). An effect probably writes a signal it also reads.');
+        throw error('E003', DEV ? 'Effects kept updating each other (infinite loop?). An effect probably writes a signal it also reads.' : '');
       }
       last = low;
       for (const e of [...set]) if (set.delete(e)) waiting--, e.run();
