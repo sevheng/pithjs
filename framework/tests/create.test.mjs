@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createProject } from '../tools/create.mjs';
+import { createProject, pithDependency } from '../tools/create.mjs';
 import { checkPreloads } from '../tools/preloads.mjs';
 
 const framework = join(import.meta.dirname, '..');
@@ -33,7 +33,7 @@ test('createProject writes a working starter project, named after its folder', (
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.scripts.check, 'pith check');
   assert.equal(pkg.scripts['dev:no-build'], 'pith serve');
-  assert.match(pkg.devDependencies.pithjs, /^file:|^\^\d/);
+  assert.match(pkg.devDependencies.pithjs, /^file:|\/releases\/download\/v[\d.]+\/pithjs-[\d.]+\.tgz$/); // a checkout, or a release
   assert.ok(pkg.devDependencies.vite);
 
   assert.equal(read(dir, 'AGENTS.md'), read(framework, 'AGENTS.md'), 'AGENTS.md is the framework\'s copy');
@@ -84,4 +84,11 @@ test("the demo's AGENTS.md is the framework's, plus a section about the demo", (
   if (!existsSync(demo)) return t.skip('no ../demo next to the framework');
   const general = read(framework, 'AGENTS.md');
   assert.ok(read(demo).startsWith(general.trimEnd()), 'demo/AGENTS.md must start with framework/AGENTS.md: copy it over');
+});
+
+test('a new project gets Pith from where pith create ran: a checkout by path, a release by its download', () => {
+  const pkg = { version: '0.2.0', repository: { url: 'git+https://github.com/sevheng/pithjs.git' } };
+  assert.equal(pithDependency(pkg, '/home/me/pithjs/framework'), 'file:/home/me/pithjs/framework');
+  assert.equal(pithDependency(pkg, '/home/me/.npm/_npx/1a2b/node_modules/pithjs'),
+    'https://github.com/sevheng/pithjs/releases/download/v0.2.0/pithjs-0.2.0.tgz');
 });

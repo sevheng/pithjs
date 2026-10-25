@@ -1,26 +1,60 @@
-# webFramwork
+# Pith
 
-```
-framework/   Pith: the framework, its tools (dev server, check, see, new), tests and docs
-demo/        an app built with Pith: pages, components, a dev API, styles and user flows
-```
+**The essential core of a web app.** A tiny framework built on the browser's own tech: signals, templates,
+Web Components, a router, data loading and forms, in about 10 KB, with **no dependencies and no build step**.
+Made to be easy for AI agents (and people) to get right: every project carries the rules, and one command checks
+everything.
 
-Start here:
+**[See the demo and the docs →](https://sevheng.github.io/pithjs/)** (built with Pith, including a chat, an inbox,
+a trading screen, a spreadsheet and a shop)
+
+> Pith is an experiment: its API may still change, and it hasn't been used in production yet.
+
+## Start a project
+
+Needs Node 24+ and Chrome or Chromium (for the checks and prerendering).
 
 ```sh
-cd demo
-npm install      # once: links Pith (../framework, as the pithjs package) and installs Vite
-npm run dev      # → http://localhost:8000, reloads when you save
-npm run check    # proves everything works: tests, user flows, every page, phone layout, types, 10 KB size budget, preloads
-npm run build    # production build into dist/, every page prerendered to HTML
-npm run preview  # serve dist/ locally
+npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.0/pithjs-0.1.0.tgz pith create my-app
+cd my-app
+npm install
+npm run dev      # → http://localhost:8000
+npm run check    # tests, user flows, every page on a phone, accessibility, types: must print "All good"
+npm run build    # production build into dist/, every page prerendered; put dist/ on any static host
 ```
 
-- Building the app: read [demo/AGENTS.md](demo/AGENTS.md)
-- How the framework works: read [framework/README.md](framework/README.md)
-- Error codes like `[pith W001]`: see [framework/docs/errors.md](framework/docs/errors.md)
+Other versions: [Releases](https://github.com/sevheng/pithjs/releases). Without any tools, point an import map at
+the one-file copy: `"pith": "https://cdn.jsdelivr.net/gh/sevheng/pithjs@v0.1.0/framework/pith/pith.min.js"`.
 
-Needs Node 24+ and Chrome/Chromium. Pith itself has no runtime dependencies.
+```js
+import { define, html, signal, computed } from 'pith';
 
-A new project of your own: `node framework/tools/cli.mjs create ../my-app` (then `npm install` and `npm run check` there).
-Changing the framework: [framework/CONTRIBUTING.md](framework/CONTRIBUTING.md).
+define('pith-counter', (props) => {
+  const count = signal(Number(props.start.value));
+  const double = computed(() => count.value * 2);
+  return html`
+    <p>${count}</p>
+    <p>Double: ${double}</p>
+    <button @click=${() => count.value++}>+</button>
+  `;
+}, { props: ['start'] });
+```
+
+## This repo
+
+```
+framework/   Pith: the framework (pith/), its tools (the pith command), tests, docs and the starter template
+demo/        the demo site: Home, the docs, and the example apps (published to GitHub Pages)
+compare/     the same apps in Pith, React and Vue, measured the same way (RESULTS.md)
+```
+
+- Building an app: [framework/AGENTS.md](framework/AGENTS.md) (every project gets a copy)
+- The whole API: [framework/README.md](framework/README.md)
+- Error codes like `[pith W001]`: [framework/docs/errors.md](framework/docs/errors.md)
+- What's in each version: [framework/CHANGELOG.md](framework/CHANGELOG.md)
+
+Working on Pith itself: `cd demo && npm install && npm run check` runs everything; see
+[framework/CONTRIBUTING.md](framework/CONTRIBUTING.md). Releasing: bump `framework/package.json`'s version, add
+its notes to the changelog, then `git tag v<version> && git push --tags`.
+
+MIT license.

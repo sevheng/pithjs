@@ -5,6 +5,12 @@
   "type": "module",
   "description": "A tiny framework built on native web tech: no runtime dependencies, no build step. Import it as 'pith'.",
   "license": "MIT",
+  "homepage": "https://sevheng.github.io/pithjs/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sevheng/pithjs.git",
+    "directory": "framework"
+  },
   "bin": {
     "pith": "tools/cli.mjs"
   },
@@ -22,6 +28,7 @@
     "template",
     "skills",
     "AGENTS.md",
+    "CHANGELOG.md",
     "README.md"
   ],
   "scripts": {

@@ -19,6 +19,18 @@ const title = (name) => {
 };
 
 /**
+ * Where a new project gets Pith from: a checkout of the repo is linked by its absolute path (so changes to it
+ * show at once); a copy installed from a GitHub Release (npx --package=<.tgz>) points at that release's file.
+ * @param {{ version: string, repository: { url: string } }} pkg Pith's package.json
+ * @param {string} folder where this Pith is
+ */
+export function pithDependency(pkg, folder) {
+  if (!folder.split(sep).includes('node_modules')) return `file:${folder}`;
+  const repo = pkg.repository.url.replace(/^git\+/, '').replace(/\.git$/, '');
+  return `${repo}/releases/download/v${pkg.version}/pithjs-${pkg.version}.tgz`;
+}
+
+/**
  * @param {string} dir the new project's folder (created; it must not exist or be empty)
  * @returns {string} the folder, resolved
  */
@@ -39,7 +51,6 @@ export function createProject(dir) {
   walk(dir);
 
   const pith = JSON.parse(readFileSync(join(framework, 'package.json'), 'utf8'));
-  const installed = framework.split(sep).includes('node_modules');
   writeFileSync(join(dir, 'package.json'), JSON.stringify({
     name,
     version: '0.1.0',
@@ -57,7 +68,7 @@ export function createProject(dir) {
     },
     engines: { node: '>=24' },
     devDependencies: {
-      pithjs: installed ? `^${pith.version}` : `file:${framework}`, // a checkout: link it, by absolute path
+      pithjs: pithDependency(pith, framework),
       vite: VITE,
     },
   }, null, 2) + '\n');

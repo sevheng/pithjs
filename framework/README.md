@@ -6,7 +6,7 @@ The name: the *pith* is the essential core of something, and the core keeps only
 (It was called Mini until 2026-10-23; older notes in `../compare` measured the same framework under that name.)
 
 **Size budget: 10 KB.** The whole framework (`'pith'`, every export), built and gzipped, must stay within
-10 KB (10,000 bytes); it's 9.7 KB now. `npm run check` measures it every run (`tools/size.mjs`) and fails
+10 KB (10,000 bytes), and it's just under it. `npm run check` measures it every run (`tools/size.mjs`) and fails
 over budget, so a new feature has to pay for itself. Apps usually ship less, since the build drops what
 they don't use. Only what most apps need, and is easy to get wrong, belongs in it; the rest (UI widgets,
 animation helpers beyond `transition()`) is app code an AI agent can write from the browser's own APIs.
@@ -33,7 +33,9 @@ This folder is the `pithjs` package (`package.json`). Working on the framework i
 Start a project with `pith create`:
 
 ```sh
-npx pithjs create my-app             # once Pith is on npm; from this repo: node framework/tools/cli.mjs create my-app
+# from a GitHub Release (https://github.com/sevheng/pithjs/releases): the version's .tgz
+npx --package=https://github.com/sevheng/pithjs/releases/download/v0.1.0/pithjs-0.1.0.tgz pith create my-app
+# or from a checkout of this repo: node framework/tools/cli.mjs create my-app
 cd my-app
 npm install                          # Pith's tools (pithjs) and Vite: the two dev dependencies
 npm run check                        # a new project prints "All good"
@@ -41,7 +43,8 @@ npm run check                        # a new project prints "All good"
 
 It writes `index.html` (import map and preloads), `app/` (router, home, 404 and error pages, nav bar, `ui.js`),
 `.claude/skills/` (the `pith-frontend` and `pith-design` agent skills, from `skills/`), `styles/`, `tests/flows.js`, `AGENTS.md` and `jsconfig.json`. Its `package.json` lists
-`pithjs` (from this repo, linked as `file:...`) and calls the `pith` command:
+`pithjs` (the release's `.tgz`, or this folder linked as `file:...` when created from a checkout) and calls
+the `pith` command:
 
 ```json
 "scripts": {
