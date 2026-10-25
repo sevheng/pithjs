@@ -353,6 +353,13 @@ select.input { cursor: pointer; }
 }
 /* ===== end of Pith design ===== */
 
+/* ---------- Smooth scrolling ---------- */
+/* Links to a #section on the same page glide there ("On this page" in the docs). The router's own scrolls
+   (a new page at the top, Back where you were) still jump. Off for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
 /* ===== This app's own styles (the Pith demo) ===== */
 
 /* Counter */

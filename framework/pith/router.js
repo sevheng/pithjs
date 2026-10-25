@@ -134,7 +134,7 @@ export function createRouter(
   const isReady = (route) => !!route.view && route.layoutFn !== undefined;
   const defaultOf = (mod, what) => {
     if (typeof mod?.default !== 'function') {
-      throw error('E005', `The ${what} has no default export. Write "export default function MyPage() { ... }".`);
+      throw error('E005', DEV ? `The ${what} has no default export. Write "export default function MyPage() { ... }".` : '');
     }
     return mod.default;
   };
@@ -184,13 +184,9 @@ export function createRouter(
     if (t) document.title = title(t);
   });
 
-  const errorView = errorOption ?? ((/** @type {any} */ err, retry) => html`
-    <section class="section narrow" role="alert">
-      <h1>This page didn't load</h1>
-      <p class="muted">${String(err?.message ?? err)}</p>
-      <button class="btn primary" type="button" @click=${retry}>Try again</button>
-    </section>
-  `);
+  const errorView = errorOption ?? ((/** @type {any} */ err, retry) => html`<section class="section narrow" role="alert">
+    <h1>This page didn't load</h1><p class="muted">${String(err?.message ?? err)}</p>
+    <button class="btn primary" type="button" @click=${retry}>Try again</button></section>`);
   const failedView = (route) => errorView(route.error, () => load(route).catch(() => {}));
 
   // Dev only: registry.pages lists the current layout (when it holds state of its own), then the page.
@@ -273,11 +269,26 @@ export function createRouter(
     saveTimer = setTimeout(saveScroll, 100); // browsers limit how often replaceState may run
   };
 
-  // Now (the new page is already in the DOM) and again next frame, once layout has settled.
+  // The router's own scrolls jump, even when the app smooth-scrolls its #links (html { scroll-behavior: smooth }).
+  const jump = (top) => window.scrollTo({ top, behavior: 'instant' });
+  // Back/forward: put the position back now (the page is in the DOM) and every 16 ms until the page's height has
+  // settled, for a second at most. A page still growing above that point (a lazy part, an image) would otherwise be
+  // carried elsewhere by the browser's scroll anchoring. The user scrolling stops it. (A timer, not
+  // requestAnimationFrame: a page that isn't drawn, hidden or headless, gets no frames.)
   let frame = 0;
+  const stopBack = () => clearTimeout(frame);
+  const userScrolls = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  for (const type of userScrolls) addEventListener(type, stopBack, { passive: true });
   const scrollBack = (y) => {
-    window.scrollTo(0, y);
-    frame = requestAnimationFrame(() => window.scrollTo(0, y));
+    let steps = 60, height = 0, still = 0;
+    const step = () => {
+      jump(y);
+      const h = document.documentElement.scrollHeight;
+      still = h === height ? still + 1 : 0;
+      height = h;
+      if (--steps && still < 10) frame = setTimeout(step, 16);
+    };
+    step();
   };
 
   let navigation = 0;
@@ -298,13 +309,13 @@ export function createRouter(
         path.value = url.pathname;
         search.value = url.search;
       });
-      cancelAnimationFrame(frame); // a newer page must not get an older page's scroll position
+      stopBack(); // a newer page must not get an older page's scroll position
       if (restore != null) {
         scrollBack(restore);
       } else if (scroll) {
         const target = url.hash && document.getElementById(decodeURIComponent(url.hash.slice(1)));
-        if (target) target.scrollIntoView();
-        else window.scrollTo(0, 0);
+        if (target) target.scrollIntoView({ behavior: 'instant' });
+        else jump(0);
       }
       if (focus) /** @type {HTMLElement | null} */ (document.querySelector(focus))?.focus({ preventScroll: true });
     };
@@ -399,7 +410,7 @@ export function createRouter(
     } else {
       navigation++;
       search.value = url.search;
-      cancelAnimationFrame(frame);
+      stopBack();
       scrollBack(restore);
     }
   }
@@ -427,11 +438,12 @@ export function createRouter(
     ready,
     dispose() {
       clearTimeout(saveTimer);
-      cancelAnimationFrame(frame);
+      stopBack();
       document.removeEventListener('click', onClick);
       for (const type of intents) document.removeEventListener(type, onIntent);
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('scroll', onScroll);
+      for (const type of userScrolls) removeEventListener(type, stopBack);
       history.scrollRestoration = restoration;
     },
   };

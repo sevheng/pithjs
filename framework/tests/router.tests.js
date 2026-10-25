@@ -203,6 +203,59 @@ export default async function (t) {
     }
   });
 
+  // An app may smooth-scroll its own #links (html { scroll-behavior: smooth }); the router's own scrolls (to the top
+  // of a new page, back to where you were) must still jump, not glide across the page.
+  await test('router: its scrolls stay instant when the page sets scroll-behavior: smooth', async () => {
+    const tall = (label) => () => html`<p>${label}</p><div style="height:3000px"></div>`;
+    const routes = { [start]: tall('start'), '/__pith/sm/a': tall('a'), '*': () => 'not found' };
+    sandbox.style.display = 'block';
+    document.documentElement.style.scrollBehavior = 'smooth';
+    try {
+      await withRouter(routes, {}, async (router) => {
+        await until(() => text().startsWith('start'));
+        scrollTo({ top: 800, behavior: 'instant' });
+        router.navigate('/__pith/sm/a');
+        await until(() => text().startsWith('a'));
+        eq(scrollY, 0, 'a new page starts at the top at once');
+        history.back();
+        await until(() => text().startsWith('start'));
+        eq(scrollY, 800, 'back is where it was at once');
+      });
+    } finally {
+      document.documentElement.style.scrollBehavior = '';
+      sandbox.style.display = '';
+      scrollTo({ top: 0, behavior: 'instant' });
+    }
+  });
+
+  // Back to a page that keeps growing after it's shown (lazy parts, images above the old position): the browser's
+  // scroll anchoring would carry the page somewhere else, so the router puts the position back until it settles.
+  await test('router: back restores the scroll position on a page that grows after it is shown', async () => {
+    const grows = () => {
+      const tall = signal(false);
+      setTimeout(() => (tall.value = true), 60); // e.g. a lazy example above the old position
+      return html`<p>grows</p><div style=${() => `height:${tall.value ? 4000 : 500}px`}></div><div style="height:3000px"></div>`;
+    };
+    const routes = { [start]: grows, '/__pith/gr/a': () => html`<p>a</p>`, '*': () => 'not found' };
+    sandbox.style.display = 'block';
+    try {
+      await withRouter(routes, {}, async (router) => {
+        await until(() => text().startsWith('grows'));
+        await new Promise((r) => setTimeout(r, 150)); // grown
+        scrollTo({ top: 3000, behavior: 'instant' });
+        router.navigate('/__pith/gr/a');
+        await until(() => text().startsWith('a'));
+        history.back();
+        await until(() => text().startsWith('grows'));
+        await new Promise((r) => setTimeout(r, 400)); // grown again, and settled
+        eq(Math.round(scrollY), 3000, 'back where it was, after the page grew');
+      });
+    } finally {
+      sandbox.style.display = '';
+      scrollTo({ top: 0, behavior: 'instant' });
+    }
+  });
+
   await test('router: pages sharing a layout keep the layout mounted', async () => {
     let shellRuns = 0;
     let pageRuns = 0;
