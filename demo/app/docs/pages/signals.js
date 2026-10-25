@@ -164,7 +164,9 @@ todos.value.push(newTodo);                            // ✗ the same array: not
   ${code(batchEx)}
   <p>Either way, the updates run in order: a computed or effect runs after everything it reads has, once per change,
     so it never sees half an update, and a chain of computeds can be any length. The
-    <a href="/docs/spreadsheet">Spreadsheet</a> example leans on this: a chain of running totals 1,000 cells deep.</p>
+    <a href="/docs/spreadsheet">Spreadsheet</a> example leans on this: a chain of running totals 1,000 cells deep.
+    A computed that nothing reads any more (a cell scrolled out of view, a row that's gone) skips its updates and
+    works itself out when it's read next, so off-screen work costs nothing.</p>
 
   <h2 id="untrack">Reading without subscribing</h2>
   <p>${c('untrack(fn)')} reads signals without making the current effect depend on them. For one signal,

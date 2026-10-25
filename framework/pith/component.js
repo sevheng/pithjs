@@ -79,9 +79,9 @@ export function define(name, setup, { props = [], shadow = false, styles = '', f
   if (typeof setup !== 'function') {
     throw error('E004', `define('${name}', setup): setup must be a function that returns html\`...\`.`, TypeError);
   }
-  for (const p of props) {
+  if (DEV) for (const p of props) {
     if (p !== p.toLowerCase()) {
-      DEV && warn(
+      warn(
         'W009',
         `define('${name}'): prop "${p}" has capital letters, but HTML attribute names are lowercase, ` +
           `so the attribute will never reach it. Use "${p.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())}".`

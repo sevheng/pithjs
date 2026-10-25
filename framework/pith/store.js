@@ -31,8 +31,8 @@ export function createStore(initial, { persist = null, name = persist } = {}) {
   /** @type {any} */
   const store = {};
   for (const key of Object.keys(initial)) {
-    if (persist && notJson(initial[key])) {
-      DEV && warn('W014', `Store "${persist}": "${key}" is ${describe(initial[key])}, which doesn't survive saving to localStorage. Use plain objects, arrays, strings or numbers.`);
+    if (DEV && persist && notJson(initial[key])) {
+      warn('W014', `Store "${persist}": "${key}" is ${describe(initial[key])}, which doesn't survive saving to localStorage. Use plain objects, arrays, strings or numbers.`);
     }
     store[key] = signal(Object.hasOwn(saved, key) ? saved[key] : initial[key]);
   }

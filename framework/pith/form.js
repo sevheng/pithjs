@@ -57,8 +57,8 @@ export function form({ initial, validate = {}, onSubmit }) {
   if (DEV && recording()) return record('form', silently(() => form({ initial, validate, onSubmit })));
   const id = `form${++formCount}`;
   const names = /** @type {(keyof V & string)[]} */ (Object.keys(initial));
-  for (const key of Object.keys(validate)) {
-    if (!names.includes(key)) DEV && warn('W015', `form(): validate.${key} has no field in initial. Add ${key} to initial, or fix the name.`);
+  if (DEV) for (const key of Object.keys(validate)) {
+    if (!names.includes(key)) warn('W015', `form(): validate.${key} has no field in initial. Add ${key} to initial, or fix the name.`);
   }
 
   /** @type {{ [K in keyof V]: import('./signal.js').Signal<V[K]> }} */

@@ -121,6 +121,39 @@ test('a computed that reads every link of a chain runs once per change, and neve
   assert.equal(sum.value, (1000 * 1001) / 2 + 1000 * 2);
 });
 
+test('a computed nobody reads skips its re-runs, and catches up when it is read', () => {
+  const a = signal(1);
+  let runs = 0;
+  const c = computed(() => (runs++, a.value * 2));
+  a.value = 2;
+  a.value = 3;
+  assert.equal(runs, 1); // only the first run: the changes found no reader
+  assert.equal(c.value, 6);
+  assert.equal(c.peek(), 6);
+  assert.equal(runs, 2);
+  const seen = [];
+  const stop = effect(() => seen.push(c.value)); // read in an effect, it follows every change again
+  a.value = 4;
+  assert.deepEqual(seen, [6, 8]);
+  assert.equal(runs, 3);
+  stop();
+  a.value = 5;
+  a.value = 6;
+  assert.equal(runs, 3);
+  assert.equal(c.value, 12);
+  assert.equal(runs, 4);
+});
+
+test('only the unread end of a chain skips: the links it reads stay fresh, so reading it is one step', () => {
+  const c = chain(5000);
+  for (let i = 2; i < 5; i++) {
+    const before = c.runs();
+    c.head.value = i;
+    assert.equal(c.runs() - before, 4999);
+  }
+  assert.equal(c.links[4999].value, 4 + 5000);
+});
+
 test('a diamond (e reads a and twice, twice reads a) computes e once, with both sides new', () => {
   const a = signal(1);
   const seen = [];

@@ -1207,13 +1207,16 @@ flow('sheet: scrolling to row 900 draws it (and not row 1), and editing there wo
   await app.waitFor(() => activeName(app) === 'B1' && app.query('#cell-B1'), 'Ctrl+Up goes to the top and scrolls there');
 });
 
-flow('sheet: Fill demo data, then Edit A1 updates the whole 1,000-deep chain once each', async (app) => {
+flow('sheet: Fill demo data, then Edit A1 updates the whole 1,000-deep chain once each, and skips the statuses off screen', async (app) => {
   await app.go('/sheet');
   await app.click('Fill demo data');
   await app.waitFor(() => /^-?\d/.test(cellText(app, 'G4') ?? ''), 'the final balance (G4 = D1000) has a value');
   const final = Number(cellText(app, 'G4'));
   await app.click('Edit A1');
-  await app.see('Edit A1: 2,003 cells recomputed in');
+  await app.see('cells recomputed in');
+  // A1, the 1,000 balances, the sums, and only the statuses on screen (the others have no reader).
+  const cells = Number(/Edit A1: ([\d,]+) cells/.exec(app.query('.sheet-readout').textContent)[1].replaceAll(',', ''));
+  app.expect(cells > 1003 && cells < 1100, `Edit A1 recomputes the chain and the statuses on screen, not all 2,003 cells: ${cells}`);
   await app.waitFor(() => Number(cellText(app, 'G4')) === final + 100, `the final balance moves by 100: ${final} → ${cellText(app, 'G4')}`);
   app.expect(cellText(app, 'A1') === '2600', 'A1 went up by 100');
   scrollTo(app, 999);

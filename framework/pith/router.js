@@ -73,17 +73,17 @@ export function createRouter(
     };
   };
 
-  for (const [pattern, route] of Object.entries(routes)) {
+  if (DEV) for (const [pattern, route] of Object.entries(routes)) {
     if (pattern !== '*' && !pattern.startsWith('/')) {
-      DEV && warn('W011', `Route "${pattern}" should start with "/" (like "/${pattern}"), otherwise it never matches.`);
+      warn('W011', `Route "${pattern}" should start with "/" (like "/${pattern}"), otherwise it never matches.`);
     }
     /** @type {{ view?: unknown, load?: unknown, redirect?: unknown }} */
     const r = typeof route === 'function' ? { view: route } : route;
     if (typeof r?.view !== 'function' && typeof r?.load !== 'function' && r?.redirect == null) {
-      DEV && warn('W012', `Route "${pattern}" needs { title, load: () => import('./pages/x.js') } or a view function.`);
+      warn('W012', `Route "${pattern}" needs { title, load: () => import('./pages/x.js') } or a view function.`);
     }
   }
-  if (!routes['*']) DEV && warn('W013', 'No "*" route: unknown URLs will show plain "Not found" text.');
+  if (DEV && !routes['*']) warn('W013', 'No "*" route: unknown URLs will show plain "Not found" text.');
 
   const table = Object.entries(routes)
     .filter(([pattern]) => pattern !== '*')
@@ -107,7 +107,7 @@ export function createRouter(
 
   // Follow route redirects and the guard until a URL is allowed. Returns the URL to show.
   function allowed(url) {
-    const from = url.pathname;
+    const from = DEV && url.pathname; // for W020
     for (let i = 0; i <= MAX_REDIRECTS; i++) {
       const { route, params } = resolve(url.pathname);
       let to = null;

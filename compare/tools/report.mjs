@@ -10,42 +10,42 @@ const read = (name) => {
 const measure = read('measure.json') ?? {};
 const code = read('code.json');
 const builds = read('build.json');
-const ai = read('ai.json');
 
 const IMPLS = ['pith', 'pith-vite', 'react', 'vue'];
-const NAMES = { pith: 'Pith', 'pith-vite': 'Pith + Vite', react: 'React', vue: 'Vue', 'pith-fine': 'Pith, fine-grained rows' };
-// Runtime and memory also show Pith with fine-grained rows (bench/pith-fine, an opt-in pattern), when measured.
-const BENCH_IMPLS = [...IMPLS, ...(measure.runtime?.['pith-fine'] ? ['pith-fine'] : [])];
+const NAMES = { pith: 'Pith', 'pith-vite': 'Pith + Vite', react: 'React', vue: 'Vue' };
+const APPS = { trade: 'Trading', sheet: 'Spreadsheet' };
 const out = [];
 const table = (head, rows) => {
   out.push(`| ${head.join(' | ')} |`, `|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
   for (const r of rows) out.push(`| ${r.join(' | ')} |`);
   out.push('');
 };
-// Bold the best (lowest) number in each row of numeric cells.
-const boldBest = (cells) => {
-  const nums = cells.map((c) => (typeof c === 'number' ? c : null));
-  const best = Math.min(...nums.filter((n) => n !== null));
+// Bold the best number in each row of numeric cells (the lowest, or the highest with high = true).
+const boldBest = (cells, high = false) => {
+  const nums = cells.filter((c) => typeof c === 'number');
+  const best = high ? Math.max(...nums) : Math.min(...nums);
   return cells.map((c) => (c === best ? `**${c}**` : c ?? '–'));
 };
+const r1 = (x) => (typeof x === 'number' ? Math.round(x * 10) / 10 : x);
 
 out.push('# Results', '');
 if (measure.environment) {
   const e = measure.environment;
-  out.push(`Measured ${e.date.slice(0, 10)} with ${e.chrome}, Node ${e.node}. Medians of ${e.runs} runs (load) and 10 runs × 3 pages × 4 rotated rounds (runtime).`, '');
+  out.push(`Measured ${e.date.slice(0, 10)} with ${e.chrome}, Node ${e.node}. Medians of ${e.runs} runs (load) and of ` +
+    `10 runs × 3 pages × ${e.rounds} rotated rounds (runtime; under load, one 5-second run per round).`, '');
 }
 
 if (measure.load) {
   out.push('## Load on a slow phone', '',
     'Fresh browser profile each run, Slow 4G (150 ms RTT, 1.6 Mbps) and 4× CPU slowdown. ' +
-    '"Ready" = the page\'s real content is on screen (todos, stats, or table rows). ' +
+    '"Ready" = the real content is on screen (the watchlist and chart, or the grid). ' +
     '"Blocking" = long-task time over 50 ms before ready. Lower is better; best per row in bold.', '');
-  const pages = [...new Set(Object.values(measure.load).map((r) => r.app))];
   for (const proto of ['h1', 'h2']) {
     out.push(`### Over ${proto === 'h1' ? 'HTTP/1.1' : 'HTTP/2'}`, '');
-    for (const page of pages) {
-      const get = (impl) => measure.load[`${page} · ${impl} · ${proto}`];
-      table([`\`${page}\``, ...IMPLS.map((i) => NAMES[i])], [
+    for (const app of Object.keys(APPS)) {
+      const get = (impl) => measure.load[`${app} · ${impl} · ${proto}`];
+      if (!get('pith')) continue;
+      table([APPS[app], ...IMPLS.map((i) => NAMES[i])], [
         ['JS downloaded (KB, gzip)', ...boldBest(IMPLS.map((i) => get(i)?.jsKB))],
         ['JS files', ...boldBest(IMPLS.map((i) => get(i)?.jsFiles))],
         ['First paint (ms)', ...boldBest(IMPLS.map((i) => get(i)?.fcp))],
@@ -58,34 +58,46 @@ if (measure.load) {
 
 if (measure.runtime) {
   out.push('## Runtime (ms, lower is better)', '',
-    'js-framework-benchmark-style operations on the bench app, desktop CPU. Time from click to DOM updated and laid out.', '');
-  const ops = Object.keys(measure.runtime.pith ?? {});
-  table(['Operation', ...BENCH_IMPLS.map((i) => NAMES[i])], ops.map((op) => [op, ...boldBest(BENCH_IMPLS.map((i) => measure.runtime[i]?.[op]))]));
-  if (BENCH_IMPLS.includes('pith-fine')) {
-    out.push('"Pith, fine-grained rows" is the same Pith app with each row\'s label as a signal (bench/pith-fine), an opt-in pattern for big, busy lists. "Pith" is the default way to write it.', '');
+    'Desktop CPU. Time from the call (or click) to the DOM updated and laid out; best per row in bold.', '');
+  for (const [app, byImpl] of Object.entries(measure.runtime)) {
+    out.push(`### ${APPS[app] ?? app}`, '');
+    const ops = Object.keys(byImpl.pith ?? Object.values(byImpl)[0]);
+    table(['Operation', ...IMPLS.map((i) => NAMES[i])], ops.map((op) => [op, ...boldBest(IMPLS.map((i) => byImpl[i]?.[op]))]));
   }
 }
 
-const ab = read('ab-runtime.json');
-if (ab) {
-  out.push('### Pith before and after the optimization pass', '',
-    'Same session, old and new Pith alternated 6 times (medians), so session-to-session noise cancels out.',
-    'Measured 2026-10-22, before runs started right after a frame: that timing penalised remove and select, so',
-    'their "after" here is worse than in the main table above. The other operations show the pass itself.', '');
-  table(['Operation', 'Pith before', 'Pith after', 'change'], Object.entries(ab).map(([op, { before, after }]) =>
-    [op, Math.round(before * 10) / 10, Math.round(after * 10) / 10, `${after < before ? '' : '+'}${Math.round(((after - before) / before) * 100)}%`]));
+if (measure.stress) {
+  out.push('## Under load', '',
+    'Sustained work for 5 seconds while every frame is recorded. Frames per second (higher is better), the median and ' +
+    '95th-percentile frame time, and long tasks (main-thread work over 50 ms).', '');
+  for (const [app, runs] of Object.entries(measure.stress)) {
+    for (const [name, byImpl] of Object.entries(runs)) {
+      out.push(`### ${APPS[app] ?? app}: ${name}`, '');
+      table(['', ...IMPLS.map((i) => NAMES[i])], [
+        ['Frames per second', ...boldBest(IMPLS.map((i) => r1(byImpl[i]?.fps)), true)],
+        ['Frame, median (ms)', ...boldBest(IMPLS.map((i) => r1(byImpl[i]?.frameP50)))],
+        ['Frame, 95th percentile (ms)', ...boldBest(IMPLS.map((i) => r1(byImpl[i]?.frameP95)))],
+        ['Long tasks', ...boldBest(IMPLS.map((i) => r1(byImpl[i]?.longTasks)))],
+        ['Long-task time (ms)', ...boldBest(IMPLS.map((i) => r1(byImpl[i]?.longMs)))],
+      ]);
+    }
+  }
 }
 
 if (measure.memory) {
-  out.push('## Memory (JS heap, MB, lower is better)', '');
-  const rows = Object.keys(measure.memory.pith ?? {});
-  table(['State', ...BENCH_IMPLS.map((i) => NAMES[i])], rows.map((r) => [r, ...boldBest(BENCH_IMPLS.map((i) => measure.memory[i]?.[r]))]));
+  out.push('## Memory (JS heap after GC, MB, lower is better)', '');
+  for (const [app, byImpl] of Object.entries(measure.memory)) {
+    out.push(`### ${APPS[app] ?? app}`, '');
+    const states = Object.keys(byImpl.pith ?? Object.values(byImpl)[0]);
+    table(['State', ...IMPLS.map((i) => NAMES[i])], states.map((s) => [s, ...boldBest(IMPLS.map((i) => byImpl[i]?.[s]))]));
+  }
 }
 
 if (code) {
-  out.push('## Code (lines of app code, without comments and blank lines)', '');
-  table(['App', 'Pith', 'React', 'Vue'], ['todo', 'crm', 'bench'].map((app) => [
-    app, ...boldBest(['pith', 'react', 'vue'].map((i) => code.code[`${app}/${i}`].lines)),
+  out.push('## Code (lines of app code, without comments and blank lines)', '',
+    'The shared code (the feed, the chart geometry, the formula engine, the formatting) is the same for all and not counted.', '');
+  table(['App', 'Pith', 'React', 'Vue'], Object.keys(APPS).filter((a) => code.code[`${a}/pith`]).map((app) => [
+    APPS[app], ...boldBest(['pith', 'react', 'vue'].map((i) => code.code[`${app}/${i}`].lines)),
   ]));
   out.push('## Developer experience', '');
   const b = (app, impl) => builds?.[`${app}/${impl}`];
@@ -93,15 +105,9 @@ if (code) {
     ['npm packages to install', ...['pith', 'react', 'vue'].map((i) => code.deps[i].total)],
     ['node_modules size (MB)', ...['pith', 'react', 'vue'].map((i) => code.deps[i].diskMB)],
     ['Build step', 'none', 'Vite', 'Vite'],
-    ['Production build of the CRM (ms)', '0', b('crm', 'react') ?? '–', b('crm', 'vue') ?? '–'],
+    ['Production build of Trading (ms)', '0', b('trade', 'react') ?? '–', b('trade', 'vue') ?? '–'],
     ['Config files', '0', '1 (vite.config.js)', '1 (vite.config.js)'],
   ]);
-}
-
-if (ai) {
-  out.push('## AI-friendliness', '', ai.method, '');
-  table(['Task', 'Pith', 'React', 'Vue'], ai.tasks.map((t) => [t.name, ...['pith', 'react', 'vue'].map((i) => t[i])]));
-  if (ai.notes) out.push(...ai.notes.map((n) => `- ${n}`), '');
 }
 
 writeFileSync(join(compare, 'RESULTS.md'), out.join('\n'));

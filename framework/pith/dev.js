@@ -2,8 +2,7 @@
 // Override by setting globalThis.PITH_DEV = true/false before pith is imported.
 // Every warning and error has a code; framework/docs/errors.md explains each one and how to fix it.
 
-const host = globalThis.location?.hostname ?? '';
-export const DEV = globalThis.PITH_DEV ?? ['localhost', '127.0.0.1', '[::1]'].includes(host);
+export const DEV = globalThis.PITH_DEV ?? ['localhost', '127.0.0.1', '[::1]'].includes(globalThis.location?.hostname ?? '');
 
 // Dev only. Read by the test tools (tests/state.js) to print the app's state as text, for
 // `npm run see /path --state` and failing user flows. Nothing is recorded in production.

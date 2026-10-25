@@ -18,7 +18,12 @@ let currentOwner = null;  // array collecting disposers for effects/cleanups cre
 let currentHandler = null; // nearest catchError handler: { fn, parent }
 let batchDepth = 0;
 let flushing = false;
-const pending = new Set();
+// Effects waiting to run, a Set per level (see signal), so a flush finds the lowest level without a scan.
+let pending = [], waiting = 0, low = 0;
+const queue = (e) => {
+  const set = (pending[e.lv] ??= new Set());
+  if (!set.has(e)) set.add(e), waiting++, e.lv < low && (low = e.lv);
+};
 
 /**
  * A reactive value. Reading .value inside an effect/template subscribes; writing notifies.
@@ -38,8 +43,7 @@ export function signal(initial, subscribers = new Set()) {
       // repeats), and a parent goes before the children it may remove. Nothing recurses, so a chain
       // of computeds can be any length.
       if (currentEffect) {
-        subscribers.add(currentEffect);
-        currentEffect.deps.add(subscribers);
+        track(subscribers);
         if (subscribers.lv >= currentEffect.lv) currentEffect.lv = subscribers.lv + 1;
       }
       return value;
@@ -47,7 +51,7 @@ export function signal(initial, subscribers = new Set()) {
     set value(next) {
       if (Object.is(next, value)) return;
       value = next;
-      for (const e of subscribers) pending.add(e);
+      for (const e of subscribers) queue(e);
       if (!batchDepth) flush();
     },
     peek: () => value,
@@ -65,28 +69,37 @@ export function computed(fn) {
   /** @type {any} */
   const subs = new Set();
   const s = signal(undefined, subs);
-  effect(() => {
+  // A change that finds no reader (an off-screen cell, a row that's gone) only marks it stale: it stays
+  // subscribed, so what it reads keeps a reader and stays fresh, and the next read works it out (never
+  // more than one level deep). The first run is eager.
+  let ran, stale, pulling;
+  const run = /** @type {any} */ (effect)(() => {
+    ran = 1;
     s.value = fn();
     subs.lv = currentEffect.lv; // its readers sit above it
-  });
+  }, () => (stale = ran && !pulling && !subs.size)).run;
+  const fresh = () => stale && ((pulling = 1), run(), (pulling = 0));
   return mark({
-    get value() { return s.value; },
-    peek: () => s.peek(),
+    get value() { fresh(); return s.value; },
+    peek: () => (fresh(), s.peek()),
   });
 }
 
 /**
  * Run fn now and again whenever a signal it read changes. fn may return a cleanup.
  * @param {() => void | (() => void)} fn
+ * @param {() => any} [skip] internal: computed() skips re-runs nobody reads
  * @returns {() => void} dispose
  */
-export function effect(fn) {
+export function effect(fn, skip) {
   // lv: its level (see signal). It only goes up, which keeps it above everything it ever read.
-  const e = { deps: new Set(), children: [], cleanup: null, disposed: false, run, handler: currentHandler, lv: currentEffect ? currentEffect.lv + 1 : 0 };
+  // deps: what it read, each with the number of the run that last read it (see track).
+  const e = { deps: new Map(), ran: 0, children: [], cleanup: null, disposed: false, run, handler: currentHandler, lv: currentEffect ? currentEffect.lv + 1 : 0 };
 
   function run() {
-    if (e.disposed) return;
+    if (e.disposed || skip?.()) return;
     reset(e);
+    const n = ++e.ran;
     const prevEffect = currentEffect, prevOwner = currentOwner, prevHandler = currentHandler;
     currentEffect = e;
     currentOwner = e.children;
@@ -102,6 +115,9 @@ export function effect(fn) {
       currentEffect = prevEffect;
       currentOwner = prevOwner;
       currentHandler = prevHandler;
+      // Leave only what this run didn't read: what it read again stays subscribed (no churn for a formula
+      // that reads 1,000 cells each time).
+      for (const [subs, last] of e.deps) if (last !== n) subs.delete(e), e.deps.delete(subs);
     }
     if (failed) handle(err, e.handler);
   }
@@ -110,16 +126,24 @@ export function effect(fn) {
     if (e.disposed) return;
     e.disposed = true;
     reset(e);
+    for (const subs of e.deps.keys()) subs.delete(e);
+    e.deps.clear();
   };
   if (currentOwner) currentOwner.push(dispose);
+  dispose.run = run; // for computed(), to catch up when read
   run();
   return dispose;
 }
 
-// Drop subscriptions, dispose nested effects and run the user cleanup before a re-run.
+// Subscribe the current effect to subs (a signal's set of readers), and note this run read it.
+function track(subs) {
+  const e = currentEffect;
+  if (!e.deps.has(subs)) subs.add(e);
+  e.deps.set(subs, e.ran);
+}
+
+// Dispose nested effects and run the user cleanup before a re-run.
 function reset(e) {
-  for (const subs of e.deps) subs.delete(e);
-  e.deps.clear();
   for (const dispose of e.children.splice(0)) dispose();
   if (typeof e.cleanup === 'function') {
     const cleanup = e.cleanup;
@@ -133,19 +157,16 @@ function flush() {
   flushing = true;
   let rounds = 0, last;
   try {
-    while (pending.size) {
-      let min = Infinity, queue;
-      for (const e of pending) {
-        if (e.lv < min) (min = e.lv), (queue = [e]);
-        else if (e.lv <= min) queue.push(e);
-      }
+    while (waiting) {
+      while (!pending[low]?.size) low++;
+      const set = pending[low];
       // In order, the levels only go up. Effects that keep sending it back down are updating each other.
-      if (min <= last && ++rounds > 1000) {
-        pending.clear();
+      if (low <= last && ++rounds > 1000) {
+        (pending = []), (waiting = low = 0);
         throw error('E003', 'Effects kept updating each other (infinite loop?). An effect probably writes a signal it also reads.');
       }
-      last = min;
-      for (const e of queue) pending.delete(e), e.run();
+      last = low;
+      for (const e of [...set]) if (set.delete(e)) waiting--, e.run();
     }
   } finally {
     flushing = false;
@@ -286,15 +307,14 @@ export function selector(source) {
     if (next === current) return;
     const prev = current;
     current = next;
-    for (const key of [prev, next]) for (const e of readers.get(key) ?? []) pending.add(e);
+    for (const key of [prev, next]) for (const e of readers.get(key) ?? []) queue(e);
     if (!batchDepth) flush();
   });
   const isSelected = (key) => {
     if (currentEffect) {
       let set = readers.get(key);
       if (!set) readers.set(key, (set = new Readers(key)));
-      set.add(currentEffect);
-      currentEffect.deps.add(set);
+      track(set);
     }
     return key === current;
   };

@@ -210,9 +210,9 @@ export function toNodes(value, out = []) {
   } else if (value instanceof Node) {
     out.push(value);
   } else {
-    if (typeof value === 'object' && String(value).startsWith('[object ')) {
-      if (value[REPEAT]) DEV && warn('W004', 'repeat() must be the whole ${} hole, not inside an array or function.');
-      else if (DEV) warn('W002', `A template hole got ${describe(value)}, which shows as "${String(value)}". Render one of its fields instead.`);
+    if (DEV && typeof value === 'object' && String(value).startsWith('[object ')) {
+      if (value[REPEAT]) warn('W004', 'repeat() must be the whole ${} hole, not inside an array or function.');
+      else warn('W002', `A template hole got ${describe(value)}, which shows as "${String(value)}". Render one of its fields instead.`);
     }
     out.push(document.createTextNode(String(value)));
   }
