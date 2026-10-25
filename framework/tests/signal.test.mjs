@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { signal, computed, effect, batch, root, untrack, onCleanup, catchError, selector } from '../pith/signal.js';
+import { signal, computed, effect, batch, root, untrack, onCleanup, catchError, selector, isSignal } from '../pith/signal.js';
 
 test('effect re-runs when a signal it read changes', () => {
   const s = signal(1);
@@ -319,4 +319,26 @@ test('selector: rows that go away are dropped, so memory stays bounded', () => {
   const t = rows(3, isSelected); // still works afterwards
   selected.value = 1;
   assert.equal(t.total(), 5); // rows 0 (no longer selected) and 1 (now selected)
+});
+
+test('isSignal is true for signals and computeds, false for look-alikes; a computed can\'t be written', () => {
+  const s = signal(1);
+  const c = computed(() => s.value * 2);
+  assert.ok(isSignal(s) && isSignal(c));
+  assert.ok(!isSignal({ value: 1 }) && !isSignal(null) && !isSignal(() => 1));
+  assert.throws(() => { /** @type {any} */ (c).value = 3; }, TypeError);
+  assert.equal(c.value, 2);
+});
+
+test('disposing a root lets go of every subscription its effects and computeds held', () => {
+  const s = signal(1);
+  let runs = 0;
+  root((dispose) => {
+    const c = computed(() => s.value + 1);
+    effect(() => { runs++; c.value; s.value; });
+    dispose();
+  });
+  assert.equal(/** @type {any} */ (s).subs.size, 0, 'nothing left subscribed to the signal');
+  s.value = 2;
+  assert.equal(runs, 1, 'a disposed effect never runs again');
 });

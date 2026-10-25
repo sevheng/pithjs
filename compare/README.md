@@ -53,40 +53,43 @@ Each app's `measure.js` names what's measured; `tools/measure.mjs` times them al
 ## What the numbers say
 
 **Loading: Pith's strongest area.**
-- **JS downloaded:** Trading needs 20 KB (gzip) in Pith without a build, app and shared code included, and 9.5 KB
+- **JS downloaded:** Trading needs 20 KB (gzip) in Pith without a build, app and shared code included, and 9.6 KB
   bundled, against Vue's 29 KB and React's 71 KB.
-- **Pith + Vite is the fastest on every page**: ready 17–21% sooner than Vue and 38–39% sooner than React.
-- **Pith without a build is level with Vue** (from 9% behind to 9% ahead, depending on the app and protocol) and
-  20–30% sooner than React. It's 13–33% behind Pith + Vite, because the browser fetches the app's own files one by
+- **Pith + Vite is the fastest on every page**: ready 18–21% sooner than Vue and 38–40% sooner than React.
+- **Pith without a build is level with Vue** (from 5% behind to 11% ahead, depending on the app and protocol) and
+  19–31% sooner than React. It's 12–32% behind Pith + Vite, because the browser fetches the app's own files one by
   one instead of one bundle.
 
-**Trading: Pith leads where it matters, the browser sets the limit.**
-- **Few prices ticking in a long list** (10 of 1,000): Pith updates the page in 2.8 ms, Vue in 3.2, React in 8.1.
+**Trading: Pith is fastest at every update, and uses the least memory.**
+- **Few prices ticking in a long list** (10 of 1,000): Pith updates the page in 3.3 ms, Vue in 3.9, React in 7.4.
   Pith and Vue write the changed values in place; React re-renders the changed rows and compares the rest.
-- **A full step of 40 prices:** all within the noise (Pith 8.9, React 9.7, Vue 10.0 ms). Switching symbol: all within 10%.
-- **All 1,000 prices at once:** Pith 215 ms, Vue 263, React 305. Most of that is the browser's style and layout
-  (and the 1,000 restarted flash animations), not the framework.
+- **A full step of 40 prices:** Pith 9.2 ms, React 10.3, Vue 10.9. **All 1,000 at once:** Pith 223 ms, Vue 284, React
+  331 (most of it is the browser's style and layout, and the 1,000 restarted flash animations).
+- **Switching symbol:** all within 3% (React 7.8, Vue 7.9, Pith 8.0 ms).
+- **Memory:** 5.1 MB for 1,000 symbols, against React's 5.6 and Vue's 8.2; after 2,000 steps Pith is at 5.7, React at
+  10.1, Vue at 8.9.
 - **Under load** (1,000 symbols at 60 steps a second): all four draw the same, about 27 frames a second with 40
   prices per step and about 5 with all 1,000. The browser's layout of the 1,000-row list is the limit, not the
   framework.
 
-**Spreadsheet: the trade-off of fine-grained reactivity, both ways.**
-- **An edit nobody else reads:** Pith 0.8 ms, Vue 1.6, React 3.6. Only what depends on the edit is worked out;
+**Spreadsheet: Pith is fastest at every edit; React at bulk changes.**
+- **Editing the top of a 1,000-deep chain:** Pith 3.5 ms, Vue 4.6, React 5.4.
+- **An edit nobody else reads:** Pith 0.9 ms, Vue 1.8, React 5.4. Only what depends on the edit is worked out;
   React evaluates every formula again.
-- **Editing the top of a 1,000-deep chain:** Vue 3.9 ms, React 4.4, Pith 6.2. Vue's lazy computeds are the
-  fastest here; Pith pushes the change down the chain level by level.
-- **Fill and clear 5,000 cells:** React is fastest (23 ms and 3.2), because it stores text and builds no reactive
-  values. Pith takes 45 and 16, Vue 30 and 73.
+- **Scrolling one screen:** Pith 6.3 ms, Vue 6.5, React 6.8.
+- **Fill and clear 5,000 cells:** React is fastest (31 ms and 4.0), because it stores text and builds no reactive
+  values. Pith takes 37 and 10.6, Vue 34 and 77.
+- **Memory:** Pith and Vue 5.1 MB, React 3.1 (plain text costs less than a reactive value per cell).
 - **Under load** (100 random edits a second): all four hold 60 frames a second.
-- **Improved by this benchmark:** it found three weaknesses in Pith's signals, fixed on 2026-10-25 (A/B in
-  `results/ab-signals.json`): computeds nobody reads now skip their updates, a flush finds the next level without a
-  scan, and effects keep their subscriptions across runs. Fill went from 56 to 45 ms, Edit A1 from 8.9 to 6.2, clear
-  from 24 to 17. Before that, a chain of 1,000 computeds also failed outright with E003.
 
-**Memory: React uses the least.** Plain data costs less than reactive values. Trading with 1,000 symbols takes
-8.4 MB in Pith, 8.2 in Vue and 5.6 in React (but React grows to 10.1 MB after 2,000 steps, where Pith and Vue stay
-at 8.9). The full spreadsheet takes 11.3 MB in Pith, 5.1 in Vue and 3.1 in React: Pith's per-cell cost (a signal,
-a computed and its effect, and the model's own objects per cell) is about twice Vue's.
+**How Pith got here (2026-10-25).** This benchmark found Pith behind and its core was changed, each step A/B
+tested in one session (`results/ab-*.json`):
+1. Computeds nobody reads skip their updates; a flush finds the next level without a scan; effects keep their
+   subscriptions across runs (`ab-signals.json`: fill −20%, Edit A1 −31%, clear −31%). Before this, a chain of
+   1,000 computeds failed outright with E003.
+2. Signals, computeds and effects became classes with their parts made on first use, instead of objects full of
+   closures (`ab-classes.json`: Edit A1 −48%, clear −41%, fill −21%, ticking rows −14%). A signal went from 720 to
+   48 bytes; Trading's memory from 8.4 to 5.1 MB, the spreadsheet's from 11.3 to 5.1.
 
 **Code and setup:**
 - **Code size:** Trading takes 207 lines in Pith, 245 in React and 247 in Vue; the Spreadsheet 227, 188 and 227

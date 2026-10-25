@@ -57,12 +57,8 @@ export function inject(key, fallback) {
 }
 
 // Shown when a component without its own fallback throws.
-const defaultFallback = (err, retry) => html`
-  <div class="load-error" role="alert">
-    <p>Something went wrong. ${err?.message ?? String(err)}</p>
-    <button class="btn" type="button" @click=${retry}>Try again</button>
-  </div>
-`;
+const defaultFallback = (err, retry) => html`<div class="load-error" role="alert"><p>Something went wrong. ${err?.message ?? String(err)}</p>
+  <button class="btn" type="button" @click=${retry}>Try again</button></div>`;
 
 /**
  * Turn a setup function into a Custom Element. setup runs once per mount and returns html`...`.
@@ -77,7 +73,7 @@ const defaultFallback = (err, retry) => html`
 export function define(name, setup, { props = [], shadow = false, styles = '', fallback } = {}) {
   if (customElements.get(name)) return customElements.get(name);
   if (typeof setup !== 'function') {
-    throw error('E004', `define('${name}', setup): setup must be a function that returns html\`...\`.`, TypeError);
+    throw error('E004', DEV ? `define('${name}', setup): setup must be a function that returns html\`...\`.` : '', TypeError);
   }
   if (DEV) for (const p of props) {
     if (p !== p.toLowerCase()) {

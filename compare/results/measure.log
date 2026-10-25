@@ -1,20 +1,19 @@
-trade · pith · h1          {"app":"trade","impl":"pith","protocol":"http/1.1","fcp":892,"lcp":892,"ready":698.6,"tbt":0,"jsKB":20.3,"jsFiles":6,"requests":10}
-trade · pith · h2          {"app":"trade","impl":"pith","protocol":"h2","fcp":800,"lcp":800,"ready":617.3,"tbt":0,"jsKB":20.3,"jsFiles":6,"requests":10}
-trade · pith-vite · h1     {"app":"trade","impl":"pith-vite","protocol":"http/1.1","fcp":728,"lcp":728,"ready":545.7,"tbt":0,"jsKB":9.5,"jsFiles":1,"requests":5}
-trade · pith-vite · h2     {"app":"trade","impl":"pith-vite","protocol":"h2","fcp":748,"lcp":748,"ready":548.4,"tbt":0,"jsKB":9.5,"jsFiles":1,"requests":5}
-trade · react · h1         {"app":"trade","impl":"react","protocol":"http/1.1","fcp":1056,"lcp":1056,"ready":890,"tbt":0,"jsKB":71.1,"jsFiles":1,"requests":5}
-trade · react · h2         {"app":"trade","impl":"react","protocol":"h2","fcp":1060,"lcp":1060,"ready":882,"tbt":0,"jsKB":71.1,"jsFiles":1,"requests":5}
-trade · vue · h1           {"app":"trade","impl":"vue","protocol":"http/1.1","fcp":876,"lcp":876,"ready":688.7,"tbt":0,"jsKB":29.2,"jsFiles":1,"requests":5}
-trade · vue · h2           {"app":"trade","impl":"vue","protocol":"h2","fcp":872,"lcp":872,"ready":681.5,"tbt":0,"jsKB":29.2,"jsFiles":1,"requests":5}
-  retrying after: never became ready: http://localhost:45569/
-sheet · pith · h1          {"app":"sheet","impl":"pith","protocol":"http/1.1","fcp":784,"lcp":784,"ready":651.2,"tbt":0,"jsKB":21.6,"jsFiles":6,"requests":10}
-sheet · pith · h2          {"app":"sheet","impl":"pith","protocol":"h2","fcp":716,"lcp":716,"ready":584,"tbt":0,"jsKB":21.6,"jsFiles":6,"requests":10}
-sheet · pith-vite · h1     {"app":"sheet","impl":"pith-vite","protocol":"http/1.1","fcp":624,"lcp":624,"ready":491.3,"tbt":0,"jsKB":9.3,"jsFiles":1,"requests":5}
-sheet · pith-vite · h2     {"app":"sheet","impl":"pith-vite","protocol":"h2","fcp":644,"lcp":644,"ready":501.9,"tbt":0,"jsKB":9.3,"jsFiles":1,"requests":5}
-sheet · react · h1         {"app":"sheet","impl":"react","protocol":"http/1.1","fcp":936,"lcp":936,"ready":810.1,"tbt":0,"jsKB":70.8,"jsFiles":1,"requests":5}
-sheet · react · h2         {"app":"sheet","impl":"react","protocol":"h2","fcp":916,"lcp":916,"ready":809.8,"tbt":0,"jsKB":70.8,"jsFiles":1,"requests":5}
-sheet · vue · h1           {"app":"sheet","impl":"vue","protocol":"http/1.1","fcp":736,"lcp":736,"ready":594.9,"tbt":0,"jsKB":28.9,"jsFiles":1,"requests":5}
-sheet · vue · h2           {"app":"sheet","impl":"vue","protocol":"h2","fcp":748,"lcp":748,"ready":605.6,"tbt":0,"jsKB":28.9,"jsFiles":1,"requests":5}
+trade · pith · h1          {"app":"trade","impl":"pith","protocol":"http/1.1","fcp":928,"lcp":928,"ready":727.1,"tbt":0,"jsKB":20.1,"jsFiles":6,"requests":10}
+trade · pith · h2          {"app":"trade","impl":"pith","protocol":"h2","fcp":804,"lcp":804,"ready":622.1,"tbt":0,"jsKB":20.1,"jsFiles":6,"requests":10}
+trade · pith-vite · h1     {"app":"trade","impl":"pith-vite","protocol":"http/1.1","fcp":732,"lcp":732,"ready":550.3,"tbt":0,"jsKB":9.6,"jsFiles":1,"requests":5}
+trade · pith-vite · h2     {"app":"trade","impl":"pith-vite","protocol":"h2","fcp":740,"lcp":740,"ready":554.4,"tbt":0,"jsKB":9.6,"jsFiles":1,"requests":5}
+trade · react · h1         {"app":"trade","impl":"react","protocol":"http/1.1","fcp":1084,"lcp":1084,"ready":901.8,"tbt":0,"jsKB":71.1,"jsFiles":1,"requests":5}
+trade · react · h2         {"app":"trade","impl":"react","protocol":"h2","fcp":1076,"lcp":1076,"ready":900.9,"tbt":0,"jsKB":71.1,"jsFiles":1,"requests":5}
+trade · vue · h1           {"app":"trade","impl":"vue","protocol":"http/1.1","fcp":880,"lcp":880,"ready":689.8,"tbt":0,"jsKB":29.2,"jsFiles":1,"requests":5}
+trade · vue · h2           {"app":"trade","impl":"vue","protocol":"h2","fcp":884,"lcp":884,"ready":697.2,"tbt":0,"jsKB":29.2,"jsFiles":1,"requests":5}
+sheet · pith · h1          {"app":"sheet","impl":"pith","protocol":"http/1.1","fcp":784,"lcp":784,"ready":642.3,"tbt":0,"jsKB":21.4,"jsFiles":6,"requests":10}
+sheet · pith · h2          {"app":"sheet","impl":"pith","protocol":"h2","fcp":716,"lcp":716,"ready":581.8,"tbt":0,"jsKB":21.4,"jsFiles":6,"requests":10}
+sheet · pith-vite · h1     {"app":"sheet","impl":"pith-vite","protocol":"http/1.1","fcp":632,"lcp":632,"ready":496,"tbt":0,"jsKB":9.4,"jsFiles":1,"requests":5}
+sheet · pith-vite · h2     {"app":"sheet","impl":"pith-vite","protocol":"h2","fcp":628,"lcp":628,"ready":496.9,"tbt":0,"jsKB":9.4,"jsFiles":1,"requests":5}
+sheet · react · h1         {"app":"sheet","impl":"react","protocol":"http/1.1","fcp":924,"lcp":924,"ready":813,"tbt":0,"jsKB":70.8,"jsFiles":1,"requests":5}
+sheet · react · h2         {"app":"sheet","impl":"react","protocol":"h2","fcp":964,"lcp":964,"ready":830.6,"tbt":0,"jsKB":70.8,"jsFiles":1,"requests":5}
+sheet · vue · h1           {"app":"sheet","impl":"vue","protocol":"http/1.1","fcp":764,"lcp":764,"ready":615.2,"tbt":0,"jsKB":28.9,"jsFiles":1,"requests":5}
+sheet · vue · h2           {"app":"sheet","impl":"vue","protocol":"h2","fcp":764,"lcp":764,"ready":605.9,"tbt":0,"jsKB":28.9,"jsFiles":1,"requests":5}
 trade runtime round 1/4 pith
 trade runtime round 1/4 pith-vite
 trade runtime round 1/4 react
@@ -31,10 +30,10 @@ trade runtime round 4/4 vue
 trade runtime round 4/4 pith
 trade runtime round 4/4 pith-vite
 trade runtime round 4/4 react
-pith       {"step: 40 of 40 symbols":8.9,"switch symbol":7.8,"step: 1,000 of 1,000 symbols":214.9,"step: 10 of 1,000 symbols":2.8}
-pith-vite  {"step: 40 of 40 symbols":9,"switch symbol":7.8,"step: 1,000 of 1,000 symbols":215.2,"step: 10 of 1,000 symbols":3}
-react      {"step: 40 of 40 symbols":9.7,"switch symbol":7.5,"step: 1,000 of 1,000 symbols":305,"step: 10 of 1,000 symbols":8.1}
-vue        {"step: 40 of 40 symbols":10,"switch symbol":7.2,"step: 1,000 of 1,000 symbols":262.6,"step: 10 of 1,000 symbols":3.2}
+pith       {"step: 40 of 40 symbols":9.2,"switch symbol":8,"step: 1,000 of 1,000 symbols":223.4,"step: 10 of 1,000 symbols":3.3}
+pith-vite  {"step: 40 of 40 symbols":9.3,"switch symbol":8.1,"step: 1,000 of 1,000 symbols":229.1,"step: 10 of 1,000 symbols":3.5}
+react      {"step: 40 of 40 symbols":10.3,"switch symbol":7.8,"step: 1,000 of 1,000 symbols":331.1,"step: 10 of 1,000 symbols":7.4}
+vue        {"step: 40 of 40 symbols":10.9,"switch symbol":7.9,"step: 1,000 of 1,000 symbols":284.4,"step: 10 of 1,000 symbols":3.9}
 sheet runtime round 1/4 pith
 sheet runtime round 1/4 pith-vite
 sheet runtime round 1/4 react
@@ -51,30 +50,50 @@ sheet runtime round 4/4 vue
 sheet runtime round 4/4 pith
 sheet runtime round 4/4 pith-vite
 sheet runtime round 4/4 react
-pith       {"fill demo data":44.9,"Edit A1 (1,000-deep chain)":6.2,"edit one cell nobody reads":0.8,"scroll one screen":6.3,"clear":16.1}
-pith-vite  {"fill demo data":44.1,"Edit A1 (1,000-deep chain)":6.2,"edit one cell nobody reads":0.8,"scroll one screen":6.2,"clear":16}
-react      {"fill demo data":23,"Edit A1 (1,000-deep chain)":4.4,"edit one cell nobody reads":3.6,"scroll one screen":5.5,"clear":3.2}
-vue        {"fill demo data":29.8,"Edit A1 (1,000-deep chain)":3.9,"edit one cell nobody reads":1.6,"scroll one screen":6.1,"clear":73.3}
-trade stress 1,000 symbols, 60 steps/s round 1/4 pith
-trade stress 1,000 symbols, 60 steps/s round 1/4 pith-vite
-trade stress 1,000 symbols, 60 steps/s round 1/4 react
-trade stress 1,000 symbols, 60 steps/s round 1/4 vue
-trade stress 1,000 symbols, 60 steps/s round 2/4 pith-vite
-trade stress 1,000 symbols, 60 steps/s round 2/4 react
-trade stress 1,000 symbols, 60 steps/s round 2/4 vue
-trade stress 1,000 symbols, 60 steps/s round 2/4 pith
-trade stress 1,000 symbols, 60 steps/s round 3/4 react
-trade stress 1,000 symbols, 60 steps/s round 3/4 vue
-trade stress 1,000 symbols, 60 steps/s round 3/4 pith
-trade stress 1,000 symbols, 60 steps/s round 3/4 pith-vite
-trade stress 1,000 symbols, 60 steps/s round 4/4 vue
-trade stress 1,000 symbols, 60 steps/s round 4/4 pith
-trade stress 1,000 symbols, 60 steps/s round 4/4 pith-vite
-trade stress 1,000 symbols, 60 steps/s round 4/4 react
-pith       {"fps":5,"frameP50":191.7,"frameP95":258.3,"longTasks":26,"longMs":4172}
-pith-vite  {"fps":5.1,"frameP50":200,"frameP95":250,"longTasks":26,"longMs":4143}
-react      {"fps":5.9,"frameP50":183.4,"frameP95":275,"longTasks":27,"longMs":4110}
-vue        {"fps":4.8,"frameP50":200.1,"frameP95":266.6,"longTasks":29,"longMs":4203}
+pith       {"fill demo data":36.8,"Edit A1 (1,000-deep chain)":3.5,"edit one cell nobody reads":0.9,"scroll one screen":6.3,"clear":10.6}
+pith-vite  {"fill demo data":35.8,"Edit A1 (1,000-deep chain)":3.4,"edit one cell nobody reads":0.9,"scroll one screen":6.2,"clear":10.6}
+react      {"fill demo data":30.6,"Edit A1 (1,000-deep chain)":5.4,"edit one cell nobody reads":5.4,"scroll one screen":6.8,"clear":4}
+vue        {"fill demo data":34.3,"Edit A1 (1,000-deep chain)":4.6,"edit one cell nobody reads":1.8,"scroll one screen":6.5,"clear":76.7}
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 1/4 pith
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 1/4 pith-vite
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 1/4 react
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 1/4 vue
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 2/4 pith-vite
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 2/4 react
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 2/4 vue
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 2/4 pith
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 3/4 react
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 3/4 vue
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 3/4 pith
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 3/4 pith-vite
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 4/4 vue
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 4/4 pith
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 4/4 pith-vite
+trade stress 1,000 symbols, 40 ticking per step, 60 steps/s round 4/4 react
+pith       {"fps":27.1,"frameP50":33.4,"frameP95":50,"longTasks":3,"longMs":170.5}
+pith-vite  {"fps":27.8,"frameP50":33.3,"frameP95":50,"longTasks":2.5,"longMs":156.5}
+react      {"fps":26.9,"frameP50":33.4,"frameP95":50.1,"longTasks":4,"longMs":220}
+vue        {"fps":27.1,"frameP50":33.4,"frameP95":50.1,"longTasks":3,"longMs":178.5}
+trade stress 1,000 symbols, all ticking, 60 steps/s round 1/4 pith
+trade stress 1,000 symbols, all ticking, 60 steps/s round 1/4 pith-vite
+trade stress 1,000 symbols, all ticking, 60 steps/s round 1/4 react
+trade stress 1,000 symbols, all ticking, 60 steps/s round 1/4 vue
+trade stress 1,000 symbols, all ticking, 60 steps/s round 2/4 pith-vite
+trade stress 1,000 symbols, all ticking, 60 steps/s round 2/4 react
+trade stress 1,000 symbols, all ticking, 60 steps/s round 2/4 vue
+trade stress 1,000 symbols, all ticking, 60 steps/s round 2/4 pith
+trade stress 1,000 symbols, all ticking, 60 steps/s round 3/4 react
+trade stress 1,000 symbols, all ticking, 60 steps/s round 3/4 vue
+trade stress 1,000 symbols, all ticking, 60 steps/s round 3/4 pith
+trade stress 1,000 symbols, all ticking, 60 steps/s round 3/4 pith-vite
+trade stress 1,000 symbols, all ticking, 60 steps/s round 4/4 vue
+trade stress 1,000 symbols, all ticking, 60 steps/s round 4/4 pith
+trade stress 1,000 symbols, all ticking, 60 steps/s round 4/4 pith-vite
+trade stress 1,000 symbols, all ticking, 60 steps/s round 4/4 react
+pith       {"fps":4.5,"frameP50":208.3,"frameP95":291.6,"longTasks":24,"longMs":4370}
+pith-vite  {"fps":4.8,"frameP50":200,"frameP95":258.4,"longTasks":25,"longMs":4249}
+react      {"fps":5.4,"frameP50":208.3,"frameP95":300,"longTasks":27.5,"longMs":4313}
+vue        {"fps":4.4,"frameP50":225,"frameP95":283.3,"longTasks":29.5,"longMs":4401.5}
 sheet stress 100 random edits/s on the demo data round 1/4 pith
 sheet stress 100 random edits/s on the demo data round 1/4 pith-vite
 sheet stress 100 random edits/s on the demo data round 1/4 react
@@ -91,16 +110,16 @@ sheet stress 100 random edits/s on the demo data round 4/4 vue
 sheet stress 100 random edits/s on the demo data round 4/4 pith
 sheet stress 100 random edits/s on the demo data round 4/4 pith-vite
 sheet stress 100 random edits/s on the demo data round 4/4 react
-pith       {"fps":59.6,"frameP50":16.7,"frameP95":16.7,"longTasks":0,"longMs":0}
-pith-vite  {"fps":59.6,"frameP50":16.7,"frameP95":16.8,"longTasks":0,"longMs":0}
+pith       {"fps":59.7,"frameP50":16.7,"frameP95":16.7,"longTasks":0,"longMs":0}
+pith-vite  {"fps":59.7,"frameP50":16.7,"frameP95":16.8,"longTasks":0,"longMs":0}
 react      {"fps":59.7,"frameP50":16.7,"frameP95":16.8,"longTasks":0,"longMs":0}
 vue        {"fps":59.7,"frameP50":16.7,"frameP95":16.8,"longTasks":0,"longMs":0}
-trade memory pith       {"40 symbols":1.24,"1,000 symbols":8.35,"1,000 symbols after 2,000 steps":8.88}
-trade memory pith-vite  {"40 symbols":1.19,"1,000 symbols":8.3,"1,000 symbols after 2,000 steps":8.83}
-trade memory react      {"40 symbols":1.59,"1,000 symbols":5.61,"1,000 symbols after 2,000 steps":10.13}
+trade memory pith       {"40 symbols":1.1,"1,000 symbols":5.11,"1,000 symbols after 2,000 steps":5.7}
+trade memory pith-vite  {"40 symbols":1.05,"1,000 symbols":5.06,"1,000 symbols after 2,000 steps":5.65}
+trade memory react      {"40 symbols":1.59,"1,000 symbols":5.61,"1,000 symbols after 2,000 steps":10.11}
 trade memory vue        {"40 symbols":1.54,"1,000 symbols":8.23,"1,000 symbols after 2,000 steps":8.87}
-sheet memory pith       {"empty":1.7,"demo data":11.31}
-sheet memory pith-vite  {"empty":1.67,"demo data":11.27}
+sheet memory pith       {"empty":1.24,"demo data":5.11}
+sheet memory pith-vite  {"empty":1.21,"demo data":5.07}
 sheet memory react      {"empty":1.52,"demo data":3.09}
 sheet memory vue        {"empty":1.38,"demo data":5.07}
 

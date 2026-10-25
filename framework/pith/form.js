@@ -169,8 +169,9 @@ export function form({ initial, validate = {}, onSubmit }) {
       describedBy,
       invalid: () => (shownError(name) ? 'true' : null),
       blur: () => { touched[name].value = true; },
-      hint: hint ? html`<p class="field-hint" id=${`${id}-hint`}>${hint}</p>` : null,
-      error: html`<p class="field-error" id=${`${id}-error`} role="alert">${() => shownError(name)}</p>`,
+      // The field around a control: its label (null: the control brings its own), the hint and the error.
+      field: (label, control) => html`<div class="field">${label == null ? null : html`<label class="field-label" for=${id}>${label}</label>`}${control}${
+        hint ? html`<p class="field-hint" id=${`${id}-hint`}>${hint}</p>` : null}<p class="field-error" id=${`${id}-error`} role="alert">${() => shownError(name)}</p></div>`,
     };
   }
 
@@ -209,18 +210,9 @@ export function form({ initial, validate = {}, onSubmit }) {
     input(name, { label, type = 'text', placeholder, autocomplete, hint }) {
       if (!known(name)) return null;
       const p = parts(name, hint);
-      return html`
-        <div class="field">
-          <label class="field-label" for=${p.id}>${label}</label>
-          <input class="input" id=${p.id} name=${name} type=${type}
-                 placeholder=${placeholder ?? null} autocomplete=${autocomplete ?? null}
-                 .value=${() => fields[name].value ?? ''}
-                 @input=${(e) => set(name, e.target.value)} @blur=${p.blur}
-                 aria-invalid=${p.invalid} aria-describedby=${p.describedBy}>
-          ${p.hint}
-          ${p.error}
-        </div>
-      `;
+      return p.field(label, html`<input class="input" id=${p.id} name=${name} type=${type} placeholder=${placeholder ?? null}
+        autocomplete=${autocomplete ?? null} .value=${() => fields[name].value ?? ''} @input=${(e) => set(name, e.target.value)}
+        @blur=${p.blur} aria-invalid=${p.invalid} aria-describedby=${p.describedBy}>`);
     },
 
     /**
@@ -231,17 +223,9 @@ export function form({ initial, validate = {}, onSubmit }) {
     textarea(name, { label, rows = 4, placeholder, hint }) {
       if (!known(name)) return null;
       const p = parts(name, hint);
-      return html`
-        <div class="field">
-          <label class="field-label" for=${p.id}>${label}</label>
-          <textarea class="input" id=${p.id} name=${name} rows=${rows} placeholder=${placeholder ?? null}
-                    .value=${() => fields[name].value ?? ''}
-                    @input=${(e) => set(name, e.target.value)} @blur=${p.blur}
-                    aria-invalid=${p.invalid} aria-describedby=${p.describedBy}></textarea>
-          ${p.hint}
-          ${p.error}
-        </div>
-      `;
+      return p.field(label, html`<textarea class="input" id=${p.id} name=${name} rows=${rows} placeholder=${placeholder ?? null}
+        .value=${() => fields[name].value ?? ''} @input=${(e) => set(name, e.target.value)}
+        @blur=${p.blur} aria-invalid=${p.invalid} aria-describedby=${p.describedBy}></textarea>`);
     },
 
     /**
@@ -253,20 +237,9 @@ export function form({ initial, validate = {}, onSubmit }) {
       if (!known(name)) return null;
       const p = parts(name, hint);
       const pairs = options.map((o) => (Array.isArray(o) ? o : [o, o]));
-      return html`
-        <div class="field">
-          <label class="field-label" for=${p.id}>${label}</label>
-          <select class="input" id=${p.id} name=${name}
-                  @change=${(e) => set(name, e.target.value)} @blur=${p.blur}
-                  aria-invalid=${p.invalid} aria-describedby=${p.describedBy}>
-            ${pairs.map(([value, text]) => html`
-              <option value=${value} ?selected=${() => fields[name].value === value}>${text}</option>
-            `)}
-          </select>
-          ${p.hint}
-          ${p.error}
-        </div>
-      `;
+      return p.field(label, html`<select class="input" id=${p.id} name=${name} @change=${(e) => set(name, e.target.value)}
+        @blur=${p.blur} aria-invalid=${p.invalid} aria-describedby=${p.describedBy}>${pairs.map(([value, text]) =>
+          html`<option value=${value} ?selected=${() => fields[name].value === value}>${text}</option>`)}</select>`);
     },
 
     /**
@@ -277,19 +250,9 @@ export function form({ initial, validate = {}, onSubmit }) {
     checkbox(name, { label, hint }) {
       if (!known(name)) return null;
       const p = parts(name, hint);
-      return html`
-        <div class="field">
-          <label class="field-check">
-            <input type="checkbox" class="check" id=${p.id} name=${name}
-                   .checked=${() => !!fields[name].value}
-                   @change=${(e) => { set(name, e.target.checked); touched[name].value = true; }}
-                   aria-invalid=${p.invalid} aria-describedby=${p.describedBy}>
-            <span>${label}</span>
-          </label>
-          ${p.hint}
-          ${p.error}
-        </div>
-      `;
+      return p.field(null, html`<label class="field-check"><input type="checkbox" class="check" id=${p.id} name=${name}
+        .checked=${() => !!fields[name].value} @change=${(e) => { set(name, e.target.checked); touched[name].value = true; }}
+        aria-invalid=${p.invalid} aria-describedby=${p.describedBy}> <span>${label}</span></label>`);
     },
   };
 }

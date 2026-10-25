@@ -66,12 +66,8 @@ export async function fetchJSON(url, { json, headers, method, ...init } = {}) {
 }
 
 const defaultLoading = () => html`<p class="loading" role="status">Loading…</p>`;
-const defaultError = (err, retry) => html`
-  <div class="load-error" role="alert">
-    <p>Couldn't load this. ${err?.message ?? String(err)}</p>
-    <button class="btn" type="button" @click=${retry}>Try again</button>
-  </div>
-`;
+const defaultError = (err, retry) => html`<div class="load-error" role="alert"><p>Couldn't load this. ${err?.message ?? String(err)}</p>
+  <button class="btn" type="button" @click=${retry}>Try again</button></div>`;
 
 /**
  * Load async data. Signals read by `fetcher` before its first `await` are tracked:

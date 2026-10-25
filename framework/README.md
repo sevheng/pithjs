@@ -268,8 +268,8 @@ batch(() => rows.value.forEach((r, i) => i % 10 === 0 && (r.label.value += ' !!!
 ```
 
 Adding and removing rows still replaces the array (`rows.value = [...]`). Measured in `../compare` (Trading,
-written this way), when 10 of a 1,000-row watchlist's prices tick the page updates in 2.8 ms (React 8.1, Vue 3.2),
-for more memory: each row holds its signals and effects, 8.4 MB for the 1,000 rows against React's 5.6.
+written this way), when 10 of a 1,000-row watchlist's prices tick the page updates in 3.3 ms (React 7.4, Vue 3.9).
+Each row holds its own signals and effects, which costs some memory: 5.1 MB for the 1,000 rows (React 5.6, Vue 8.2).
 So use it for the fields that change, in lists that are big and busy, not by default.
 
 ### Components

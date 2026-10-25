@@ -121,9 +121,11 @@ function AppView(app) {
     : (() => {
         const leaf = data.runtime.sheet['edit one cell nobody reads'];
         const a1 = data.runtime.sheet['Edit A1 (1,000-deep chain)'];
+        const fill = data.runtime.sheet['fill demo data'];
+        const best = (v) => NAMES[['pith', 'react', 'vue'].sort((a, b) => v[a] - v[b])[0]];
         return html`An edit nobody else reads costs Pith <strong>${num(leaf.pith)} ms</strong> (React ${num(leaf.react)}, Vue ${num(leaf.vue)}):
-          only what changed recomputes. On the 1,000-deep chain Vue is ahead (${num(a1.vue)} ms against Pith's ${num(a1.pith)}), and
-          React, with no reactive cells to build, fills and clears the sheet fastest.`;
+          only what changed recomputes. On the 1,000-deep chain ${best(a1)} is fastest (Pith ${num(a1.pith)} ms, React ${num(a1.react)},
+          Vue ${num(a1.vue)}), and filling the sheet ${best(fill)} (React builds no reactive cells at all).`;
       })();
   return html`
     <section class="section bench-view" aria-labelledby="view-title">
@@ -150,7 +152,9 @@ function AppView(app) {
   `;
 }
 
-const MEMORY_NOTES = { trade: 'Each of the 1,000 rows holds its own signals in Pith and Vue; React keeps plain objects.', sheet: 'Every cell with something in it is a reactive value in Pith and Vue; React keeps the raw text and works the values out.' };
+const MEMORY_NOTES = { trade: 'Each of the 1,000 rows holds its own signals in Pith and Vue; React keeps plain objects and re-renders.', sheet: 'Every cell with something in it is a reactive value in Pith and Vue; React keeps the raw text and works the values out.' };
+
+const leastOf = (v) => NAMES[['pith', 'react', 'vue'].sort((a, b) => v[a] - v[b])[0]];
 
 function MemoryView() {
   const t = data.memory.trade['1,000 symbols'];
@@ -159,9 +163,9 @@ function MemoryView() {
     <section class="section bench-view" aria-labelledby="view-title">
       <h2 id="view-title">Memory</h2>
       <p class="muted">The JavaScript heap after a forced garbage collection. Megabytes, lower is better.</p>
-      <p class="bench-summary">React holds the least: plain data costs less than reactive values. Trading with 1,000 symbols takes
-        ${num(t.pith)} MB in Pith, ${num(t.vue)} in Vue and <strong>${num(t.react)} in React</strong>; the full spreadsheet
-        ${num(sh.pith)} MB in Pith, ${num(sh.vue)} in Vue and ${num(sh.react)} in React.</p>
+      <p class="bench-summary">Trading with 1,000 symbols takes <strong>${num(t.pith)} MB in Pith</strong>, ${num(t.react)} in React and
+        ${num(t.vue)} in Vue (${leastOf(t)} holds the least). The full spreadsheet takes ${num(sh.pith)} MB in Pith, ${num(sh.react)} in React
+        and ${num(sh.vue)} in Vue (${leastOf(sh)} holds the least).</p>
       ${Object.entries(data.memory).map(([app, states]) => html`
         <h3 class="bench-sub">${APPS[app].name}</h3>
         <p class="muted note">${MEMORY_NOTES[app]}</p>

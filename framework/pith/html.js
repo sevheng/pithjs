@@ -10,7 +10,7 @@
 //   element ref         ref=${el => ...}    called with the element
 // Attribute holes must be the whole value: class=${x}, not class="a ${x}".
 
-import { effect, root, untrack, onCleanup, isSignal, catching } from './signal.js';
+import { watch, root, untrack, onCleanup, isSignal, catching } from './signal.js';
 import { DEV, warn, error, describe } from './dev.js';
 
 /** @typedef {import('./signal.js').ReadonlySignal<any>} AnySignal */
@@ -89,7 +89,7 @@ function compile(strings, inSvg) {
     let s = strings[i];
     if (skipQuote) {
       if (s[0] !== skipQuote) {
-        throw error('E001', `An attribute hole must be the whole value: write class=\${x}, not class="a \${x}". Near: "${s.slice(0, 30)}"`);
+        throw error('E001', DEV ? `An attribute hole must be the whole value: write class=\${x}, not class="a \${x}". Near: "${s.slice(0, 30)}"` : '');
       }
       s = s.slice(1);
       skipQuote = '';
@@ -101,7 +101,7 @@ function compile(strings, inSvg) {
     const sofar = markup + s;
     if (sofar.lastIndexOf('<') > sofar.lastIndexOf('>')) {
       const m = ATTR_TAIL.exec(s);
-      if (!m) throw error('E001', `A hole inside a tag must be a whole attribute value, like name=\${x}. Near: "${s.slice(-30)}"`);
+      if (!m) throw error('E001', DEV ? `A hole inside a tag must be a whole attribute value, like name=\${x}. Near: "${s.slice(-30)}"` : '');
       markup += s.slice(0, m.index) + `pith-${i}="${m[1]}"`;
       skipQuote = m[2];
     } else {
@@ -146,8 +146,8 @@ function compile(strings, inSvg) {
     if (!found.has(i)) {
       throw error(
         'E002',
-        `The \${} after "${strings[i].slice(-30).trim()}" is in a place templates can't fill ` +
-          `(inside <textarea>, <title>, <style>, <script> or a comment). For a textarea use .value=\${x}.`
+        DEV ? `The \${} after "${strings[i].slice(-30).trim()}" is in a place templates can't fill ` +
+          `(inside <textarea>, <title>, <style>, <script> or a comment). For a textarea use .value=\${x}.` : ''
       );
     }
   }
@@ -239,7 +239,7 @@ function bindChild(anchor, value) {
   // of, and those must leave with it too (a page's late content, when the router swaps the page).
   /** @type {Text | null} */
   let start = null;
-  effect(() => {
+  watch(() => {
     const next = read(value);
     if (nodes.length === 1 && nodes[0].nodeType === Node.TEXT_NODE && isText(next)) {
       const text = String(next);
@@ -261,7 +261,7 @@ function bindRepeat(anchor, { items, key, render }) {
     for (const n of row.nodes) n.remove();
   };
 
-  effect(() => {
+  watch(() => {
     const list = read(items) || [];
     untrack(() => {
       const oldIndex = new Map();
@@ -403,7 +403,7 @@ function bindAttr(el, name, value) {
   } else {
     apply = (v) => setAttr(el, name, v);
   }
-  if (isReactive(value)) effect(() => apply(read(value)));
+  if (isReactive(value)) watch(() => apply(read(value)));
   else apply(value);
 }
 

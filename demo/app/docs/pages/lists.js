@@ -117,8 +117,8 @@ export default () => html`
   ${code(fine)}
   <p>The <a href="/docs/trading">Trading</a> example's watchlist is written this way. Measured against the same
     screen in React and Vue (<a href="/docs/benchmarks?view=trade">Benchmarks</a>), when 10 of 1,000 prices tick
-    Pith updates the page in 2.8 ms, React in 8.1 and Vue in 3.2. But each row now holds its signals and effects:
-    the 1,000-row watchlist takes 8.4 MB, against React's 5.6.</p>
+    Pith updates the page in 3.3 ms, React in 7.4 and Vue in 3.9. Each row holds its own signals and effects, which
+    costs memory, but little: the 1,000-row watchlist takes 5.1 MB (React 5.6, Vue 8.2).</p>
   ${note(html`Don't make every field a signal by default. Use it for the fields that change, in lists that are
     big and busy. For everything else, replace the item and let its row be rebuilt.`)}
 

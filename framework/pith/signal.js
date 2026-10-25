@@ -11,52 +11,140 @@ import { DEV, error, recording, record, silently } from './dev.js';
  * @typedef {{ readonly value: T, peek(): T }} ReadonlySignal
  */
 
-const SIGNAL = Symbol('signal');
-
 let currentEffect = null; // effect whose reads are being tracked
-let currentOwner = null;  // array collecting disposers for effects/cleanups created now
+let currentOwner = null;  // what owns effects/cleanups created now: an Effect, or a root's array (see drop)
 let currentHandler = null; // nearest catchError handler: { fn, parent }
 let batchDepth = 0;
 let flushing = false;
-// Effects waiting to run, a Set per level (see signal), so a flush finds the lowest level without a scan.
+// Effects waiting to run, a Set per level (see read), so a flush finds the lowest level without a scan.
 let pending = [], waiting = 0, low = 0;
 const queue = (e) => {
   const set = (pending[e.lv] ??= new Set());
   if (!set.has(e)) set.add(e), waiting++, e.lv < low && (low = e.lv);
 };
 
+// Signals, computeds and effects are classes: their methods live on the prototype, and the sets they need
+// are made on first use, so a signal is a small object (thousands of them make a sheet or a live list).
+
+/**
+ * Read s (a signal or computed) in the current effect: subscribe it and lift it above s's level.
+ * Levels keep updates in order: an effect sits one above the deepest computed it read (a plain signal has
+ * none), and a nested effect starts above its parent. A flush runs the lowest level first, so a value is
+ * computed once, after everything it reads (no half-updated reads, no repeats), and a parent goes before
+ * the children it may remove. Nothing recurses, so a chain of computeds can be any length.
+ */
+function read(s) {
+  const e = currentEffect;
+  if (e) {
+    track(s.subs ??= new Map());
+    if (s.lv >= e.lv) e.lv = s.lv + 1;
+  }
+  return s.v;
+}
+
+function write(s, next) {
+  if (Object.is(next, s.v)) return;
+  s.v = next;
+  if (s.subs) {
+    for (const e of s.subs.keys()) queue(e);
+    if (!batchDepth) flush();
+  }
+}
+
+class Value {
+  constructor(v) {
+    this.v = v;
+    this.subs = null; // the effects that read it, each with the number of its run that last did (see track)
+  }
+  get value() { return read(this); }
+  set value(next) { write(this, next); }
+  peek() { return this.v; }
+}
+
 /**
  * A reactive value. Reading .value inside an effect/template subscribes; writing notifies.
  * @template T
  * @param {T} initial
- * @param {any} [subscribers] internal: computed() keeps its own set, to give it a level
  * @returns {Signal<T>}
  */
-export function signal(initial, subscribers = new Set()) {
+export function signal(initial) {
   if (DEV && recording()) return record('signal', silently(() => signal(initial)));
-  let value = initial;
-  return mark({
-    get value() {
-      // Levels keep updates in order: an effect sits one above the deepest computed it read (a plain
-      // signal has none), and a nested effect starts above its parent. A flush runs the lowest level
-      // first, so a value is computed once, after everything it reads (no half-updated reads, no
-      // repeats), and a parent goes before the children it may remove. Nothing recurses, so a chain
-      // of computeds can be any length.
-      if (currentEffect) {
-        track(subscribers);
-        if (subscribers.lv >= currentEffect.lv) currentEffect.lv = subscribers.lv + 1;
-      }
-      return value;
-    },
-    set value(next) {
-      if (Object.is(next, value)) return;
-      value = next;
-      for (const e of subscribers) queue(e);
-      if (!batchDepth) flush();
-    },
-    peek: () => value,
-  });
+  return /** @type {any} */ (new Value(initial));
 }
+
+// lv: its level (see read). It only goes up, which keeps it above everything it ever read.
+// deps: the readers maps (signals' subs) of what it read; made on first read.
+// children: effects and cleanups made while it ran (it's their owner, see push); made on first use.
+// cleanup: what its fn returned. fn is null once it's disposed.
+class Effect {
+  constructor(fn) {
+    this.fn = fn;
+    this.deps = null;
+    this.ran = 0;
+    this.children = null;
+    this.handler = currentHandler;
+    this.lv = currentEffect ? currentEffect.lv + 1 : 0;
+    if (currentOwner) currentOwner.push(this);
+  }
+  push(child) { (this.children ??= []).push(child); } // as an owner, like root's array
+  /** @returns {any} true: don't run now (see Computed) */
+  skip() { return false; }
+  exec() { return this.fn(); }
+  run() {
+    if (!this.fn || this.skip()) return;
+    reset(this);
+    const n = ++this.ran;
+    const prevEffect = currentEffect, prevOwner = currentOwner, prevHandler = currentHandler;
+    currentEffect = currentOwner = this;
+    currentHandler = this.handler;
+    let failed = false, err;
+    try {
+      this.cleanup = this.exec();
+    } catch (x) {
+      failed = true;
+      err = x;
+    } finally {
+      currentEffect = prevEffect;
+      currentOwner = prevOwner;
+      currentHandler = prevHandler;
+      // Leave only what this run didn't read: what it read again stays subscribed (no churn for a formula
+      // that reads 1,000 cells each time).
+      const deps = this.deps;
+      if (deps) {
+        let kept = 0;
+        for (const subs of deps) if (subs.get(this) === n) deps[kept++] = subs; else subs.delete(this);
+        deps.length = kept;
+      }
+    }
+    if (failed) handle(err, this.handler); // no catchError around it: handle rethrows
+  }
+  dispose() {
+    if (!this.fn) return;
+    this.fn = null;
+    reset(this);
+    if (this.deps) for (const subs of this.deps) subs.delete(this);
+    this.deps = null;
+  }
+}
+
+// A computed is the effect that works out its value, and a signal its readers read. A change that finds no
+// reader (an off-screen cell, a row that's gone) only marks it stale: it stays subscribed, so what it reads
+// keeps a reader and stays fresh, and the next read works it out (never more than one level deep). The
+// first run is eager. Its level as an effect is the level its readers sit above.
+class Computed extends Effect {
+  constructor(fn) {
+    super(fn);
+    this.v = undefined;
+    this.subs = null;
+    this.stale = 0; // 1: a change found no reader; 2: catching up on a read
+    this.run();
+  }
+  skip() { return (this.stale = this.ran && this.stale < 2 && !this.subs?.size ? 1 : 0); }
+  exec() { write(this, this.fn()); }
+  get value() { return read(fresh(this)); }
+  peek() { return fresh(this).v; }
+}
+const fresh = (c) => (c.stale && ((c.stale = 2), c.run()), c);
 
 /**
  * A read-only signal derived from other signals.
@@ -66,85 +154,41 @@ export function signal(initial, subscribers = new Set()) {
  */
 export function computed(fn) {
   if (DEV && recording()) return record('computed', silently(() => computed(fn)));
-  /** @type {any} */
-  const subs = new Set();
-  const s = signal(undefined, subs);
-  // A change that finds no reader (an off-screen cell, a row that's gone) only marks it stale: it stays
-  // subscribed, so what it reads keeps a reader and stays fresh, and the next read works it out (never
-  // more than one level deep). The first run is eager.
-  let ran, stale, pulling;
-  const run = /** @type {any} */ (effect)(() => {
-    ran = 1;
-    s.value = fn();
-    subs.lv = currentEffect.lv; // its readers sit above it
-  }, () => (stale = ran && !pulling && !subs.size)).run;
-  const fresh = () => stale && ((pulling = 1), run(), (pulling = 0));
-  return mark({
-    get value() { fresh(); return s.value; },
-    peek: () => (fresh(), s.peek()),
-  });
+  return /** @type {any} */ (new Computed(fn));
 }
 
 /**
  * Run fn now and again whenever a signal it read changes. fn may return a cleanup.
  * @param {() => void | (() => void)} fn
- * @param {() => any} [skip] internal: computed() skips re-runs nobody reads
  * @returns {() => void} dispose
  */
-export function effect(fn, skip) {
-  // lv: its level (see signal). It only goes up, which keeps it above everything it ever read.
-  // deps: what it read, each with the number of the run that last read it (see track).
-  const e = { deps: new Map(), ran: 0, children: [], cleanup: null, disposed: false, run, handler: currentHandler, lv: currentEffect ? currentEffect.lv + 1 : 0 };
-
-  function run() {
-    if (e.disposed || skip?.()) return;
-    reset(e);
-    const n = ++e.ran;
-    const prevEffect = currentEffect, prevOwner = currentOwner, prevHandler = currentHandler;
-    currentEffect = e;
-    currentOwner = e.children;
-    currentHandler = e.handler;
-    let failed = false, err;
-    try {
-      e.cleanup = fn();
-    } catch (x) {
-      if (!e.handler) throw x; // no catchError around it: behave as before
-      failed = true;
-      err = x;
-    } finally {
-      currentEffect = prevEffect;
-      currentOwner = prevOwner;
-      currentHandler = prevHandler;
-      // Leave only what this run didn't read: what it read again stays subscribed (no churn for a formula
-      // that reads 1,000 cells each time).
-      for (const [subs, last] of e.deps) if (last !== n) subs.delete(e), e.deps.delete(subs);
-    }
-    if (failed) handle(err, e.handler);
-  }
-
-  const dispose = () => {
-    if (e.disposed) return;
-    e.disposed = true;
-    reset(e);
-    for (const subs of e.deps.keys()) subs.delete(e);
-    e.deps.clear();
-  };
-  if (currentOwner) currentOwner.push(dispose);
-  dispose.run = run; // for computed(), to catch up when read
-  run();
-  return dispose;
+export function effect(fn) {
+  const e = watch(fn);
+  return () => e.dispose();
 }
 
-// Subscribe the current effect to subs (a signal's set of readers), and note this run read it.
+/** effect() for the framework's own use: no dispose function to make (its owner disposes it). */
+export function watch(fn) {
+  const e = new Effect(fn);
+  e.run();
+  return e;
+}
+
+// Subscribe the current effect to subs (a signal's readers), and note which run read it.
 function track(subs) {
   const e = currentEffect;
-  if (!e.deps.has(subs)) subs.add(e);
-  e.deps.set(subs, e.ran);
+  const last = subs.get(e);
+  if (last === e.ran) return;
+  if (last === undefined) (e.deps ??= []).push(subs);
+  subs.set(e, e.ran);
 }
+
+// An owner's child: an effect, or a cleanup or dispose function.
+const drop = (d) => (typeof d === 'function' ? d() : d.dispose());
 
 // Dispose nested effects and run the user cleanup before a re-run.
 function reset(e) {
-  for (const dispose of e.children.splice(0)) dispose();
+  if (e.children?.length) for (const d of e.children.splice(0)) drop(d);
   if (typeof e.cleanup === 'function') {
     const cleanup = e.cleanup;
     e.cleanup = null;
@@ -188,6 +232,24 @@ export function batch(fn) {
   }
 }
 
+// Run fn in a new ownership scope with error handler h, tracking nothing. attach: the current owner disposes it too.
+function scope(fn, h, attach) {
+  const disposers = [];
+  const dispose = () => { for (const d of disposers.splice(0)) drop(d); };
+  if (attach && currentOwner) currentOwner.push(dispose);
+  const prevEffect = currentEffect, prevOwner = currentOwner, prevHandler = currentHandler;
+  currentEffect = null;
+  currentOwner = disposers;
+  currentHandler = h;
+  try {
+    return fn(dispose);
+  } finally {
+    currentEffect = prevEffect;
+    currentOwner = prevOwner;
+    currentHandler = prevHandler;
+  }
+}
+
 /**
  * Create an ownership scope; call the given dispose to stop every effect made inside.
  * @template T
@@ -195,17 +257,7 @@ export function batch(fn) {
  * @returns {T}
  */
 export function root(fn) {
-  const disposers = [];
-  const prevEffect = currentEffect, prevOwner = currentOwner;
-  currentEffect = null;
-  currentOwner = disposers;
-  const dispose = () => { for (const d of disposers.splice(0)) d(); };
-  try {
-    return fn(dispose);
-  } finally {
-    currentEffect = prevEffect;
-    currentOwner = prevOwner;
-  }
+  return scope(fn, currentHandler);
 }
 
 /**
@@ -218,27 +270,12 @@ export function root(fn) {
  * @returns {T | undefined} fn's result, or undefined if it threw
  */
 export function catchError(fn, handler) {
-  const disposers = [];
-  const dispose = () => { for (const d of disposers.splice(0)) d(); };
-  if (currentOwner) currentOwner.push(dispose);
   const h = { fn: handler, parent: currentHandler };
-  const prevEffect = currentEffect, prevOwner = currentOwner, prevHandler = currentHandler;
-  currentEffect = null;
-  currentOwner = disposers;
-  currentHandler = h;
-  let failed = false, err, result;
   try {
-    result = fn(dispose);
-  } catch (x) {
-    failed = true;
-    err = x;
-  } finally {
-    currentEffect = prevEffect;
-    currentOwner = prevOwner;
-    currentHandler = prevHandler;
+    return scope(fn, h, true);
+  } catch (err) {
+    handle(err, h);
   }
-  if (failed) handle(err, h);
-  return result;
 }
 
 /**
@@ -289,8 +326,8 @@ function handle(err, h) {
  */
 export function selector(source) {
   const readers = new Map(); // key -> the effects that read isSelected(key), tracked like a signal's
-  // An effect leaves its sets on re-run or dispose (see reset); the key goes when its last reader does.
-  class Readers extends Set {
+  // An effect leaves its sets when a run doesn't read them, or on dispose; the key goes when its last reader does.
+  class Readers extends Map {
     constructor(key) {
       super();
       this.key = key;
@@ -302,12 +339,12 @@ export function selector(source) {
     }
   }
   let current;
-  effect(() => {
+  watch(() => {
     const next = typeof source === 'function' ? source() : source.value;
     if (next === current) return;
     const prev = current;
     current = next;
-    for (const key of [prev, next]) for (const e of readers.get(key) ?? []) queue(e);
+    for (const key of [prev, next]) for (const e of readers.get(key)?.keys() ?? []) queue(e);
     if (!batchDepth) flush();
   });
   const isSelected = (key) => {
@@ -346,15 +383,5 @@ export function onCleanup(fn) {
   if (currentOwner) currentOwner.push(fn);
 }
 
-/**
- * @template O
- * @param {O} obj
- * @returns {O}
- */
-function mark(obj) {
-  Object.defineProperty(obj, SIGNAL, { value: true });
-  return obj;
-}
-
 /** @type {(x: unknown) => x is ReadonlySignal<unknown>} */
-export const isSignal = (x) => x != null && x[SIGNAL] === true;
+export const isSignal = (x) => x instanceof Value || x instanceof Computed;

@@ -2,6 +2,8 @@
 
 Every message looks like `[pith W001] ... See docs/errors.md#w001`.
 **Warnings** (`W`) show only on localhost. **Errors** (`E`) are thrown everywhere, because the output would be wrong.
+Errors that only a mistake in the code can cause (E001, E002, E004, E005) say what's wrong on localhost; in
+production they carry just their code and this link, since development showed them first.
 Each entry shows the mistake, the fix, and why.
 
 ---

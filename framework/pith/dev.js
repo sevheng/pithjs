@@ -105,7 +105,7 @@ export function warn(code, message) {
 
 // Errors are thrown in every mode: they mean the output would be wrong.
 export function error(code, message, Type = Error) {
-  const err = new Type(`[pith ${code}] ${message} ${ref(code)}`);
+  const err = new Type(`[pith ${code}] ${message ? `${message} ` : ''}${ref(code)}`);
   return Object.assign(err, { code });
 }
 

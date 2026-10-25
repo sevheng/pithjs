@@ -144,6 +144,12 @@ async function openPage(server, path) {
   return page;
 }
 
+// Written after each part, so a failure late in a long run keeps what was measured.
+function save() {
+  mkdirSync(join(compare, 'results'), { recursive: true });
+  writeFileSync(resultsFile, JSON.stringify(results, null, 2) + '\n');
+}
+
 // ---------- Load ----------
 const injectLoad = (selector) => `
   window.__lcp = 0; window.__tbt = 0;
@@ -252,12 +258,19 @@ async function inPages(app, impl, path, script, passes) {
   const got = [];
   try {
     for (let pass = 0; pass < passes; pass++) {
-      const page = await openPage(server, path);
-      try {
-        got.push(await page.evaluate(script));
-      } finally {
-        await page.close();
-      }
+      // A page whose module fetch fails now and then (seen on a busy machine) is measured again, once.
+      const once = async () => {
+        const page = await openPage(server, path);
+        try {
+          return await page.evaluate(script);
+        } finally {
+          await page.close();
+        }
+      };
+      got.push(await once().catch((err) => {
+        console.warn(`  retrying after: ${err.message}`);
+        return once();
+      }));
     }
   } finally {
     server.close();
@@ -265,6 +278,7 @@ async function inPages(app, impl, path, script, passes) {
   return got;
 }
 
+save();
 if (want('runtime')) {
   results.runtime = {};
   for (const app of ONLY_APPS) {
@@ -277,6 +291,7 @@ if (want('runtime')) {
   }
 }
 
+save();
 if (want('stress')) {
   results.stress = {};
   for (const app of ONLY_APPS) {
@@ -287,6 +302,7 @@ if (want('stress')) {
   }
 }
 
+save();
 if (want('memory')) {
   results.memory = {};
   for (const app of ONLY_APPS) {
@@ -311,7 +327,6 @@ if (want('memory')) {
   }
 }
 
-mkdirSync(join(compare, 'results'), { recursive: true });
-writeFileSync(resultsFile, JSON.stringify(results, null, 2) + '\n');
+save();
 await browser.close();
 console.log(`\nwrote ${resultsFile}`);

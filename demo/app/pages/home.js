@@ -37,8 +37,8 @@ const highlight = (src) => {
 const numbers = [
   ['<10', 'KB', 'the whole framework, gzipped'],
   ['0', '', 'runtime dependencies, no build needed'],
-  ['22%', '', 'sooner on screen than React'],
-  ['2.9×', '', 'faster live updates than React'],
+  ['19%', '', 'sooner on screen than React'],
+  ['2.2×', '', 'faster live updates than React'],
 ];
 
 // What `npm run check` prints, shortened.

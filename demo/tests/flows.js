@@ -333,7 +333,7 @@ flow('benchmarks: each view shows its charts, and the choice is kept in ?view=',
   await app.see('An edit nobody else reads costs Pith');
   await app.waitFor(() => benchRow(app, 'Edit A1', 'react'), 'the Spreadsheet view should chart Edit A1');
   await app.click('Memory');
-  await app.see('React holds the least');
+  await app.see('Trading with 1,000 symbols takes');
   await app.waitFor(() => benchRow(app, 'Demo data', 'react'), 'the Memory view should chart the spreadsheet with its demo data');
   await app.click('Size');
   await app.see('Trading needs');
@@ -348,7 +348,7 @@ flow('benchmarks: ?view= and ?protocol= survive a reload', async (app) => {
   await app.go('/docs/benchmarks');
   await app.click('Memory');
   await app.go(`/docs/benchmarks${app.window.location.search}`);
-  await app.see('React holds the least');
+  await app.see('Trading with 1,000 symbols takes');
   const pressed = app.query('[aria-label="Benchmark"] [aria-pressed="true"]')?.textContent.trim();
   app.expect(pressed === 'Memory', `Memory should be the selected view after a reload, got "${pressed}"`);
   await app.click('Load');

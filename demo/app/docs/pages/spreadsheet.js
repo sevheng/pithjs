@@ -125,14 +125,14 @@ html\`<div class="sheet-scroll" ref=\${win.ref}>
   <ul>
     <li><strong>Edit A1</strong> recomputes about 1,030 cells (A1, the 1,000 balances, the sums that read them, and the
       statuses on screen; the other statuses have no reader, so they skip it), each once, and updates the rows on screen
-      in <strong>5.6 ms</strong> (median; the slowest 8.5 ms). It's on screen 13 ms after the click. Before Pith ordered
-      its updates, this edit failed with ${c('E003')}; before computeds nobody reads skipped their updates, it took
-      8.7 ms and recomputed 2,003 cells.</li>
-    <li><strong>Random edits</strong> at 100 a second: about <strong>37,000 cells recomputed a second</strong>, under 5 ms
-      a frame (the worst in a second 8 to 14 ms), and the page kept drawing at 60 frames a second.</li>
+      in <strong>3.1 ms</strong> (median; the slowest 4.4 ms). It's on screen 12 ms after the click. Before Pith ordered
+      its updates, this edit failed with ${c('E003')}; on 2026-10-25 it took 8.7 ms, before computeds nobody reads
+      skipped their updates and signals became small objects.</li>
+    <li><strong>Random edits</strong> at 100 a second: about <strong>36,000 cells recomputed a second</strong>, about 2 ms
+      a frame (the worst in a second under 5 ms), and the page kept drawing at 60 frames a second.</li>
     <li>At 1,000 a second (about 16 edits in each frame's ${c('batch()')}, so a balance below several of them is still
-      worked out once): about <strong>61,000 cells a second</strong>, 6 ms a frame (the worst 9 to 12 ms).</li>
-    <li><strong>Fill demo data</strong> (5,007 cells; the 4,033 values in use worked out once, in order) takes 35 to 48 ms.</li>
+      worked out once): about <strong>61,000 cells a second</strong>, 3 ms a frame (the worst 5 to 6 ms).</li>
+    <li><strong>Fill demo data</strong> (5,007 cells; the 4,033 values in use worked out once, in order) takes 25 to 46 ms.</li>
     <li>The same sheet written in React and Vue: <a href="/docs/benchmarks?view=sheet">Benchmarks</a>.</li>
   </ul>
   <p>The bar shows the same numbers on your machine.</p>

@@ -7,52 +7,52 @@ export default {
     "h1": {
       "trade": {
         "pith": {
-          "ready": 698.6,
-          "fcp": 892,
-          "jsKB": 20.3,
+          "ready": 727.1,
+          "fcp": 928,
+          "jsKB": 20.1,
           "jsFiles": 6
         },
         "pith-vite": {
-          "ready": 545.7,
-          "fcp": 728,
-          "jsKB": 9.5,
+          "ready": 550.3,
+          "fcp": 732,
+          "jsKB": 9.6,
           "jsFiles": 1
         },
         "react": {
-          "ready": 890,
-          "fcp": 1056,
+          "ready": 901.8,
+          "fcp": 1084,
           "jsKB": 71.1,
           "jsFiles": 1
         },
         "vue": {
-          "ready": 688.7,
-          "fcp": 876,
+          "ready": 689.8,
+          "fcp": 880,
           "jsKB": 29.2,
           "jsFiles": 1
         }
       },
       "sheet": {
         "pith": {
-          "ready": 651.2,
+          "ready": 642.3,
           "fcp": 784,
-          "jsKB": 21.6,
+          "jsKB": 21.4,
           "jsFiles": 6
         },
         "pith-vite": {
-          "ready": 491.3,
-          "fcp": 624,
-          "jsKB": 9.3,
+          "ready": 496,
+          "fcp": 632,
+          "jsKB": 9.4,
           "jsFiles": 1
         },
         "react": {
-          "ready": 810.1,
-          "fcp": 936,
+          "ready": 813,
+          "fcp": 924,
           "jsKB": 70.8,
           "jsFiles": 1
         },
         "vue": {
-          "ready": 594.9,
-          "fcp": 736,
+          "ready": 615.2,
+          "fcp": 764,
           "jsKB": 28.9,
           "jsFiles": 1
         }
@@ -61,52 +61,52 @@ export default {
     "h2": {
       "trade": {
         "pith": {
-          "ready": 617.3,
-          "fcp": 800,
-          "jsKB": 20.3,
+          "ready": 622.1,
+          "fcp": 804,
+          "jsKB": 20.1,
           "jsFiles": 6
         },
         "pith-vite": {
-          "ready": 548.4,
-          "fcp": 748,
-          "jsKB": 9.5,
+          "ready": 554.4,
+          "fcp": 740,
+          "jsKB": 9.6,
           "jsFiles": 1
         },
         "react": {
-          "ready": 882,
-          "fcp": 1060,
+          "ready": 900.9,
+          "fcp": 1076,
           "jsKB": 71.1,
           "jsFiles": 1
         },
         "vue": {
-          "ready": 681.5,
-          "fcp": 872,
+          "ready": 697.2,
+          "fcp": 884,
           "jsKB": 29.2,
           "jsFiles": 1
         }
       },
       "sheet": {
         "pith": {
-          "ready": 584,
+          "ready": 581.8,
           "fcp": 716,
-          "jsKB": 21.6,
+          "jsKB": 21.4,
           "jsFiles": 6
         },
         "pith-vite": {
-          "ready": 501.9,
-          "fcp": 644,
-          "jsKB": 9.3,
+          "ready": 496.9,
+          "fcp": 628,
+          "jsKB": 9.4,
           "jsFiles": 1
         },
         "react": {
-          "ready": 809.8,
-          "fcp": 916,
+          "ready": 830.6,
+          "fcp": 964,
           "jsKB": 70.8,
           "jsFiles": 1
         },
         "vue": {
-          "ready": 605.6,
-          "fcp": 748,
+          "ready": 605.9,
+          "fcp": 764,
           "jsKB": 28.9,
           "jsFiles": 1
         }
@@ -116,60 +116,60 @@ export default {
   "runtime": {
     "trade": {
       "step: 40 of 40 symbols": {
-        "pith": 8.9,
-        "pith-vite": 9,
-        "react": 9.7,
-        "vue": 10
+        "pith": 9.2,
+        "pith-vite": 9.3,
+        "react": 10.3,
+        "vue": 10.9
       },
       "switch symbol": {
-        "pith": 7.8,
-        "pith-vite": 7.8,
-        "react": 7.5,
-        "vue": 7.2
+        "pith": 8,
+        "pith-vite": 8.1,
+        "react": 7.8,
+        "vue": 7.9
       },
       "step: 1,000 of 1,000 symbols": {
-        "pith": 214.9,
-        "pith-vite": 215.2,
-        "react": 305,
-        "vue": 262.6
+        "pith": 223.4,
+        "pith-vite": 229.1,
+        "react": 331.1,
+        "vue": 284.4
       },
       "step: 10 of 1,000 symbols": {
-        "pith": 2.8,
-        "pith-vite": 3,
-        "react": 8.1,
-        "vue": 3.2
+        "pith": 3.3,
+        "pith-vite": 3.5,
+        "react": 7.4,
+        "vue": 3.9
       }
     },
     "sheet": {
       "fill demo data": {
-        "pith": 44.9,
-        "pith-vite": 44.1,
-        "react": 23,
-        "vue": 29.8
+        "pith": 36.8,
+        "pith-vite": 35.8,
+        "react": 30.6,
+        "vue": 34.3
       },
       "Edit A1 (1,000-deep chain)": {
-        "pith": 6.2,
-        "pith-vite": 6.2,
-        "react": 4.4,
-        "vue": 3.9
+        "pith": 3.5,
+        "pith-vite": 3.4,
+        "react": 5.4,
+        "vue": 4.6
       },
       "edit one cell nobody reads": {
-        "pith": 0.8,
-        "pith-vite": 0.8,
-        "react": 3.6,
-        "vue": 1.6
+        "pith": 0.9,
+        "pith-vite": 0.9,
+        "react": 5.4,
+        "vue": 1.8
       },
       "scroll one screen": {
         "pith": 6.3,
         "pith-vite": 6.2,
-        "react": 5.5,
-        "vue": 6.1
+        "react": 6.8,
+        "vue": 6.5
       },
       "clear": {
-        "pith": 16.1,
-        "pith-vite": 16,
-        "react": 3.2,
-        "vue": 73.3
+        "pith": 10.6,
+        "pith-vite": 10.6,
+        "react": 4,
+        "vue": 76.7
       }
     }
   },
@@ -177,71 +177,71 @@ export default {
     "trade": {
       "1,000 symbols, 40 ticking per step, 60 steps/s": {
         "pith": {
-          "fps": 27.2,
-          "frameP50": 33.3,
+          "fps": 27.1,
+          "frameP50": 33.4,
           "frameP95": 50,
-          "longTasks": 4,
-          "longMs": 233.5
+          "longTasks": 3,
+          "longMs": 170.5
         },
         "pith-vite": {
-          "fps": 27.5,
+          "fps": 27.8,
+          "frameP50": 33.3,
+          "frameP95": 50,
+          "longTasks": 2.5,
+          "longMs": 156.5
+        },
+        "react": {
+          "fps": 26.9,
+          "frameP50": 33.4,
+          "frameP95": 50.1,
+          "longTasks": 4,
+          "longMs": 220
+        },
+        "vue": {
+          "fps": 27.1,
           "frameP50": 33.4,
           "frameP95": 50.1,
           "longTasks": 3,
-          "longMs": 177.5
-        },
-        "react": {
-          "fps": 27.4,
-          "frameP50": 33.3,
-          "frameP95": 50.1,
-          "longTasks": 3.5,
-          "longMs": 194
-        },
-        "vue": {
-          "fps": 27,
-          "frameP50": 33.4,
-          "frameP95": 50.1,
-          "longTasks": 2.5,
-          "longMs": 150.5
+          "longMs": 178.5
         }
       },
       "1,000 symbols, all ticking, 60 steps/s": {
         "pith": {
-          "fps": 4.8,
-          "frameP50": 200.1,
-          "frameP95": 258.3,
-          "longTasks": 25.5,
-          "longMs": 4167
+          "fps": 4.5,
+          "frameP50": 208.3,
+          "frameP95": 291.6,
+          "longTasks": 24,
+          "longMs": 4370
         },
         "pith-vite": {
-          "fps": 4.9,
+          "fps": 4.8,
           "frameP50": 200,
-          "frameP95": 258.3,
+          "frameP95": 258.4,
           "longTasks": 25,
-          "longMs": 4142
+          "longMs": 4249
         },
         "react": {
-          "fps": 5.7,
-          "frameP50": 191.7,
-          "frameP95": 283.3,
-          "longTasks": 28,
-          "longMs": 4138
+          "fps": 5.4,
+          "frameP50": 208.3,
+          "frameP95": 300,
+          "longTasks": 27.5,
+          "longMs": 4313
         },
         "vue": {
-          "fps": 4.6,
-          "frameP50": 208.3,
-          "frameP95": 275,
-          "longTasks": 28.5,
-          "longMs": 4306
+          "fps": 4.4,
+          "frameP50": 225,
+          "frameP95": 283.3,
+          "longTasks": 29.5,
+          "longMs": 4401.5
         }
       }
     },
     "sheet": {
       "100 random edits/s on the demo data": {
         "pith": {
-          "fps": 59.6,
+          "fps": 59.7,
           "frameP50": 16.7,
-          "frameP95": 16.8,
+          "frameP95": 16.7,
           "longTasks": 0,
           "longMs": 0
         },
@@ -255,7 +255,7 @@ export default {
         "react": {
           "fps": 59.7,
           "frameP50": 16.7,
-          "frameP95": 16.7,
+          "frameP95": 16.8,
           "longTasks": 0,
           "longMs": 0
         },
@@ -272,34 +272,34 @@ export default {
   "memory": {
     "trade": {
       "40 symbols": {
-        "pith": 1.24,
-        "pith-vite": 1.19,
+        "pith": 1.1,
+        "pith-vite": 1.05,
         "react": 1.59,
         "vue": 1.54
       },
       "1,000 symbols": {
-        "pith": 8.35,
-        "pith-vite": 8.3,
+        "pith": 5.11,
+        "pith-vite": 5.06,
         "react": 5.61,
         "vue": 8.23
       },
       "1,000 symbols after 2,000 steps": {
-        "pith": 8.88,
-        "pith-vite": 8.83,
-        "react": 10.13,
+        "pith": 5.7,
+        "pith-vite": 5.65,
+        "react": 10.11,
         "vue": 8.87
       }
     },
     "sheet": {
       "empty": {
-        "pith": 1.7,
-        "pith-vite": 1.67,
+        "pith": 1.24,
+        "pith-vite": 1.21,
         "react": 1.52,
         "vue": 1.38
       },
       "demo data": {
-        "pith": 11.31,
-        "pith-vite": 11.27,
+        "pith": 5.11,
+        "pith-vite": 5.07,
         "react": 3.09,
         "vue": 5.07
       }

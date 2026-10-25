@@ -1,0 +1,38 @@
+{
+  "trade: step: 40 of 40 symbols": {
+    "before": 9.65,
+    "after": 9
+  },
+  "trade: switch symbol": {
+    "before": 8.05,
+    "after": 7.9
+  },
+  "trade: step: 1,000 of 1,000 symbols": {
+    "before": 222.9,
+    "after": 221.3
+  },
+  "trade: step: 10 of 1,000 symbols": {
+    "before": 4.050000000000001,
+    "after": 3.5
+  },
+  "sheet: fill demo data": {
+    "before": 46.25,
+    "after": 36.35
+  },
+  "sheet: Edit A1 (1,000-deep chain)": {
+    "before": 6.45,
+    "after": 3.35
+  },
+  "sheet: edit one cell nobody reads": {
+    "before": 0.8,
+    "after": 0.9
+  },
+  "sheet: scroll one screen": {
+    "before": 6.4,
+    "after": 6.4
+  },
+  "sheet: clear": {
+    "before": 17.85,
+    "after": 10.55
+  }
+}
