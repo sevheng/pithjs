@@ -24,6 +24,12 @@ let mounts = [
   ['/__pith/', join(frameworkRoot, 'tests')],
 ];
 const port = Number(process.env.PORT) || 8000;
+let sitePath = '/'; // the base the site is served under (pith build --base): stripped from each request
+
+/** '/pithjs', 'pithjs/' or '/pithjs/' → '/pithjs/'; nothing → '/'. */
+export const normalizeBase = (value) => (value ? `/${value.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/') : '/');
+/** The --base value in a command line, normalized ('/' without one). */
+export const baseArg = (args) => normalizeBase(args.includes('--base') ? args[args.indexOf('--base') + 1] : undefined);
 export const types = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -115,6 +121,7 @@ async function handle(req, res) {
   let url, pathname;
   try {
     url = new URL(req.url, 'http://localhost');
+    if (sitePath !== '/' && url.pathname.startsWith(sitePath)) url.pathname = url.pathname.slice(sitePath.length - 1);
     pathname = decodeURIComponent(url.pathname);
   } catch {
     res.writeHead(400).end('Bad request');
@@ -139,9 +146,11 @@ async function handle(req, res) {
 /**
  * Port 0 picks any free port; read it back from server.address().port.
  * @param {number} [listenPort]
- * @param {{ dist?: boolean }} [options] dist: serve the project's dist/ build (see npm run build)
+ * @param {{ dist?: boolean, base?: string }} [options] dist: serve the project's dist/ build (see npm run build) ·
+ *   base: the site's base path (pith build --base), served at /base/ like its host will
  */
-export function startServer(listenPort = port, { dist = false } = {}) {
+export function startServer(listenPort = port, { dist = false, base = '/' } = {}) {
+  sitePath = base;
   if (dist) {
     siteRoot = join(projectRoot, 'dist');
     mounts = [...mounts, ['/tests/', join(projectRoot, 'tests')]];
@@ -155,6 +164,7 @@ export function startServer(listenPort = port, { dist = false } = {}) {
 
 if (import.meta.main) {
   const dist = process.argv.includes('--dist');
-  const server = await startServer(port, { dist });
-  console.log(`Pith ${dist ? 'preview' : 'dev'} server: http://localhost:${server.address().port}  (serving ${dist ? join(projectRoot, 'dist') : projectRoot})`);
+  const base = baseArg(process.argv);
+  const server = await startServer(port, { dist, base });
+  console.log(`Pith ${dist ? 'preview' : 'dev'} server: http://localhost:${server.address().port}${base}  (serving ${dist ? join(projectRoot, 'dist') : projectRoot})`);
 }

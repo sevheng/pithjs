@@ -2,7 +2,7 @@
 
 import { createRouter } from '../pith/router.js';
 import { transition } from '../pith/transition.js';
-import { html } from '../pith/html.js';
+import { html, setBase, withBase } from '../pith/html.js';
 import { root, signal } from '../pith/signal.js';
 
 /** @param {any} t */
@@ -21,7 +21,8 @@ export default async function (t) {
       await fn(router);
     } finally {
       router.dispose();
-      history.replaceState(null, '', startUrl);
+      // Only when it moved: WebKit refuses more than 100 replaceState calls in 10 seconds.
+      if (location.pathname + location.search + location.hash !== startUrl || history.state !== null) history.replaceState(null, '', startUrl);
     }
   }
 
@@ -253,6 +254,34 @@ export default async function (t) {
     } finally {
       sandbox.style.display = '';
       scrollTo({ top: 0, behavior: 'instant' });
+    }
+  });
+
+  // pith build --base /pithjs/ (a site served from a folder, like GitHub Pages): the app keeps writing /paths, and
+  // links, navigate() and fetchJSON get the base in front; routes match the path without it.
+  await test('router: under a base, links and navigate() get it in front, and routes match without it', async () => {
+    const dir = start.slice(0, start.lastIndexOf('/') + 1); // this test page's folder, e.g. /__pith/
+    const here = start.slice(dir.length - 1); // this page's path under it, e.g. /index.html
+    setBase(dir);
+    try {
+      eq(withBase('/api/team'), `${dir}api/team`);
+      eq(withBase('//cdn.example/x.js'), '//cdn.example/x.js', 'a protocol-relative URL is left alone');
+      eq(withBase(`${dir}b`), `${dir}b`, 'a path that already has the base is left alone');
+      const routes = { [here]: () => html`<a id="base-link" href="/base-b">b</a>`, '/base-b': () => 'page b', '*': () => 'not found' };
+      await withRouter(routes, {}, async (router) => {
+        await until(() => sandbox.querySelector('#base-link'));
+        eq(router.path.value, here);
+        eq(sandbox.querySelector('#base-link').getAttribute('href'), `${dir}base-b`);
+        sandbox.querySelector('#base-link').click();
+        await until(() => text() === 'page b');
+        eq(location.pathname, `${dir}base-b`);
+        eq(router.path.value, '/base-b');
+        router.navigate(here);
+        await until(() => text() !== 'page b');
+        eq(location.pathname, start);
+      });
+    } finally {
+      setBase('/');
     }
   });
 

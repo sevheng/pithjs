@@ -31,7 +31,7 @@ those `SKILL.md` files before starting UI work.
 | `npm install` | once: installs Pith's tools (`pithjs`) and Vite, the two dev dependencies |
 | `npm run dev` | Vite dev server on :8000 (`PORT=3000` for another port): reloads on save, CSS updates in place |
 | `npm run dev:no-build` | the same app with no Vite at all |
-| `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip) |
+| `npm run build` | production build with Vite into `dist/` (bundled, minified, dev warnings removed), then each route prerendered to `dist/<route>/index.html` (`-- --no-prerender` to skip; `-- --base /repo/` when it's served from a folder, like GitHub Pages) |
 | `npm run preview` | serve the built `dist/` locally (unknown paths get `dist/404.html`, the plain shell) |
 | `npm run check -- --build` | build, then run every check against the built app (and check every route was prerendered) |
 | `npm run check -- --browsers` | also run the framework tests and user flows in Firefox and WebKit (Safari). Needs `playwright-core` installed once (the check says how); skipped otherwise |

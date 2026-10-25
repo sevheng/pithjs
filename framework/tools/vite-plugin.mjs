@@ -15,11 +15,15 @@ export const stripNoBuildTags = (html) =>
     .replace(/\s*<script type="importmap">[\s\S]*?<\/script>/, '')
     .replace(/\s*<link rel="modulepreload"[^>]*>/g, '');
 
+/** Tell the app the base path it's served under (pith build --base): Pith reads <meta name="pith-base">. */
+export const addBase = (html, base) =>
+  base === '/' ? html : html.replace(/<head[^>]*>/, (head) => `${head}\n  <meta name="pith-base" content="${base}">`);
+
 /**
- * @param {{ projectRoot: string }} options
+ * @param {{ projectRoot: string, base?: string }} options base: the path the built site is served under
  * @returns {import('vite').Plugin}
  */
-export function pith({ projectRoot }) {
+export function pith({ projectRoot, base = '/' }) {
   // Served as-is, not through Vite: test pages load Pith through their own import map, and must
   // share one copy of the harness with the flows file they import.
   const raw = [
@@ -56,7 +60,7 @@ export function pith({ projectRoot }) {
       },
       server: { fs: { allow: [projectRoot, framework] } },
     }),
-    transformIndexHtml: { order: 'pre', handler: stripNoBuildTags },
+    transformIndexHtml: { order: 'pre', handler: (html) => addBase(stripNoBuildTags(html), base) },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost');

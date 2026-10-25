@@ -104,6 +104,13 @@ export default () => html`
   ${code(nginx, { label: 'nginx SPA fallback' })}
   ${note(html`Static hosting doesn't run ${c('api/')}. Those files are a fake backend for development (and for
     the build's baked data). In production a real backend must answer the same URLs.`, 'warn')}
+  <p>
+    A site served from a folder, like GitHub Pages' ${c('https://you.github.io/repo/')}, is built with
+    ${c('npm run build -- --base /repo/')} (try it with ${c('npm run preview -- --base /repo/')}). Keep writing
+    ${c('/paths')} in the app: links, ${c('fetchJSON')} and the router add the base. This demo is published that
+    way by a GitHub Actions workflow (${c('.github/workflows/pages.yml')}), and answers its ${c('/api/')} in the
+    browser there (${c('app/static-api.js')}), so every example works on a static host.
+  </p>
 
   <h2 id="without-a-build">Deploying without a build</h2>
   <p>

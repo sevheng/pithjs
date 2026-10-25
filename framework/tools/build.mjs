@@ -13,7 +13,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { projectRoot } from './dev-server.mjs';
+import { projectRoot, baseArg, normalizeBase } from './dev-server.mjs';
 import { pith } from './vite-plugin.mjs';
 
 // Load Vite from the project (it's the project's dev dependency, not the framework's).
@@ -29,25 +29,28 @@ async function loadVite() {
 
 /**
  * Build the project in `root` into `root/dist`, then prerender its routes. Returns the build time in ms.
- * @param {{ root?: string, quiet?: boolean, prerender?: boolean, onPrerender?: (result: any) => void }} [options]
- *   onPrerender: gets prerender()'s result (pages written, redirected routes, warnings)
+ * @param {{ root?: string, quiet?: boolean, prerender?: boolean, base?: string, onPrerender?: (result: any) => void }} [options]
+ *   onPrerender: gets prerender()'s result (pages written, redirected routes, warnings) ·
+ *   base: the path the site will be served under, e.g. '/pithjs/' for https://you.github.io/pithjs/
  */
-export async function buildProject({ root = projectRoot, quiet = false, prerender = true, onPrerender } = {}) {
+export async function buildProject({ root = projectRoot, quiet = false, prerender = true, base = '/', onPrerender } = {}) {
+  base = normalizeBase(base);
   if (!existsSync(join(root, 'index.html'))) throw new Error(`No index.html in ${root}: run this from a Pith project folder.`);
   const { build } = await loadVite();
   const start = performance.now();
   const result = await build({
     configFile: false,
     root,
+    base,
     logLevel: quiet ? 'silent' : 'info',
     define: { 'globalThis.PITH_DEV': 'false' },
-    plugins: [pith({ projectRoot: root })],
+    plugins: [pith({ projectRoot: root, base })],
     build: { outDir: 'dist', emptyOutDir: true },
   });
   if (prerender) {
     const { prerender: run } = await import('./prerender.mjs');
     const chunks = [result].flat().flatMap((r) => ('output' in r ? r.output : [])).filter((c) => c.type === 'chunk');
-    const done = await run({ root, chunks });
+    const done = await run({ root, chunks, base });
     onPrerender?.(done);
     if (!quiet) {
       if (done.skipped) console.log(`– Prerender skipped: ${done.skipped}`);
@@ -63,6 +66,7 @@ export async function buildProject({ root = projectRoot, quiet = false, prerende
 }
 
 if (import.meta.main) {
-  const ms = await buildProject({ prerender: !process.argv.includes('--no-prerender') });
-  console.log(`\n✓ Built ${join(projectRoot, 'dist')} in ${ms} ms. Try it: npm run preview`);
+  const base = baseArg(process.argv);
+  const ms = await buildProject({ prerender: !process.argv.includes('--no-prerender'), base });
+  console.log(`\n✓ Built ${join(projectRoot, 'dist')} in ${ms} ms${base === '/' ? '' : `, to be served under ${base}`}. Try it: npm run preview${base === '/' ? '' : ` -- --base ${base}`}`);
 }

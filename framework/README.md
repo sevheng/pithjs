@@ -88,6 +88,11 @@ Chromes at a time (a quarter of your CPU cores); `PITH_CHROME_JOBS=2` lowers tha
   shows before any JS runs and search engines see it. The app's JS then replaces it with the live page.
   Skip it with `npm run build -- --no-prerender`; it's skipped automatically if Chrome isn't found.
 
+A site served from a folder rather than the root of its domain (GitHub Pages: `https://you.github.io/repo/`) is
+built with `npm run build -- --base /repo/`, and tried locally with `npm run preview -- --base /repo/`. The app
+keeps writing `/paths`: links in templates, `fetchJSON('/api/...')` and the router put the base in front, and
+routes match the path without it (the build writes the base into `<meta name="pith-base">`).
+
 `main.js` should `await router.ready` (the first page's code has loaded) before replacing `#app`,
 so the prerendered page never flashes empty:
 
@@ -153,8 +158,8 @@ points at it, and it is Pith's only preload.
 state recording): ~10 KB gzipped and one request, instead of ~30 KB in ten files. It's built once and
 committed, so deploying needs nothing installed. `forDeploy(html)` in `tools/release.mjs` makes those
 two edits. Keep `/pith/index.js` in development so warnings stay on. In `../compare`, a site deployed this
-way is ready 2–19% sooner than Vue. It's 0–21% behind `npm run build`, which also bundles the app's own
-files and prerenders.
+way is ready about as soon as Vue (5% later to 11% sooner). It's 12–32% behind `npm run build`, which also
+bundles the app's own files and prerenders.
 
 Changing `pith/`? Run `npm run release` in `demo/` (`pith release`) to rebuild the copy;
 `npm run check` fails until you do.

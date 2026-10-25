@@ -19,6 +19,15 @@ const REPEAT = Symbol('repeat');
 const ATTR_TAIL = /([^\s"'<>\/=]+)\s*=\s*(["']?)$/;
 const MARKER = /^pith-(\d+)$/;
 const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction', 'xlink:href']);
+
+// Where the site lives when it isn't at the root of its domain (e.g. /pithjs/ on GitHub Pages): `pith build --base`
+// writes it into <meta name="pith-base">. App paths starting with / get it in front: links, fetchJSON, the router.
+export let base = /** @type {HTMLMetaElement | null} */ (globalThis.document?.querySelector('meta[name="pith-base"]'))?.content || '/';
+/** For tests: the base as a build would set it. */
+export const setBase = (b) => (base = b);
+/** '/docs' → '/pithjs/docs' under the base /pithjs/; anything else as it is. */
+export const withBase = (path) =>
+  base !== '/' && path[0] === '/' && path[1] !== '/' && !path.startsWith(base) ? base + path.slice(1) : path;
 const templates = new WeakMap();
 
 /**
@@ -135,7 +144,10 @@ function compile(strings, inSvg) {
     if (!(node instanceof Element)) continue;
     for (const attr of [...node.attributes]) {
       const m = MARKER.exec(attr.name);
-      if (!m) continue;
+      if (!m) {
+        if (URL_ATTRS.has(attr.name)) attr.value = withBase(attr.value); // a link written in the template
+        continue;
+      }
       found.add(+m[1]);
       parts.push({ node: index, hole: +m[1], attr: attr.value });
       node.removeAttribute(attr.name);
@@ -413,6 +425,6 @@ function setAttr(el, name, value) {
     return;
   }
   let text = value === true ? '' : String(value);
-  if (URL_ATTRS.has(name) && /^\s*javascript:/i.test(text)) text = '#';
+  if (URL_ATTRS.has(name)) text = /^\s*javascript:/i.test(text) ? '#' : withBase(text);
   el.setAttribute(name, text);
 }

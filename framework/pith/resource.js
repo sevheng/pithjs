@@ -3,7 +3,7 @@
 // paginated(fetcher) builds on it to load a list page by page.
 
 import { signal, computed, effect, untrack, batch, onCleanup } from './signal.js';
-import { html } from './html.js';
+import { html, withBase } from './html.js';
 import { DEV, warn, describe, recording, record, silently } from './dev.js';
 
 /** A non-2xx response. `body` is the parsed JSON (or text) the server sent back. */
@@ -35,6 +35,7 @@ let baked = {};
  * @returns {Promise<any>}
  */
 export async function fetchJSON(url, { json, headers, method, ...init } = {}) {
+  url = withBase(url);
   const hasJson = json !== undefined;
   method ??= hasJson ? 'POST' : 'GET';
   const data = globalThis.document?.getElementById('pith-data');

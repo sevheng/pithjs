@@ -5,7 +5,7 @@
 // and layouts that stay mounted while the user moves between pages that share them.
 
 import { signal, computed, effect, untrack, batch, catchError } from './signal.js';
-import { html } from './html.js';
+import { html, base, withBase } from './html.js';
 import { transition } from './transition.js';
 import { DEV, warn, error, describe, registry, recording, collect, silently } from './dev.js';
 
@@ -105,23 +105,26 @@ export function createRouter(
     return { route: fallback, params: {} };
   }
 
+  // The app's path for a URL's pathname: without the base the site is served under (see withBase).
+  const local = (pathname) => (pathname.startsWith(base) ? pathname.slice(base.length - 1) : pathname);
+
   // Follow route redirects and the guard until a URL is allowed. Returns the URL to show.
   function allowed(url) {
     const from = DEV && url.pathname; // for W020
     for (let i = 0; i <= MAX_REDIRECTS; i++) {
-      const { route, params } = resolve(url.pathname);
+      const { route, params } = resolve(local(url.pathname));
       let to = null;
       if (route.redirect != null) {
         to = typeof route.redirect === 'function' ? untrack(() => route.redirect(params)) : route.redirect;
       } else if (guard) {
-        const result = untrack(() => guard({ path: url.pathname, params, query: parseQuery(url.search), route }));
+        const result = untrack(() => guard({ path: local(url.pathname), params, query: parseQuery(url.search), route }));
         if (typeof result === 'string') to = result;
         else if (result !== true) {
           DEV && warn('W022', `The router guard returned ${describe(result)} for "${url.pathname}". Return true to allow the page, or a path like '/login' to redirect.`);
         }
       }
       if (typeof to !== 'string') return url;
-      const next = new URL(to, url);
+      const next = new URL(withBase(to), url);
       if (next.href === url.href || next.origin !== location.origin) return next;
       url = next;
     }
@@ -170,7 +173,7 @@ export function createRouter(
   if (first.origin !== location.origin) location.replace(first.href);
   else if (first.href !== location.href) history.replaceState(history.state, '', first);
 
-  const path = signal(location.pathname);
+  const path = signal(local(location.pathname));
   const search = signal(location.search);
   const query = computed(() => parseQuery(search.value));
   const match = computed(() => resolve(path.value));
@@ -301,12 +304,12 @@ export function createRouter(
   async function go(url, { scroll = false, animate = false, restore = null } = {}) {
     const id = ++navigation;
     // Keep the current page on screen until the next page's code has arrived.
-    await load(resolve(url.pathname).route).catch(() => {}); // a failure renders failedView
+    await load(resolve(local(url.pathname)).route).catch(() => {}); // a failure renders failedView
     if (id !== navigation) return; // the user already went somewhere else
 
     const apply = () => {
       batch(() => {
-        path.value = url.pathname;
+        path.value = local(url.pathname);
         search.value = url.search;
       });
       stopBack(); // a newer page must not get an older page's scroll position
@@ -330,7 +333,7 @@ export function createRouter(
    * @param {{ replace?: boolean }} [options] replace: don't add a history entry
    */
   function navigate(to, { replace = false } = {}) {
-    const url = allowed(new URL(to, location.href));
+    const url = allowed(new URL(withBase(to), location.href));
     if (url.origin !== location.origin) {
       location.href = url.href;
       return;
@@ -342,7 +345,7 @@ export function createRouter(
       saveScroll();
       history.pushState(null, '', url);
     }
-    if (url.pathname !== path.peek()) {
+    if (local(url.pathname) !== path.peek()) {
       go(url, { scroll: true, animate: true });
     } else {
       navigation++; // cancels a slower navigation that is still loading
@@ -394,7 +397,7 @@ export function createRouter(
   // Start downloading a page's code as soon as the user shows interest in a link to it.
   function onIntent(e) {
     const a = linkFrom(e);
-    if (a && !a.hasAttribute('data-reload')) load(resolve(a.pathname).route).catch(() => {});
+    if (a && !a.hasAttribute('data-reload')) load(resolve(local(a.pathname)).route).catch(() => {});
   }
 
   // Back/forward isn't animated: browsers (and swipe-back on phones) already animate it.
@@ -403,9 +406,9 @@ export function createRouter(
     const url = allowed(new URL(location.href));
     if (url.origin !== location.origin) return location.replace(url.href);
     if (url.href !== location.href) history.replaceState(history.state, '', url);
-    if (url.pathname === path.peek() && url.search === search.peek()) return; // only the #hash changed
+    if (local(url.pathname) === path.peek() && url.search === search.peek()) return; // only the #hash changed
     const restore = history.state?.scroll ?? 0;
-    if (url.pathname !== path.peek()) {
+    if (local(url.pathname) !== path.peek()) {
       go(url, { restore });
     } else {
       navigation++;

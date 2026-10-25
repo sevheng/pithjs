@@ -132,13 +132,14 @@ export const landedElsewhere = (route, renderedTitle) =>
 /**
  * Prerender every fixed route of the project's built dist/, and every URL its prerender.mjs lists.
  * Needs Chrome (returns { skipped } without it).
- * @param {{ root?: string, chunks?: { fileName: string, facadeModuleId?: string | null, imports?: string[] }[] }} [options]
+ * @param {{ root?: string, base?: string, chunks?: { fileName: string, facadeModuleId?: string | null, imports?: string[] }[] }} [options]
+ *   base: the path the site is served under (pith build --base); pages are loaded there
  *   chunks: Vite's output chunks, used to preload each page's code so its markup isn't blanked while it loads
  *   redirected: routes not written because they showed another page (W063); that's expected, not a failure
  *   pages[].route: the URL prerendered ('/team/3' for the route '/team/:id')
  * @returns {Promise<{ skipped?: string, pages: { route: string, file: string }[], redirected?: string[], warnings: string[] }>}
  */
-export async function prerender({ root = projectRoot, chunks = [] } = {}) {
+export async function prerender({ root = projectRoot, chunks = [], base: sitePath = '/' } = {}) {
   if (resolve(root) !== resolve(projectRoot)) {
     throw new Error(`prerender serves ${projectRoot}/dist; run it from ${root} (or set PITH_PROJECT=${root}).`);
   }
@@ -152,8 +153,8 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
 
   // Pages load from a shell that records their GET answers; the plain one is put back after.
   writeFileSync(join(dist, 'index.html'), recordData(shell));
-  const server = await startServer(0, { dist: true });
-  const base = `http://localhost:${server.address().port}`;
+  const server = await startServer(0, { dist: true, base: sitePath });
+  const base = `http://localhost:${server.address().port}${sitePath.slice(0, -1)}`;
   let loaded;
   try {
     loaded = await Promise.all([...targets.map((t) => t.path), NOT_FOUND].map((path) => loadPage(chrome, base + path)));
@@ -182,7 +183,7 @@ export async function prerender({ root = projectRoot, chunks = [] } = {}) {
     }
     if (landedElsewhere(route, page.title)) return redirected.push(path), warnings.push(`[pith W063] ${path} redirected to another page ("${page.title}"), so it wasn't prerendered.`);
     const chunk = chunks.find((c) => c.facadeModuleId && pageFile && resolve(c.facadeModuleId) === pageFile);
-    const preload = chunk ? [chunk.fileName, ...(chunk.imports ?? [])].map((f) => `/${f}`).filter((f) => !shell.includes(f)) : [];
+    const preload = chunk ? [chunk.fileName, ...(chunk.imports ?? [])].map((f) => `${sitePath}${f}`).filter((f) => !shell.includes(f)) : [];
     const file = routeFile(path);
     const target = join(dist, file);
     if (!target.startsWith(dist + sep)) throw new Error(`Can't prerender route "${path}" outside dist/.`);

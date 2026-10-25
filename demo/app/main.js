@@ -1,3 +1,4 @@
+import './static-api.js'; // first: the published demo answers /api/ in the browser (see the file)
 import { html, root, computed } from 'pith';
 import { router } from './router.js';
 import { apps } from './apps.js';
