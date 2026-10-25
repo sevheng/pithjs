@@ -4,7 +4,7 @@
 // Pith itself needs no build. Writes results/build.json.
 
 import { build } from 'vite';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const compare = join(import.meta.dirname, '..');
@@ -37,6 +37,7 @@ function configFor(app, impl) {
 
 const times = {};
 for (const app of APPS) {
+  if (!existsSync(join(compare, app))) continue; // an app not written yet
   for (const impl of ['react', 'vue', 'pith-vite']) {
     const start = performance.now();
     await build(configFor(app, impl));

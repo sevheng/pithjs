@@ -1,10 +1,12 @@
 // The spreadsheet's formulas: reading what's typed in a cell, and working out its value. Pure functions, no
-// signals, so Node tests them (tests/sheet.test.mjs). app/sheet/model.js wires them to signals.
+// framework, shared unchanged by the Pith, React and Vue Spreadsheets (compare/sheet/*), so only how each wires
+// cells to its own state differs. A copy of the Pith demo's demo/app/sheet/formula.js (tested there by
+// demo/tests/sheet.test.mjs).
 //
 // A cell holds what was typed (its "raw" text). parseInput() turns that into a number, text, nothing, or a
 // formula (anything starting with "="): its syntax tree and the cells it refers to. evaluate() works out a
 // formula's value, asking for each cell it reads through get(id), so the caller decides how a read is made
-// (in the app, it's a signal read, which is how a cell subscribes to the cells it uses).
+// (a signal or computed read in Pith and Vue, a lookup in already worked-out values in React).
 
 export const ROWS = 1000;
 export const COLS = 26;
