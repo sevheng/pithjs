@@ -406,6 +406,7 @@ rating-stars { display: inline-block; }
 :root[data-theme="dark"] { --syn-key: #ff7ab2; --syn-str: #ff8170; --syn-fn: #6bdfff; --syn-com: #9aa5b1; --term-bg: #111113; }
 
 .landing-hero { text-align: center; padding: 5rem 0 2.5rem; position: relative; }
+.hero-experiment { max-width: 32rem; margin: 1.25rem auto 0; }
 .landing-hero::before { content: ''; position: absolute; inset: -2rem 0 auto; height: 34rem; z-index: -1; pointer-events: none;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-fill) 16%, transparent), transparent); }
 .landing-hero .badge { margin-bottom: 1.25rem; }

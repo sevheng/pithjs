@@ -100,7 +100,7 @@ export default function HomePage() {
 
   return html`
     <section class="landing-hero" aria-labelledby="hero-title">
-      <p class="badge soft">10 KB · no build needed · made for AI agents</p>
+      <p class="badge soft">Experimental · 10 KB · no build · for AI agents</p>
       <h1 id="hero-title">The essential core of a web app.</h1>
       <p class="lead">Signals, components, routing, data and forms, on the browser's own tech.
         Everything hard to get right, and nothing you don't need.</p>
@@ -108,6 +108,8 @@ export default function HomePage() {
         <a class="btn primary big" href="/docs/getting-started">Get started</a>
         <a class="btn big" href="/docs">Read the docs</a>
       </div>
+      <p class="muted note hero-experiment">Pith is an experiment: its API may still change, and it hasn't been used in
+        production yet. Try it, build with it, tell us what breaks.</p>
     </section>
 
     <figure class="product-shot" aria-label="A Pith component and what it renders">
