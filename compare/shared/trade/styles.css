@@ -1,0 +1,104 @@
+/* The trading screen, on top of /styles.css (its tokens). The same file for every implementation. */
+:root { --up: #08722f; --down: #c20f2b; --fill: color-mix(in srgb, var(--text) 5%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --up: #32d74b; --down: #ff7a72; } }
+:root[data-theme="dark"] { --up: #32d74b; --down: #ff7a72; }
+
+html { font-size: 100%; }
+.trade { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 1rem; padding: 1rem; max-width: 1400px;
+  width: 100%; margin: 0 auto; align-items: start; font-variant-numeric: tabular-nums; }
+.trade .up { color: var(--up); }
+.trade .down { color: var(--down); }
+.trade .flat { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.75rem; min-width: 0; }
+.panel h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.5rem; }
+
+.trade-top { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.trade-top h1 { font-size: 1.5rem; margin: 0; }
+.equity { display: flex; align-items: baseline; gap: 0.5rem; margin: 0; }
+.equity dt { color: var(--muted); font-size: 0.85rem; }
+.equity dd { margin: 0; font-size: 1.25rem; font-weight: 700; }
+
+/* ---------- Watchlist ---------- */
+.watch { padding: 0.5rem 0.25rem; }
+.watch h2 { padding: 0 0.5rem; }
+.wl-scroll { height: calc(100vh - 7rem); min-height: 20rem; overflow-y: auto; }
+.wl-list { list-style: none; margin: 0; padding: 0; }
+.wl-row { border-radius: 10px; }
+.wl-row:hover { background: var(--fill); }
+.wl-row.selected { background: var(--accent-soft); }
+.wl-btn { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 64px 5.6rem; align-items: center;
+  gap: 0.5rem; padding: 0.35rem 0.6rem; cursor: pointer; border-radius: 10px; }
+.wl-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.wl-id { display: grid; min-width: 0; line-height: 1.3; }
+.wl-sym { font-weight: 700; font-size: 0.9rem; }
+.wl-row.selected .wl-sym { color: var(--accent); }
+.wl-name { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-spark { display: block; overflow: visible; }
+.wl-spark polyline { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linejoin: round; }
+.wl-spark.up polyline { stroke: var(--up); }
+.wl-spark.down polyline { stroke: var(--down); }
+.wl-nums { display: grid; justify-items: end; line-height: 1.3; }
+.wl-quote { display: inline-flex; align-items: center; gap: 0.2rem; }
+.wl-arrow { font-size: 0.6rem; width: 0.6rem; }
+.wl-price { font-weight: 650; font-size: 0.9rem; padding: 0 0.25rem; border-radius: 5px; }
+.wl-change { font-size: 0.75rem; font-weight: 600; }
+/* A tick flashes the price: two animation names per direction, so the flash starts again on every tick. */
+.flash-up-0 { animation: flash-up-a 0.6s ease-out; }
+.flash-up-1 { animation: flash-up-b 0.6s ease-out; }
+.flash-down-0 { animation: flash-down-a 0.6s ease-out; }
+.flash-down-1 { animation: flash-down-b 0.6s ease-out; }
+@keyframes flash-up-a { from { background: color-mix(in srgb, var(--up) 18%, transparent); color: var(--up); } }
+@keyframes flash-up-b { from { background: color-mix(in srgb, var(--up) 18%, transparent); color: var(--up); } }
+@keyframes flash-down-a { from { background: color-mix(in srgb, var(--down) 18%, transparent); color: var(--down); } }
+@keyframes flash-down-b { from { background: color-mix(in srgb, var(--down) 18%, transparent); color: var(--down); } }
+
+/* ---------- The selected symbol ---------- */
+.detail { display: grid; gap: 1rem; min-width: 0; }
+.quote { display: flex; align-items: baseline; gap: 1.25rem; flex-wrap: wrap; }
+.quote .q-sym { font-size: 1.4rem; margin: 0; text-transform: none; letter-spacing: normal; color: var(--text); }
+.q-name { color: var(--muted); margin: 0; flex: 1 1 10rem; }
+.q-price { font-size: 1.6rem; font-weight: 700; }
+.q-change { font-weight: 600; }
+.q-range { display: flex; gap: 1rem; margin: 0; color: var(--muted); font-size: 0.85rem; }
+.q-range dt { display: inline; }
+.q-range dd { display: inline; margin: 0 0 0 0.3rem; color: var(--text); font-weight: 600; }
+
+.chart svg { display: block; width: 100%; height: auto; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-tick { fill: var(--muted); font-size: 11px; }
+.cdl-wick { stroke-width: 1; }
+.cdl.up .cdl-wick { stroke: var(--up); }
+.cdl.up .cdl-body { fill: var(--up); }
+.cdl.down .cdl-wick { stroke: var(--down); }
+.cdl.down .cdl-body { fill: var(--down); }
+.last-line { stroke-width: 1; stroke-dasharray: 3 3; }
+.last-price.up .last-line { stroke: var(--up); }
+.last-price.down .last-line, .last-price.flat .last-line { stroke: var(--down); }
+.last-tag { fill: var(--text); }
+.last-text { fill: var(--surface); font-size: 11px; font-weight: 700; }
+
+.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.book-list, .tape-list { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
+.book-row, .tape-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; padding: 0.05rem 0.4rem; text-align: right; }
+.book-row { background: linear-gradient(to left, var(--fill-side) var(--depth), transparent var(--depth)); }
+.book-row.ask { --fill-side: color-mix(in srgb, var(--down) 12%, transparent); }
+.book-row.bid { --fill-side: color-mix(in srgb, var(--up) 12%, transparent); }
+.book-row.ask .book-price { color: var(--down); }
+.book-row.bid .book-price { color: var(--up); }
+.book-row.bid.best { border-top: 1px solid var(--border); }
+.book-head { color: var(--muted); font-size: 0.7rem; }
+.book-total { color: var(--muted); }
+.tape-time { color: var(--muted); }
+.tape-scroll { height: calc(21 * 1.25rem); overflow: hidden; }
+
+.positions table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.positions th, .positions td { padding: 0.25rem 0.5rem; text-align: right; border-bottom: 1px solid var(--border); }
+.positions th:first-child, .positions td:first-child { text-align: left; }
+.positions th { color: var(--muted); font-weight: 600; font-size: 0.75rem; }
+.positions tfoot td { border-bottom: 0; font-weight: 700; }
+
+@media (max-width: 800px) {
+  .trade { grid-template-columns: 1fr; }
+  .wl-scroll { height: 22rem; }
+  .panels { grid-template-columns: 1fr; }
+}
