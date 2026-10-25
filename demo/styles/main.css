@@ -131,7 +131,7 @@ main:focus { outline: none; }
 
 /* ---------- Layout ---------- */
 nav-bar { display: block; position: sticky; top: 0; z-index: 50; background: var(--glass);
-  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--hairline); }
 /* Full width on every page, so it doesn't change size (and jump) between a page and a full-screen layout. */
 .site-header { display: flex; align-items: center; gap: 1rem; padding: 0.45rem clamp(1rem, 3vw, 1.5rem); }
@@ -255,7 +255,7 @@ select.input { cursor: pointer; }
 .pith-dialog { width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 0; border-radius: 20px;
   background: var(--surface); color: var(--text); box-shadow: var(--shadow-lift); overflow-wrap: anywhere; }
 .pith-dialog[open] { animation: pith-pop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.pith-dialog::backdrop { background: rgb(0 0 0 / 0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.pith-dialog::backdrop { background: rgb(0 0 0 / 0.35); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .pith-dialog-body { padding: 1.5rem; }
 .pith-dialog-body > :first-child { margin-top: 0; }
 .pith-dialog-body > :last-child { margin-bottom: 0; }
@@ -264,7 +264,7 @@ select.input { cursor: pointer; }
 .pith-toasts { position: fixed; inset: auto 1rem 1rem auto; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem;
   width: min(24rem, calc(100vw - 2rem)); margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; }
 .pith-toast { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.25rem 0.25rem 1.1rem; border: 0; border-radius: 16px;
-  background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
   color: var(--text); box-shadow: var(--shadow-lift); animation: pith-toast-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .pith-toast::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent-fill); flex: none; }
 .pith-toast.success::before { background: var(--success); }
@@ -302,10 +302,12 @@ select.input { cursor: pointer; }
 /* The header has its own layer in every transition, so what animates (a page, a row scrolled under the
    header) is drawn below it, not over it. */
 :root:active-view-transition nav-bar { view-transition-name: site-header; background: linear-gradient(var(--glass), var(--glass)) var(--bg);
-  backdrop-filter: none; -webkit-backdrop-filter: none; }
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
 ::view-transition-group(page) { animation: none; }
 ::view-transition-old(page) { display: none; }
-::view-transition-new(page) { animation-duration: 0.15s; }
+/* The new page starts partly there and settles in: never a blank frame between two pages. */
+::view-transition-new(page) { animation: pith-page-in 0.18s ease-out; }
+@keyframes pith-page-in { from { opacity: 0.4; transform: translateY(4px); } }
 ::view-transition-group(site-header) { z-index: 1; }
 ::view-transition-old(site-header) { display: none; }
 ::view-transition-new(site-header) { animation: none; }
@@ -576,7 +578,7 @@ rating-stars { display: inline-block; }
 /* The conversation */
 .chat-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 .chat-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--hairline);
-  background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+  background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
 .chat-head h1 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.015em; margin: 0; }
 .chat-head p { margin: 0; }
 .chat-back { display: none; }
@@ -633,7 +635,7 @@ rating-stars { display: inline-block; }
 
 /* Reply and react: a small frosted pill on hover or focus */
 .msg-actions { position: absolute; top: -1.15rem; right: -0.75rem; z-index: 2; display: flex; padding: 1px; border-radius: 999px;
-  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: var(--shadow-lift);
+  background: var(--glass); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: var(--shadow-lift);
   opacity: 0; pointer-events: none; transition: opacity 0.12s; }
 .msg-row.mine .msg-actions { right: auto; left: -0.75rem; }
 .msg-actions .icon-btn { width: 36px; height: 36px; }
@@ -683,7 +685,7 @@ rating-stars { display: inline-block; }
 .firehose-stats { margin: 0; font-variant-numeric: tabular-nums; }
 .jump-slot { position: relative; height: 0; }
 .jump { position: absolute; z-index: 5; bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap;
-  background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: var(--shadow-lift); }
+  background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); box-shadow: var(--shadow-lift); }
 
 @media (prefers-reduced-motion: reduce) { .dots i, .skeleton, .skeleton-lines span { animation: none; } .msg.sending { transition: none; } }
 @media (max-width: 760px) {
@@ -1156,7 +1158,7 @@ rating-stars { display: inline-block; }
 .chart-bar.off .chart-fill { opacity: 0.4; }
 .chart-bar.on .chart-label { font-weight: 650; }
 .chart-tip { position: absolute; z-index: 2; transform: translate(-50%, calc(-100% - 12px)); display: grid; gap: 0.05rem; padding: 0.45rem 0.7rem;
-  border-radius: 10px; background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-radius: 10px; background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
   box-shadow: var(--shadow-lift); pointer-events: none; white-space: nowrap; font-size: 0.82rem; color: var(--muted); }
 .chart-tip strong { color: var(--text); font-size: 1rem; font-variant-numeric: tabular-nums; }
 .chart-data summary { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font-size: 0.9rem; font-weight: 500; cursor: pointer; }

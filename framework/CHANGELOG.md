@@ -5,6 +5,9 @@
 - A trailing slash is the same page: `/docs/signals/` (how GitHub Pages and other static hosts serve a prerendered
   page's folder) is `router.path` `/docs/signals`, so links marked as current and layouts match on first load.
 - E003 keeps its full message in development only, like E001, E002, E004 and E005.
+- The frosted bars keep their blur in production: the starter CSS writes `-webkit-backdrop-filter` before
+  `backdrop-filter` (the build's CSS minifier kept only the prefixed one, which Chrome ignores).
+- A page change no longer shows an empty frame: the new page starts partly visible and settles in.
 
 ## 0.1.0 (2026-10-25)
 

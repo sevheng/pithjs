@@ -163,7 +163,7 @@ off with reduced motion).
 **Frosted bar** (something that floats over content, like a toolbar or a sticky header):
 ```css
 .toolbar { position: sticky; top: 3.25rem; z-index: 10; background: var(--glass); border-bottom: 1px solid var(--hairline);
-  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
 ```
 
 ## Review checklist
